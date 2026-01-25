@@ -295,7 +295,7 @@ public class LoginFrame extends JFrame {
                 case "ADMIN":
                     dashboard = new AdminDashboard();
                     break;
-                case "TEACHER":
+                case "INSTRUCTOR":
                     dashboard = new TeacherDashboard();
                     break;
                 case "USER":

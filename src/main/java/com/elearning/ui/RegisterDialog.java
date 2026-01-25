@@ -45,7 +45,7 @@ public class RegisterDialog extends JDialog {
         passwordField = new ModernPasswordField("Password (min 6 characters)");
         confirmPasswordField = new ModernPasswordField("Confirm password");
 
-        String[] roles = {"USER", "TEACHER"};
+        String[] roles = {"USER", "INSTRUCTOR"};
         roleComboBox = new JComboBox<>(roles);
         roleComboBox.setFont(new Font("Segoe UI", Font.PLAIN, 14));
         roleComboBox.setPreferredSize(new Dimension(300, 45));

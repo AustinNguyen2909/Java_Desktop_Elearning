@@ -9,11 +9,12 @@ public class User {
     private Integer id;
     private String username;
     private String passwordHash;
-    private String role; // ADMIN, TEACHER, USER
+    private String role; // ADMIN, INSTRUCTOR, USER
     private String email;
+    private String phone;
     private String fullName;
     private String avatarPath;
-    private boolean isActive;
+    private String status; // PENDING, ACTIVE, SUSPENDED
     private LocalDateTime createdAt;
     private LocalDateTime updatedAt;
 
@@ -27,7 +28,7 @@ public class User {
         this.role = role;
         this.email = email;
         this.fullName = fullName;
-        this.isActive = true;
+        this.status = "PENDING";
     }
 
     // Getters and Setters
@@ -71,6 +72,14 @@ public class User {
         this.email = email;
     }
 
+    public String getPhone() {
+        return phone;
+    }
+
+    public void setPhone(String phone) {
+        this.phone = phone;
+    }
+
     public String getFullName() {
         return fullName;
     }
@@ -87,12 +96,16 @@ public class User {
         this.avatarPath = avatarPath;
     }
 
-    public boolean isActive() {
-        return isActive;
+    public String getStatus() {
+        return status;
     }
 
-    public void setActive(boolean active) {
-        isActive = active;
+    public void setStatus(String status) {
+        this.status = status;
+    }
+
+    public boolean isActive() {
+        return "ACTIVE".equals(status);
     }
 
     public LocalDateTime getCreatedAt() {

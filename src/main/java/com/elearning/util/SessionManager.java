@@ -65,10 +65,10 @@ public class SessionManager {
     }
 
     /**
-     * Check if current user is teacher
+     * Check if current user is instructor
      */
-    public boolean isTeacher() {
-        return hasRole("TEACHER");
+    public boolean isInstructor() {
+        return hasRole("INSTRUCTOR");
     }
 
     /**

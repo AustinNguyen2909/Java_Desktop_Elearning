@@ -7,7 +7,7 @@ import java.time.LocalDateTime;
  */
 public class Course {
     private Integer id;
-    private Integer teacherId;
+    private Integer instructorId;
     private String title;
     private String description;
     private String thumbnailPath;
@@ -23,7 +23,7 @@ public class Course {
     private Integer approvedBy;
 
     // Additional fields not in database
-    private String teacherName;
+    private String instructorName;
     private int enrollmentCount;
     private double averageRating;
 
@@ -31,10 +31,10 @@ public class Course {
     public Course() {
     }
 
-    public Course(String title, String description, Integer teacherId) {
+    public Course(String title, String description, Integer instructorId) {
         this.title = title;
         this.description = description;
-        this.teacherId = teacherId;
+        this.instructorId = instructorId;
         this.status = "PENDING";
         this.isPublished = false;
     }
@@ -48,12 +48,12 @@ public class Course {
         this.id = id;
     }
 
-    public Integer getTeacherId() {
-        return teacherId;
+    public Integer getInstructorId() {
+        return instructorId;
     }
 
-    public void setTeacherId(Integer teacherId) {
-        this.teacherId = teacherId;
+    public void setInstructorId(Integer instructorId) {
+        this.instructorId = instructorId;
     }
 
     public String getTitle() {
@@ -160,12 +160,12 @@ public class Course {
         this.approvedBy = approvedBy;
     }
 
-    public String getTeacherName() {
-        return teacherName;
+    public String getInstructorName() {
+        return instructorName;
     }
 
-    public void setTeacherName(String teacherName) {
-        this.teacherName = teacherName;
+    public void setInstructorName(String instructorName) {
+        this.instructorName = instructorName;
     }
 
     public int getEnrollmentCount() {
