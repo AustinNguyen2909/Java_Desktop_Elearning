@@ -48,6 +48,8 @@ public class RegisterDialog extends JDialog {
         String[] roles = {"USER", "INSTRUCTOR"};
         roleComboBox = new JComboBox<>(roles);
         roleComboBox.setFont(new Font("Segoe UI", Font.PLAIN, 14));
+        roleComboBox.setBackground(Color.WHITE);
+        roleComboBox.setForeground(new Color(33, 33, 33));
         roleComboBox.setPreferredSize(new Dimension(300, 45));
 
         registerButton = new ModernButton("Register");
@@ -65,6 +67,7 @@ public class RegisterDialog extends JDialog {
     private void setupLayout() {
         JPanel mainPanel = new JPanel();
         mainPanel.setLayout(new BoxLayout(mainPanel, BoxLayout.Y_AXIS));
+        mainPanel.setBackground(Color.WHITE);
         mainPanel.setBorder(new EmptyBorder(30, 40, 30, 40));
 
         // Title
@@ -119,6 +122,7 @@ public class RegisterDialog extends JDialog {
 
         // Buttons
         JPanel buttonPanel = new JPanel(new FlowLayout(FlowLayout.CENTER, 10, 0));
+        buttonPanel.setBackground(Color.WHITE);
         buttonPanel.add(registerButton);
         buttonPanel.add(cancelButton);
         mainPanel.add(buttonPanel);

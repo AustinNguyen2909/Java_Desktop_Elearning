@@ -71,14 +71,20 @@ public class UserDashboard extends JFrame {
 
     private JPanel createHeader() {
         JPanel headerPanel = new JPanel(new BorderLayout());
-        headerPanel.setBackground(new Color(129, 199, 132)); // Light green
+        headerPanel.setBackground(Color.WHITE);
         headerPanel.setPreferredSize(new Dimension(0, 60));
+        headerPanel.setBorder(BorderFactory.createMatteBorder(0, 0, 2, 0, new Color(230, 230, 230)));
 
         JLabel titleLabel = new JLabel("  Student Dashboard - " + currentUser.getFullName());
         titleLabel.setFont(new Font("Segoe UI", Font.BOLD, 20));
-        titleLabel.setForeground(Color.WHITE);
+        titleLabel.setForeground(new Color(33, 33, 33));
 
         JButton logoutButton = new JButton("Logout");
+        logoutButton.setBackground(new Color(220, 53, 69)); // Red for logout
+        logoutButton.setForeground(Color.WHITE);
+        logoutButton.setFocusPainted(false);
+        logoutButton.setBorderPainted(false);
+        logoutButton.setFont(new Font("Segoe UI", Font.BOLD, 12));
         logoutButton.addActionListener(e -> logout());
 
         headerPanel.add(titleLabel, BorderLayout.WEST);
@@ -106,13 +112,26 @@ public class UserDashboard extends JFrame {
         searchLbl.setForeground(new Color(33, 33, 33)); // Dark text
         searchPanel.add(searchLbl);
         searchField = new JTextField(20);
+        searchField.setBackground(Color.WHITE);
+        searchField.setForeground(new Color(33, 33, 33));
+        searchField.setCaretColor(new Color(33, 33, 33));
         searchPanel.add(searchField);
 
         JButton searchButton = new JButton("Search");
+        searchButton.setBackground(new Color(30, 64, 175)); // Navy blue
+        searchButton.setForeground(Color.WHITE);
+        searchButton.setFocusPainted(false);
+        searchButton.setBorderPainted(false);
+        searchButton.setFont(new Font("Segoe UI", Font.BOLD, 12));
         searchButton.addActionListener(e -> searchCourses());
         searchPanel.add(searchButton);
 
         JButton refreshButton = new JButton("Refresh");
+        refreshButton.setBackground(new Color(30, 64, 175)); // Navy blue
+        refreshButton.setForeground(Color.WHITE);
+        refreshButton.setFocusPainted(false);
+        refreshButton.setBorderPainted(false);
+        refreshButton.setFont(new Font("Segoe UI", Font.BOLD, 12));
         refreshButton.addActionListener(e -> loadAvailableCourses());
         searchPanel.add(refreshButton);
 
@@ -128,6 +147,9 @@ public class UserDashboard extends JFrame {
             }
         };
         availableCoursesTable = new JTable(availableCoursesModel);
+        availableCoursesTable.setBackground(Color.WHITE);
+        availableCoursesTable.setForeground(new Color(33, 33, 33));
+        availableCoursesTable.setGridColor(new Color(230, 230, 230));
         availableCoursesTable.setRowHeight(30);
         availableCoursesTable.getColumn("Actions").setCellRenderer(new ButtonRenderer());
         availableCoursesTable.getColumn("Actions").setCellEditor(new AvailableCourseButtonEditor(new JCheckBox()));
@@ -147,6 +169,8 @@ public class UserDashboard extends JFrame {
         });
 
         JScrollPane scrollPane = new JScrollPane(availableCoursesTable);
+        scrollPane.setBackground(Color.WHITE);
+        scrollPane.getViewport().setBackground(Color.WHITE);
 
         panel.add(topPanel, BorderLayout.NORTH);
         panel.add(scrollPane, BorderLayout.CENTER);
@@ -167,6 +191,11 @@ public class UserDashboard extends JFrame {
         titleLabel.setForeground(new Color(33, 33, 33)); // Dark text
 
         JButton refreshButton = new JButton("Refresh");
+        refreshButton.setBackground(new Color(30, 64, 175)); // Navy blue
+        refreshButton.setForeground(Color.WHITE);
+        refreshButton.setFocusPainted(false);
+        refreshButton.setBorderPainted(false);
+        refreshButton.setFont(new Font("Segoe UI", Font.BOLD, 12));
         refreshButton.addActionListener(e -> loadMyCourses());
 
         topPanel.add(titleLabel, BorderLayout.WEST);
@@ -181,11 +210,16 @@ public class UserDashboard extends JFrame {
             }
         };
         myCoursesTable = new JTable(myCoursesModel);
+        myCoursesTable.setBackground(Color.WHITE);
+        myCoursesTable.setForeground(new Color(33, 33, 33));
+        myCoursesTable.setGridColor(new Color(230, 230, 230));
         myCoursesTable.setRowHeight(30);
         myCoursesTable.getColumn("Actions").setCellRenderer(new ButtonRenderer());
         myCoursesTable.getColumn("Actions").setCellEditor(new MyEnrollmentButtonEditor(new JCheckBox()));
 
         JScrollPane scrollPane = new JScrollPane(myCoursesTable);
+        scrollPane.setBackground(Color.WHITE);
+        scrollPane.getViewport().setBackground(Color.WHITE);
 
         panel.add(topPanel, BorderLayout.NORTH);
         panel.add(scrollPane, BorderLayout.CENTER);
@@ -385,10 +419,15 @@ public class UserDashboard extends JFrame {
                 );
 
                 JTextArea textArea = new JTextArea(details);
+                textArea.setBackground(Color.WHITE);
+                textArea.setForeground(new Color(33, 33, 33));
+                textArea.setCaretColor(new Color(33, 33, 33));
                 textArea.setEditable(false);
                 textArea.setLineWrap(true);
                 textArea.setWrapStyleWord(true);
                 JScrollPane scrollPane = new JScrollPane(textArea);
+                scrollPane.setBackground(Color.WHITE);
+                scrollPane.getViewport().setBackground(Color.WHITE);
                 scrollPane.setPreferredSize(new Dimension(500, 400));
 
                 JOptionPane.showMessageDialog(this, scrollPane, "Course Details", JOptionPane.INFORMATION_MESSAGE);
@@ -485,6 +524,8 @@ public class UserDashboard extends JFrame {
         }
 
         JScrollPane lessonsScrollPane = new JScrollPane(lessonList);
+        lessonsScrollPane.setBackground(Color.WHITE);
+        lessonsScrollPane.getViewport().setBackground(Color.WHITE);
         leftPanel.add(lessonsTitle, BorderLayout.NORTH);
         leftPanel.add(lessonsScrollPane, BorderLayout.CENTER);
 
@@ -602,8 +643,11 @@ public class UserDashboard extends JFrame {
         descriptionArea.setWrapStyleWord(true);
         descriptionArea.setFont(new Font("Segoe UI", Font.PLAIN, 13));
         descriptionArea.setBackground(Color.WHITE);
-        descriptionArea.setForeground(new Color(66, 66, 66));
+        descriptionArea.setForeground(new Color(33, 33, 33));
+        descriptionArea.setCaretColor(new Color(33, 33, 33));
         JScrollPane descScrollPane = new JScrollPane(descriptionArea);
+        descScrollPane.setBackground(Color.WHITE);
+        descScrollPane.getViewport().setBackground(Color.WHITE);
         descScrollPane.setPreferredSize(new Dimension(0, 120));
 
         JPanel descContainerPanel = new JPanel(new BorderLayout(5, 5));
@@ -619,6 +663,9 @@ public class UserDashboard extends JFrame {
         JButton completeButton = new JButton("Mark as Complete");
         completeButton.setBackground(new Color(46, 204, 113));
         completeButton.setForeground(Color.WHITE);
+        completeButton.setFocusPainted(false);
+        completeButton.setBorderPainted(false);
+        completeButton.setFont(new Font("Segoe UI", Font.BOLD, 12));
         completeButton.setFont(new Font("Segoe UI", Font.BOLD, 14));
         completeButton.setPreferredSize(new Dimension(200, 40));
         completeButton.addActionListener(e -> {

@@ -24,7 +24,7 @@ public class EnrollmentDAO {
                      "FROM enrollments e " +
                      "JOIN courses c ON e.course_id = c.id " +
                      "WHERE e.user_id = ? " +
-                     "ORDER BY e.last_accessed_at DESC NULLS LAST, e.enrolled_at DESC";
+                     "ORDER BY e.last_accessed_at IS NULL ASC, e.last_accessed_at DESC, e.enrolled_at DESC";
 
         try (Connection conn = DBConnection.getInstance().getConnection();
              PreparedStatement stmt = conn.prepareStatement(sql)) {

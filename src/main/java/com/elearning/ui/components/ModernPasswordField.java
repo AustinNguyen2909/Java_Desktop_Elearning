@@ -24,6 +24,10 @@ public class ModernPasswordField extends JPasswordField {
 
     private void init() {
         setFont(new Font("Segoe UI", Font.PLAIN, 14));
+        setBackground(Color.WHITE); // Light background
+        setForeground(new Color(33, 33, 33)); // Dark text
+        setCaretColor(new Color(33, 33, 33)); // Dark caret
+        setEchoChar('•'); // Modern bullet character
         setBorder(BorderFactory.createCompoundBorder(
                 BorderFactory.createLineBorder(new Color(200, 200, 200), 1, true),
                 new EmptyBorder(8, 12, 8, 12)
