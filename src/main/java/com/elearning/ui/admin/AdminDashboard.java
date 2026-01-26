@@ -8,8 +8,10 @@ import com.elearning.service.UserService;
 import com.elearning.ui.components.ModernButton;
 import com.elearning.ui.components.ModernPasswordField;
 import com.elearning.ui.components.ModernTextField;
+import com.elearning.util.ChartUtil;
 import com.elearning.util.SessionManager;
 import com.elearning.util.ValidationUtil;
+import org.jfree.chart.ChartPanel;
 
 import javax.swing.*;
 import javax.swing.table.DefaultTableModel;
@@ -272,7 +274,12 @@ public class AdminDashboard extends JFrame {
         topPanel.add(titleLabel, BorderLayout.WEST);
         topPanel.add(refreshButton, BorderLayout.EAST);
 
-        // Statistics content
+        // Main content with statistics and charts
+        JPanel mainContent = new JPanel();
+        mainContent.setLayout(new BoxLayout(mainContent, BoxLayout.Y_AXIS));
+        mainContent.setBackground(Color.WHITE);
+
+        // Statistics cards grid
         JPanel statsContent = new JPanel(new GridLayout(0, 2, 20, 20));
         statsContent.setBackground(Color.WHITE);
 
@@ -303,13 +310,90 @@ public class AdminDashboard extends JFrame {
             statsContent.add(createStatCard("Total Reviews", String.valueOf(stats.totalReviews), new Color(52, 152, 219)));
             statsContent.add(createStatCard("Avg Enrollments/Course", String.format("%.1f", stats.averageEnrollmentsPerCourse), new Color(26, 188, 156)));
 
+            mainContent.add(statsContent);
+
+            // Charts section
+            JPanel chartsSection = new JPanel();
+            chartsSection.setLayout(new BoxLayout(chartsSection, BoxLayout.Y_AXIS));
+            chartsSection.setBackground(Color.WHITE);
+            chartsSection.setBorder(BorderFactory.createEmptyBorder(20, 0, 0, 0));
+
+            // Charts title
+            JLabel chartsTitle = new JLabel("Visual Analytics");
+            chartsTitle.setFont(new Font("Segoe UI", Font.BOLD, 18));
+            chartsTitle.setForeground(new Color(33, 33, 33));
+            chartsTitle.setBorder(BorderFactory.createEmptyBorder(10, 0, 10, 0));
+            chartsTitle.setAlignmentX(Component.LEFT_ALIGNMENT);
+            chartsSection.add(chartsTitle);
+
+            // Charts panel - 3 charts in a row
+            JPanel chartsPanel = new JPanel(new GridLayout(1, 3, 15, 15));
+            chartsPanel.setBackground(Color.WHITE);
+            chartsPanel.setAlignmentX(Component.LEFT_ALIGNMENT);
+
+            // User role distribution pie chart
+            ChartPanel userRoleChart = ChartUtil.createUserRolePieChart(
+                stats.totalUsers,
+                stats.totalInstructors,
+                stats.totalAdmins
+            );
+            chartsPanel.add(userRoleChart);
+
+            // Course status pie chart
+            int rejectedCourses = stats.totalCourses - stats.approvedCourses - stats.pendingCourses;
+            ChartPanel courseStatusChart = ChartUtil.createCourseStatusPieChart(
+                stats.approvedCourses,
+                stats.pendingCourses,
+                rejectedCourses
+            );
+            chartsPanel.add(courseStatusChart);
+
+            // Enrollment status pie chart
+            ChartPanel enrollmentStatusChart = ChartUtil.createEnrollmentStatusPieChart(
+                stats.activeEnrollments,
+                stats.completedEnrollments
+            );
+            chartsPanel.add(enrollmentStatusChart);
+
+            chartsSection.add(chartsPanel);
+            mainContent.add(chartsSection);
+
+            // Top courses chart (if available)
+            List<Course> topCourses = analyticsService.getTopCoursesByEnrollment(5);
+            if (!topCourses.isEmpty()) {
+                JPanel topCoursesSection = new JPanel();
+                topCoursesSection.setLayout(new BoxLayout(topCoursesSection, BoxLayout.Y_AXIS));
+                topCoursesSection.setBackground(Color.WHITE);
+                topCoursesSection.setBorder(BorderFactory.createEmptyBorder(20, 0, 0, 0));
+
+                JLabel topCoursesTitle = new JLabel("Top 5 Courses by Enrollment");
+                topCoursesTitle.setFont(new Font("Segoe UI", Font.BOLD, 18));
+                topCoursesTitle.setForeground(new Color(33, 33, 33));
+                topCoursesTitle.setBorder(BorderFactory.createEmptyBorder(10, 0, 10, 0));
+                topCoursesTitle.setAlignmentX(Component.LEFT_ALIGNMENT);
+                topCoursesSection.add(topCoursesTitle);
+
+                java.util.List<String> courseTitles = new java.util.ArrayList<>();
+                java.util.List<Integer> enrollmentCounts = new java.util.ArrayList<>();
+                for (Course course : topCourses) {
+                    courseTitles.add(course.getTitle());
+                    enrollmentCounts.add(course.getEnrollmentCount());
+                }
+
+                ChartPanel topCoursesChart = ChartUtil.createTopCoursesChart(courseTitles, enrollmentCounts, 5);
+                topCoursesChart.setAlignmentX(Component.LEFT_ALIGNMENT);
+                topCoursesSection.add(topCoursesChart);
+
+                mainContent.add(topCoursesSection);
+            }
+
         } catch (Exception e) {
             JLabel errorLabel = new JLabel("Error loading statistics: " + e.getMessage());
             errorLabel.setForeground(Color.RED);
             statsContent.add(errorLabel);
         }
 
-        JScrollPane scrollPane = new JScrollPane(statsContent);
+        JScrollPane scrollPane = new JScrollPane(mainContent);
         scrollPane.setBorder(null);
         scrollPane.getVerticalScrollBar().setUnitIncrement(16);
 

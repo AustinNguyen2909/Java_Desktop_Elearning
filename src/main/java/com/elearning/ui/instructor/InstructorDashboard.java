@@ -3,12 +3,15 @@ package com.elearning.ui.instructor;
 import com.elearning.model.Course;
 import com.elearning.model.Lesson;
 import com.elearning.model.User;
+import com.elearning.service.AnalyticsService;
 import com.elearning.service.CourseService;
 import com.elearning.service.EnrollmentService;
 import com.elearning.service.LessonService;
 import com.elearning.ui.components.ModernButton;
 import com.elearning.ui.components.ModernTextField;
+import com.elearning.util.ChartUtil;
 import com.elearning.util.SessionManager;
+import org.jfree.chart.ChartPanel;
 
 import javax.swing.*;
 import javax.swing.table.DefaultTableModel;
@@ -24,6 +27,7 @@ public class InstructorDashboard extends JFrame {
     private final CourseService courseService;
     private final EnrollmentService enrollmentService;
     private final LessonService lessonService;
+    private final AnalyticsService analyticsService;
 
     private JTabbedPane tabbedPane;
     private JTable coursesTable;
@@ -34,6 +38,7 @@ public class InstructorDashboard extends JFrame {
         this.courseService = new CourseService();
         this.enrollmentService = new EnrollmentService();
         this.lessonService = new LessonService();
+        this.analyticsService = new AnalyticsService();
 
         initComponents();
         loadCourses();
@@ -56,6 +61,7 @@ public class InstructorDashboard extends JFrame {
         tabbedPane.setBackground(Color.WHITE); // Light background
         tabbedPane.addTab("My Courses", createCoursesPanel());
         tabbedPane.addTab("Create Course", createNewCoursePanel());
+        tabbedPane.addTab("Statistics", createStatisticsPanel());
 
         mainPanel.add(headerPanel, BorderLayout.NORTH);
         mainPanel.add(tabbedPane, BorderLayout.CENTER);
@@ -312,6 +318,122 @@ public class InstructorDashboard extends JFrame {
                 "Error",
                 JOptionPane.ERROR_MESSAGE);
         }
+    }
+
+    private JPanel createStatisticsPanel() {
+        JPanel panel = new JPanel(new BorderLayout(10, 10));
+        panel.setBackground(Color.WHITE);
+        panel.setBorder(BorderFactory.createEmptyBorder(10, 10, 10, 10));
+
+        // Top panel with title and refresh button
+        JPanel topPanel = new JPanel(new BorderLayout());
+        topPanel.setBackground(Color.WHITE);
+
+        JLabel titleLabel = new JLabel("Instructor Statistics");
+        titleLabel.setFont(new Font("Segoe UI", Font.BOLD, 20));
+        titleLabel.setForeground(new Color(33, 33, 33));
+
+        JButton refreshButton = new JButton("Refresh Statistics");
+        refreshButton.addActionListener(e -> refreshStatistics());
+
+        topPanel.add(titleLabel, BorderLayout.WEST);
+        topPanel.add(refreshButton, BorderLayout.EAST);
+
+        // Main content panel with scrolling
+        JPanel contentPanel = new JPanel();
+        contentPanel.setLayout(new BoxLayout(contentPanel, BoxLayout.Y_AXIS));
+        contentPanel.setBackground(Color.WHITE);
+
+        try {
+            AnalyticsService.InstructorStatistics stats = analyticsService.getInstructorStatistics(
+                currentUser.getId(),
+                currentUser.getRole()
+            );
+
+            // Statistics cards panel
+            JPanel statsCardsPanel = new JPanel(new GridLayout(2, 4, 15, 15));
+            statsCardsPanel.setBackground(Color.WHITE);
+            statsCardsPanel.setBorder(BorderFactory.createEmptyBorder(20, 20, 20, 20));
+
+            // Create stat cards
+            statsCardsPanel.add(createStatCard("Total Courses", String.valueOf(stats.totalCourses),
+                new Color(52, 152, 219))); // Blue
+            statsCardsPanel.add(createStatCard("Approved Courses", String.valueOf(stats.approvedCourses),
+                new Color(46, 204, 113))); // Green
+            statsCardsPanel.add(createStatCard("Published Courses", String.valueOf(stats.publishedCourses),
+                new Color(155, 89, 182))); // Purple
+            statsCardsPanel.add(createStatCard("Total Students", String.valueOf(stats.totalStudents),
+                new Color(52, 152, 219))); // Blue
+            statsCardsPanel.add(createStatCard("Total Reviews", String.valueOf(stats.totalReviews),
+                new Color(241, 196, 15))); // Yellow
+            statsCardsPanel.add(createStatCard("Average Rating", String.format("%.1f / 5.0", stats.averageRating),
+                new Color(230, 126, 34))); // Orange
+            statsCardsPanel.add(createStatCard("Avg Enrollments/Course", String.format("%.1f", stats.averageEnrollmentsPerCourse),
+                new Color(26, 188, 156))); // Teal
+            statsCardsPanel.add(createStatCard("Completion Rate", String.format("%.1f%%", stats.completionRate),
+                new Color(46, 204, 113))); // Green
+
+            contentPanel.add(statsCardsPanel);
+
+            // Charts panel
+            JPanel chartsPanel = new JPanel(new GridLayout(1, 1, 15, 15));
+            chartsPanel.setBackground(Color.WHITE);
+            chartsPanel.setBorder(BorderFactory.createEmptyBorder(0, 20, 20, 20));
+
+            // Course performance chart
+            ChartPanel performanceChart = ChartUtil.createInstructorPerformanceChart(
+                stats.totalCourses,
+                stats.approvedCourses,
+                stats.publishedCourses
+            );
+            chartsPanel.add(performanceChart);
+
+            contentPanel.add(chartsPanel);
+
+        } catch (Exception e) {
+            JLabel errorLabel = new JLabel("Error loading statistics: " + e.getMessage());
+            errorLabel.setForeground(Color.RED);
+            errorLabel.setBorder(BorderFactory.createEmptyBorder(20, 20, 20, 20));
+            contentPanel.add(errorLabel);
+        }
+
+        JScrollPane scrollPane = new JScrollPane(contentPanel);
+        scrollPane.getVerticalScrollBar().setUnitIncrement(16);
+
+        panel.add(topPanel, BorderLayout.NORTH);
+        panel.add(scrollPane, BorderLayout.CENTER);
+
+        return panel;
+    }
+
+    private JPanel createStatCard(String title, String value, Color color) {
+        JPanel card = new JPanel(new BorderLayout(5, 5));
+        card.setBackground(Color.WHITE);
+        card.setBorder(BorderFactory.createCompoundBorder(
+            BorderFactory.createLineBorder(new Color(220, 220, 220), 1),
+            BorderFactory.createEmptyBorder(15, 15, 15, 15)
+        ));
+
+        JLabel titleLabel = new JLabel(title);
+        titleLabel.setFont(new Font("Segoe UI", Font.PLAIN, 12));
+        titleLabel.setForeground(new Color(100, 100, 100));
+
+        JLabel valueLabel = new JLabel(value);
+        valueLabel.setFont(new Font("Segoe UI", Font.BOLD, 32));
+        valueLabel.setForeground(color);
+
+        card.add(titleLabel, BorderLayout.NORTH);
+        card.add(valueLabel, BorderLayout.CENTER);
+
+        return card;
+    }
+
+    private void refreshStatistics() {
+        // Remove and recreate the statistics tab
+        int statsTabIndex = 2; // Statistics is the 3rd tab (index 2)
+        tabbedPane.removeTabAt(statsTabIndex);
+        tabbedPane.insertTab("Statistics", null, createStatisticsPanel(), null, statsTabIndex);
+        tabbedPane.setSelectedIndex(statsTabIndex);
     }
 
     private void logout() {
