@@ -7,7 +7,9 @@ import com.elearning.model.User;
 import com.elearning.service.CourseService;
 import com.elearning.service.EnrollmentService;
 import com.elearning.service.LessonService;
+import com.elearning.ui.components.VideoPlayerPanel;
 import com.elearning.util.SessionManager;
+import com.elearning.util.VideoUtil;
 
 import javax.swing.*;
 import javax.swing.table.DefaultTableModel;
@@ -338,7 +340,7 @@ public class UserDashboard extends JFrame {
                 Object[] row = {
                     enrollment.getCourseId(),
                     enrollment.getCourseTitle(),
-                    "N/A", // Category - would need to join with course
+                    enrollment.getCourseCategory() != null ? enrollment.getCourseCategory() : "N/A",
                     String.format("%.1f%%", enrollment.getProgressPercent()),
                     enrollment.getEnrolledAt(),
                     enrollment.getLastAccessedAt() != null ? enrollment.getLastAccessedAt() : "Never",
@@ -550,20 +552,35 @@ public class UserDashboard extends JFrame {
         headerTextPanel.add(durationLabel, BorderLayout.SOUTH);
         headerPanel.add(headerTextPanel, BorderLayout.CENTER);
 
-        // Video panel (placeholder)
+        // Video panel
         JPanel videoPanel = new JPanel(new BorderLayout());
         videoPanel.setBackground(Color.BLACK);
-        videoPanel.setPreferredSize(new Dimension(0, 400));
+        videoPanel.setPreferredSize(new Dimension(0, 450));
 
-        if (lesson.getVideoPath() != null && !lesson.getVideoPath().isEmpty()) {
-            JLabel videoPlaceholder = new JLabel("<html><div style='text-align: center; color: white;'>" +
-                "<h2>Video Player</h2>" +
-                "<p>File: " + new File(lesson.getVideoPath()).getName() + "</p>" +
-                "<p>Video playback will be implemented with a media library</p>" +
-                "</div></html>",
-                SwingConstants.CENTER);
-            videoPlaceholder.setForeground(Color.WHITE);
-            videoPanel.add(videoPlaceholder, BorderLayout.CENTER);
+        if (lesson.getVideoPath() != null && !lesson.getVideoPath().isEmpty() &&
+            VideoUtil.videoExists(lesson.getVideoPath())) {
+            try {
+                // Create video player
+                VideoPlayerPanel playerPanel = new VideoPlayerPanel(lesson.getVideoPath());
+                videoPanel.add(playerPanel, BorderLayout.CENTER);
+
+                // Add disposal handler for when dialog closes
+                parentDialog.addWindowListener(new java.awt.event.WindowAdapter() {
+                    @Override
+                    public void windowClosing(java.awt.event.WindowEvent windowEvent) {
+                        playerPanel.dispose();
+                    }
+                });
+            } catch (Exception e) {
+                JLabel errorLabel = new JLabel(
+                    "<html><div style='text-align: center; color: white;'>" +
+                    "<h2>Video Player Error</h2>" +
+                    "<p>" + e.getMessage() + "</p>" +
+                    "</div></html>",
+                    SwingConstants.CENTER);
+                errorLabel.setForeground(Color.WHITE);
+                videoPanel.add(errorLabel, BorderLayout.CENTER);
+            }
         } else {
             JLabel noVideoLabel = new JLabel("No video available for this lesson", SwingConstants.CENTER);
             noVideoLabel.setForeground(Color.WHITE);

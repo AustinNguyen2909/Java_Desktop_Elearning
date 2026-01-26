@@ -18,7 +18,9 @@ public class EnrollmentDAO {
      */
     public List<Enrollment> findByUserId(int userId) {
         List<Enrollment> enrollments = new ArrayList<>();
-        String sql = "SELECT e.*, c.title as course_title, c.thumbnail_path as course_thumbnail " +
+        String sql = "SELECT e.*, c.title as course_title, c.thumbnail_path as course_thumbnail, " +
+                     "c.category as course_category, c.difficulty_level as difficulty_level, " +
+                     "c.instructor_id as instructor_id " +
                      "FROM enrollments e " +
                      "JOIN courses c ON e.course_id = c.id " +
                      "WHERE e.user_id = ? " +
@@ -34,6 +36,7 @@ public class EnrollmentDAO {
                 Enrollment enrollment = mapResultSetToEnrollment(rs);
                 enrollment.setCourseTitle(rs.getString("course_title"));
                 enrollment.setCourseThumbnail(rs.getString("course_thumbnail"));
+                enrollment.setCourseCategory(rs.getString("course_category"));
                 enrollments.add(enrollment);
             }
         } catch (SQLException e) {
@@ -282,7 +285,8 @@ public class EnrollmentDAO {
      */
     public List<Enrollment> findInProgressByUserId(int userId) {
         List<Enrollment> enrollments = new ArrayList<>();
-        String sql = "SELECT e.*, c.title as course_title, c.thumbnail_path as course_thumbnail " +
+        String sql = "SELECT e.*, c.title as course_title, c.thumbnail_path as course_thumbnail, " +
+                     "c.category as course_category " +
                      "FROM enrollments e " +
                      "JOIN courses c ON e.course_id = c.id " +
                      "WHERE e.user_id = ? AND e.progress_percent > 0 AND e.progress_percent < 100 " +
@@ -298,6 +302,7 @@ public class EnrollmentDAO {
                 Enrollment enrollment = mapResultSetToEnrollment(rs);
                 enrollment.setCourseTitle(rs.getString("course_title"));
                 enrollment.setCourseThumbnail(rs.getString("course_thumbnail"));
+                enrollment.setCourseCategory(rs.getString("course_category"));
                 enrollments.add(enrollment);
             }
         } catch (SQLException e) {
@@ -311,7 +316,8 @@ public class EnrollmentDAO {
      */
     public List<Enrollment> findCompletedByUserId(int userId) {
         List<Enrollment> enrollments = new ArrayList<>();
-        String sql = "SELECT e.*, c.title as course_title, c.thumbnail_path as course_thumbnail " +
+        String sql = "SELECT e.*, c.title as course_title, c.thumbnail_path as course_thumbnail, " +
+                     "c.category as course_category " +
                      "FROM enrollments e " +
                      "JOIN courses c ON e.course_id = c.id " +
                      "WHERE e.user_id = ? AND e.completed_at IS NOT NULL " +
@@ -327,6 +333,7 @@ public class EnrollmentDAO {
                 Enrollment enrollment = mapResultSetToEnrollment(rs);
                 enrollment.setCourseTitle(rs.getString("course_title"));
                 enrollment.setCourseThumbnail(rs.getString("course_thumbnail"));
+                enrollment.setCourseCategory(rs.getString("course_category"));
                 enrollments.add(enrollment);
             }
         } catch (SQLException e) {

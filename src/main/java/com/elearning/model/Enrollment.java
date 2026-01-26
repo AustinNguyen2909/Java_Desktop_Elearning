@@ -17,6 +17,7 @@ public class Enrollment {
     // Additional fields
     private String courseTitle;
     private String courseThumbnail;
+    private String courseCategory;
     private String userName;
 
     // Constructors
@@ -100,6 +101,14 @@ public class Enrollment {
 
     public void setCourseThumbnail(String courseThumbnail) {
         this.courseThumbnail = courseThumbnail;
+    }
+
+    public String getCourseCategory() {
+        return courseCategory;
+    }
+
+    public void setCourseCategory(String courseCategory) {
+        this.courseCategory = courseCategory;
     }
 
     public String getUserName() {

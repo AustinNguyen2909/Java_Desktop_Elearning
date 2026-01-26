@@ -11,6 +11,7 @@ import com.elearning.ui.components.ModernButton;
 import com.elearning.ui.components.ModernTextField;
 import com.elearning.util.ChartUtil;
 import com.elearning.util.SessionManager;
+import com.elearning.util.VideoUtil;
 import org.jfree.chart.ChartPanel;
 
 import javax.swing.*;
@@ -745,8 +746,10 @@ public class InstructorDashboard extends JFrame {
         videoLabel.setForeground(new Color(88, 88, 88));
         final String[] selectedVideoPath = {null};
 
-        JButton chooseVideoButton = new JButton("Choose Video File");
+        JButton chooseVideoButton = new JButton("Choose & Upload Video File");
         chooseVideoButton.addActionListener(e -> {
+            // Note: We need lesson ID for proper upload, so we'll upload after lesson creation
+            // For now, just select the file
             JFileChooser fileChooser = new JFileChooser();
             fileChooser.setFileFilter(new javax.swing.filechooser.FileFilter() {
                 @Override
@@ -754,20 +757,33 @@ public class InstructorDashboard extends JFrame {
                     if (f.isDirectory()) return true;
                     String name = f.getName().toLowerCase();
                     return name.endsWith(".mp4") || name.endsWith(".avi") ||
-                           name.endsWith(".mov") || name.endsWith(".mkv");
+                           name.endsWith(".mov") || name.endsWith(".mkv") ||
+                           name.endsWith(".flv") || name.endsWith(".wmv");
                 }
 
                 @Override
                 public String getDescription() {
-                    return "Video Files (*.mp4, *.avi, *.mov, *.mkv)";
+                    return "Video Files (*.mp4, *.avi, *.mov, *.mkv, *.flv, *.wmv)";
                 }
             });
 
             int result = fileChooser.showOpenDialog(dialog);
             if (result == JFileChooser.APPROVE_OPTION) {
                 File selectedFile = fileChooser.getSelectedFile();
+
+                // Validate file size
+                long maxSize = VideoUtil.getMaxFileSize();
+                if (selectedFile.length() > maxSize) {
+                    JOptionPane.showMessageDialog(dialog,
+                        "File size exceeds maximum allowed size (" + VideoUtil.formatFileSize(maxSize) + ")",
+                        "File Too Large",
+                        JOptionPane.ERROR_MESSAGE);
+                    return;
+                }
+
                 selectedVideoPath[0] = selectedFile.getAbsolutePath();
-                videoLabel.setText("Selected: " + selectedFile.getName());
+                videoLabel.setText("Selected: " + selectedFile.getName() + " (" +
+                                 VideoUtil.formatFileSize(selectedFile.length()) + ")");
             }
         });
 
@@ -809,16 +825,50 @@ public class InstructorDashboard extends JFrame {
 
         createButton.addActionListener(e -> {
             try {
+                String title = titleField.getText().trim();
+                String description = descriptionArea.getText().trim();
+
+                if (title.isEmpty()) {
+                    JOptionPane.showMessageDialog(dialog, "Please enter a lesson title", "Error", JOptionPane.ERROR_MESSAGE);
+                    return;
+                }
+
+                // Create lesson first (without video path)
                 Lesson lesson = new Lesson();
                 lesson.setCourseId(courseId);
-                lesson.setTitle(titleField.getText().trim());
-                lesson.setDescription(descriptionArea.getText().trim());
+                lesson.setTitle(title);
+                lesson.setDescription(description);
                 lesson.setDurationMinutes((Integer) durationSpinner.getValue());
                 lesson.setPreview(previewCheckbox.isSelected());
-                lesson.setVideoPath(selectedVideoPath[0]);
+                lesson.setVideoPath(null); // Will be updated after upload
 
                 boolean success = lessonService.createLesson(lesson, currentUser.getId(), currentUser.getRole());
-                if (success) {
+                if (success && lesson.getId() > 0) {
+                    // Now upload video if one was selected
+                    if (selectedVideoPath[0] != null && !selectedVideoPath[0].isEmpty()) {
+                        try {
+                            // Copy video file to project directory
+                            File sourceFile = new File(selectedVideoPath[0]);
+                            String uploadedPath = VideoUtil.uploadVideo(dialog, courseId, lesson.getId());
+
+                            if (uploadedPath != null) {
+                                // Update lesson with video path
+                                lesson.setVideoPath(uploadedPath);
+                                lessonService.updateLesson(lesson, currentUser.getId(), currentUser.getRole());
+                            } else {
+                                JOptionPane.showMessageDialog(dialog,
+                                    "Lesson created but video upload failed. You can edit the lesson to upload the video later.",
+                                    "Partial Success",
+                                    JOptionPane.WARNING_MESSAGE);
+                            }
+                        } catch (Exception ex) {
+                            JOptionPane.showMessageDialog(dialog,
+                                "Lesson created but video upload failed: " + ex.getMessage(),
+                                "Partial Success",
+                                JOptionPane.WARNING_MESSAGE);
+                        }
+                    }
+
                     JOptionPane.showMessageDialog(dialog,
                         "Lesson created successfully!",
                         "Success",
@@ -891,27 +941,11 @@ public class InstructorDashboard extends JFrame {
 
         JButton chooseVideoButton = new JButton("Change Video File");
         chooseVideoButton.addActionListener(e -> {
-            JFileChooser fileChooser = new JFileChooser();
-            fileChooser.setFileFilter(new javax.swing.filechooser.FileFilter() {
-                @Override
-                public boolean accept(File f) {
-                    if (f.isDirectory()) return true;
-                    String name = f.getName().toLowerCase();
-                    return name.endsWith(".mp4") || name.endsWith(".avi") ||
-                           name.endsWith(".mov") || name.endsWith(".mkv");
-                }
-
-                @Override
-                public String getDescription() {
-                    return "Video Files (*.mp4, *.avi, *.mov, *.mkv)";
-                }
-            });
-
-            int result = fileChooser.showOpenDialog(dialog);
-            if (result == JFileChooser.APPROVE_OPTION) {
-                File selectedFile = fileChooser.getSelectedFile();
-                selectedVideoPath[0] = selectedFile.getAbsolutePath();
-                videoLabel.setText("Selected: " + selectedFile.getName());
+            String newVideoPath = VideoUtil.updateVideo(dialog, courseId, lessonId, lesson.getVideoPath());
+            if (newVideoPath != null) {
+                selectedVideoPath[0] = newVideoPath;
+                videoLabel.setText("New video: " + new File(newVideoPath).getName() +
+                                 " (" + VideoUtil.getVideoInfo(newVideoPath) + ")");
             }
         });
 
