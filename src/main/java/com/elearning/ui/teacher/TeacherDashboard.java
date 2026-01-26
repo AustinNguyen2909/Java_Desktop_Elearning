@@ -21,25 +21,27 @@ public class TeacherDashboard extends JFrame {
         setLocationRelativeTo(null);
 
         JPanel mainPanel = new JPanel(new BorderLayout());
-        
+        mainPanel.setBackground(Color.WHITE); // Light background
+
         // Header
         JPanel headerPanel = new JPanel(new BorderLayout());
-        headerPanel.setBackground(new Color(41, 128, 185));
+        headerPanel.setBackground(new Color(129, 212, 250)); // Light cyan blue
         headerPanel.setPreferredSize(new Dimension(0, 60));
-        
+
         JLabel titleLabel = new JLabel("  Teacher Dashboard");
         titleLabel.setFont(new Font("Segoe UI", Font.BOLD, 20));
         titleLabel.setForeground(Color.WHITE);
-        
+
         JButton logoutButton = new JButton("Logout");
         logoutButton.addActionListener(e -> logout());
-        
+
         headerPanel.add(titleLabel, BorderLayout.WEST);
         headerPanel.add(logoutButton, BorderLayout.EAST);
 
         // Content
         JLabel contentLabel = new JLabel("Teacher Dashboard - Coming Soon", SwingConstants.CENTER);
         contentLabel.setFont(new Font("Segoe UI", Font.PLAIN, 24));
+        contentLabel.setForeground(new Color(33, 33, 33)); // Dark text
 
         mainPanel.add(headerPanel, BorderLayout.NORTH);
         mainPanel.add(contentLabel, BorderLayout.CENTER);

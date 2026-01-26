@@ -70,11 +70,12 @@ public class RegisterDialog extends JDialog {
         // Title
         JLabel titleLabel = new JLabel("Create Account");
         titleLabel.setFont(new Font("Segoe UI", Font.BOLD, 24));
+        titleLabel.setForeground(new Color(33, 33, 33)); // Dark text
         titleLabel.setAlignmentX(Component.CENTER_ALIGNMENT);
 
         JLabel subtitleLabel = new JLabel("Join our learning community");
         subtitleLabel.setFont(new Font("Segoe UI", Font.PLAIN, 14));
-        subtitleLabel.setForeground(new Color(120, 120, 120));
+        subtitleLabel.setForeground(new Color(80, 80, 80)); // Darker gray for better contrast
         subtitleLabel.setAlignmentX(Component.CENTER_ALIGNMENT);
 
         // Form fields
@@ -128,6 +129,7 @@ public class RegisterDialog extends JDialog {
     private JLabel createFieldLabel(String text) {
         JLabel label = new JLabel(text);
         label.setFont(new Font("Segoe UI", Font.BOLD, 13));
+        label.setForeground(new Color(33, 33, 33)); // Dark text
         label.setAlignmentX(Component.CENTER_ALIGNMENT);
         return label;
     }
