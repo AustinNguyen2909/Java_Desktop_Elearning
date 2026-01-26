@@ -300,6 +300,89 @@ public class CourseDAO {
     }
 
     /**
+     * Find all courses (for analytics)
+     */
+    public List<Course> findAll() {
+        List<Course> courses = new ArrayList<>();
+        String sql = "SELECT c.*, u.full_name as instructor_name FROM courses c " +
+                     "JOIN users u ON c.instructor_id = u.id ORDER BY c.created_at DESC";
+
+        try (Connection conn = DBConnection.getInstance().getConnection();
+             PreparedStatement stmt = conn.prepareStatement(sql);
+             ResultSet rs = stmt.executeQuery()) {
+
+            while (rs.next()) {
+                Course course = mapResultSetToCourse(rs);
+                course.setInstructorName(rs.getString("instructor_name"));
+                courses.add(course);
+            }
+        } catch (SQLException e) {
+            e.printStackTrace();
+        }
+        return courses;
+    }
+
+    /**
+     * Find all published courses
+     */
+    public List<Course> findPublishedCourses() {
+        List<Course> courses = new ArrayList<>();
+        String sql = "SELECT c.*, u.full_name as instructor_name FROM courses c " +
+                     "JOIN users u ON c.instructor_id = u.id " +
+                     "WHERE c.is_published = TRUE ORDER BY c.created_at DESC";
+
+        try (Connection conn = DBConnection.getInstance().getConnection();
+             PreparedStatement stmt = conn.prepareStatement(sql);
+             ResultSet rs = stmt.executeQuery()) {
+
+            while (rs.next()) {
+                Course course = mapResultSetToCourse(rs);
+                course.setInstructorName(rs.getString("instructor_name"));
+                courses.add(course);
+            }
+        } catch (SQLException e) {
+            e.printStackTrace();
+        }
+        return courses;
+    }
+
+    /**
+     * Find top courses by enrollment count
+     */
+    public List<Course> findTopCoursesByEnrollment(int limit) {
+        List<Course> courses = new ArrayList<>();
+        String sql = "SELECT c.*, u.full_name as instructor_name, " +
+                     "COUNT(e.id) as enrollment_count, " +
+                     "AVG(r.rating) as avg_rating " +
+                     "FROM courses c " +
+                     "JOIN users u ON c.instructor_id = u.id " +
+                     "LEFT JOIN enrollments e ON c.id = e.course_id " +
+                     "LEFT JOIN reviews r ON c.id = r.course_id " +
+                     "WHERE c.status = 'APPROVED' AND c.is_published = TRUE " +
+                     "GROUP BY c.id " +
+                     "ORDER BY enrollment_count DESC " +
+                     "LIMIT ?";
+
+        try (Connection conn = DBConnection.getInstance().getConnection();
+             PreparedStatement stmt = conn.prepareStatement(sql)) {
+
+            stmt.setInt(1, limit);
+            ResultSet rs = stmt.executeQuery();
+
+            while (rs.next()) {
+                Course course = mapResultSetToCourse(rs);
+                course.setInstructorName(rs.getString("instructor_name"));
+                course.setEnrollmentCount(rs.getInt("enrollment_count"));
+                course.setAverageRating(rs.getDouble("avg_rating"));
+                courses.add(course);
+            }
+        } catch (SQLException e) {
+            e.printStackTrace();
+        }
+        return courses;
+    }
+
+    /**
      * Map ResultSet to Course object
      */
     private Course mapResultSetToCourse(ResultSet rs) throws SQLException {

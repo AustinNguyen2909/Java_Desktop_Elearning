@@ -2,14 +2,17 @@ package com.elearning.ui.user;
 
 import com.elearning.model.Course;
 import com.elearning.model.Enrollment;
+import com.elearning.model.Lesson;
 import com.elearning.model.User;
 import com.elearning.service.CourseService;
 import com.elearning.service.EnrollmentService;
+import com.elearning.service.LessonService;
 import com.elearning.util.SessionManager;
 
 import javax.swing.*;
 import javax.swing.table.DefaultTableModel;
 import java.awt.*;
+import java.io.File;
 import java.util.List;
 
 /**
@@ -19,6 +22,7 @@ public class UserDashboard extends JFrame {
     private final User currentUser;
     private final CourseService courseService;
     private final EnrollmentService enrollmentService;
+    private final LessonService lessonService;
 
     private JTabbedPane tabbedPane;
     private JTable availableCoursesTable;
@@ -31,6 +35,7 @@ public class UserDashboard extends JFrame {
         this.currentUser = SessionManager.getInstance().getCurrentUser();
         this.courseService = new CourseService();
         this.enrollmentService = new EnrollmentService();
+        this.lessonService = new LessonService();
 
         initComponents();
         loadAvailableCourses();
@@ -423,11 +428,264 @@ public class UserDashboard extends JFrame {
     }
 
     private void continueCourse(int courseId) {
-        JOptionPane.showMessageDialog(this,
-            "Course learning interface will be implemented in Phase 5",
-            "Info",
-            JOptionPane.INFORMATION_MESSAGE);
-        // TODO: Open course learning interface
+        Course course = courseService.getCourseById(courseId);
+        if (course == null) {
+            JOptionPane.showMessageDialog(this, "Course not found", "Error", JOptionPane.ERROR_MESSAGE);
+            return;
+        }
+
+        // Check enrollment
+        Enrollment enrollment = enrollmentService.getEnrollment(currentUser.getId(), courseId);
+        if (enrollment == null) {
+            JOptionPane.showMessageDialog(this, "You are not enrolled in this course", "Error", JOptionPane.ERROR_MESSAGE);
+            return;
+        }
+
+        // Create learning interface dialog
+        JDialog dialog = new JDialog(this, "Learning: " + course.getTitle(), true);
+        dialog.setSize(1200, 800);
+        dialog.setLocationRelativeTo(this);
+
+        JPanel mainPanel = new JPanel(new BorderLayout(10, 10));
+        mainPanel.setBackground(Color.WHITE);
+        mainPanel.setBorder(BorderFactory.createEmptyBorder(15, 15, 15, 15));
+
+        // Left panel - Lesson list
+        JPanel leftPanel = new JPanel(new BorderLayout());
+        leftPanel.setBackground(Color.WHITE);
+        leftPanel.setPreferredSize(new Dimension(300, 0));
+        leftPanel.setBorder(BorderFactory.createLineBorder(new Color(200, 200, 200)));
+
+        JLabel lessonsTitle = new JLabel("  Course Content");
+        lessonsTitle.setFont(new Font("Segoe UI", Font.BOLD, 14));
+        lessonsTitle.setForeground(new Color(33, 33, 33));
+        lessonsTitle.setPreferredSize(new Dimension(0, 40));
+        lessonsTitle.setOpaque(true);
+        lessonsTitle.setBackground(new Color(240, 240, 240));
+
+        // Lessons list
+        DefaultListModel<Lesson> lessonListModel = new DefaultListModel<>();
+        JList<Lesson> lessonList = new JList<>(lessonListModel);
+        lessonList.setCellRenderer(new LessonListCellRenderer());
+        lessonList.setSelectionMode(ListSelectionModel.SINGLE_SELECTION);
+
+        // Load lessons
+        try {
+            List<Lesson> lessons = lessonService.getCourseLessons(courseId, currentUser.getRole(), currentUser.getId(), true);
+            for (Lesson lesson : lessons) {
+                lessonListModel.addElement(lesson);
+            }
+        } catch (Exception e) {
+            JOptionPane.showMessageDialog(dialog,
+                "Error loading lessons: " + e.getMessage(),
+                "Error",
+                JOptionPane.ERROR_MESSAGE);
+        }
+
+        JScrollPane lessonsScrollPane = new JScrollPane(lessonList);
+        leftPanel.add(lessonsTitle, BorderLayout.NORTH);
+        leftPanel.add(lessonsScrollPane, BorderLayout.CENTER);
+
+        // Progress panel
+        JPanel progressPanel = new JPanel(new FlowLayout(FlowLayout.LEFT));
+        progressPanel.setBackground(Color.WHITE);
+        JLabel progressLabel = new JLabel(String.format("Progress: %.1f%%", enrollment.getProgressPercent()));
+        progressLabel.setFont(new Font("Segoe UI", Font.PLAIN, 12));
+        progressLabel.setForeground(new Color(88, 88, 88));
+        progressPanel.add(progressLabel);
+        leftPanel.add(progressPanel, BorderLayout.SOUTH);
+
+        // Right panel - Lesson viewer
+        JPanel rightPanel = new JPanel(new BorderLayout(10, 10));
+        rightPanel.setBackground(Color.WHITE);
+
+        JLabel instructionLabel = new JLabel("<html><div style='text-align: center; padding: 50px;'>" +
+            "<h2>Select a lesson from the left to start learning</h2>" +
+            "<p>Click on any lesson to view its content</p></div></html>",
+            SwingConstants.CENTER);
+        instructionLabel.setFont(new Font("Segoe UI", Font.PLAIN, 14));
+        instructionLabel.setForeground(new Color(88, 88, 88));
+        rightPanel.add(instructionLabel, BorderLayout.CENTER);
+
+        // Lesson selection listener
+        lessonList.addListSelectionListener(e -> {
+            if (!e.getValueIsAdjusting()) {
+                Lesson selectedLesson = lessonList.getSelectedValue();
+                if (selectedLesson != null) {
+                    showLessonContent(dialog, rightPanel, selectedLesson, courseId, enrollment, progressLabel);
+                }
+            }
+        });
+
+        mainPanel.add(leftPanel, BorderLayout.WEST);
+        mainPanel.add(rightPanel, BorderLayout.CENTER);
+
+        dialog.add(mainPanel);
+        dialog.setVisible(true);
+
+        // Refresh course list when dialog closes
+        loadMyCourses();
+    }
+
+    private void showLessonContent(JDialog parentDialog, JPanel contentPanel, Lesson lesson, int courseId, Enrollment enrollment, JLabel progressLabel) {
+        contentPanel.removeAll();
+        contentPanel.setLayout(new BorderLayout(10, 10));
+
+        // Header with lesson info
+        JPanel headerPanel = new JPanel(new BorderLayout());
+        headerPanel.setBackground(new Color(240, 248, 255));
+        headerPanel.setBorder(BorderFactory.createEmptyBorder(15, 15, 15, 15));
+
+        JLabel titleLabel = new JLabel("Lesson " + lesson.getOrderIndex() + ": " + lesson.getTitle());
+        titleLabel.setFont(new Font("Segoe UI", Font.BOLD, 20));
+        titleLabel.setForeground(new Color(33, 33, 33));
+
+        JLabel durationLabel = new JLabel("Duration: " + (lesson.getDurationMinutes() != null ? lesson.getDurationMinutes() : 0) + " minutes");
+        durationLabel.setFont(new Font("Segoe UI", Font.PLAIN, 12));
+        durationLabel.setForeground(new Color(88, 88, 88));
+
+        JPanel headerTextPanel = new JPanel(new BorderLayout());
+        headerTextPanel.setBackground(new Color(240, 248, 255));
+        headerTextPanel.add(titleLabel, BorderLayout.NORTH);
+        headerTextPanel.add(durationLabel, BorderLayout.SOUTH);
+        headerPanel.add(headerTextPanel, BorderLayout.CENTER);
+
+        // Video panel (placeholder)
+        JPanel videoPanel = new JPanel(new BorderLayout());
+        videoPanel.setBackground(Color.BLACK);
+        videoPanel.setPreferredSize(new Dimension(0, 400));
+
+        if (lesson.getVideoPath() != null && !lesson.getVideoPath().isEmpty()) {
+            JLabel videoPlaceholder = new JLabel("<html><div style='text-align: center; color: white;'>" +
+                "<h2>Video Player</h2>" +
+                "<p>File: " + new File(lesson.getVideoPath()).getName() + "</p>" +
+                "<p>Video playback will be implemented with a media library</p>" +
+                "</div></html>",
+                SwingConstants.CENTER);
+            videoPlaceholder.setForeground(Color.WHITE);
+            videoPanel.add(videoPlaceholder, BorderLayout.CENTER);
+        } else {
+            JLabel noVideoLabel = new JLabel("No video available for this lesson", SwingConstants.CENTER);
+            noVideoLabel.setForeground(Color.WHITE);
+            videoPanel.add(noVideoLabel, BorderLayout.CENTER);
+        }
+
+        // Description panel
+        JPanel descriptionPanel = new JPanel(new BorderLayout());
+        descriptionPanel.setBackground(Color.WHITE);
+        descriptionPanel.setBorder(BorderFactory.createEmptyBorder(15, 15, 15, 15));
+
+        JLabel descLabel = new JLabel("Description:");
+        descLabel.setFont(new Font("Segoe UI", Font.BOLD, 14));
+        descLabel.setForeground(new Color(33, 33, 33));
+
+        JTextArea descriptionArea = new JTextArea(lesson.getDescription() != null ? lesson.getDescription() : "No description available");
+        descriptionArea.setEditable(false);
+        descriptionArea.setLineWrap(true);
+        descriptionArea.setWrapStyleWord(true);
+        descriptionArea.setFont(new Font("Segoe UI", Font.PLAIN, 13));
+        descriptionArea.setBackground(Color.WHITE);
+        descriptionArea.setForeground(new Color(66, 66, 66));
+        JScrollPane descScrollPane = new JScrollPane(descriptionArea);
+        descScrollPane.setPreferredSize(new Dimension(0, 120));
+
+        JPanel descContainerPanel = new JPanel(new BorderLayout(5, 5));
+        descContainerPanel.setBackground(Color.WHITE);
+        descContainerPanel.add(descLabel, BorderLayout.NORTH);
+        descContainerPanel.add(descScrollPane, BorderLayout.CENTER);
+        descriptionPanel.add(descContainerPanel, BorderLayout.CENTER);
+
+        // Action buttons
+        JPanel actionPanel = new JPanel(new FlowLayout(FlowLayout.CENTER, 10, 10));
+        actionPanel.setBackground(Color.WHITE);
+
+        JButton completeButton = new JButton("Mark as Complete");
+        completeButton.setBackground(new Color(46, 204, 113));
+        completeButton.setForeground(Color.WHITE);
+        completeButton.setFont(new Font("Segoe UI", Font.BOLD, 14));
+        completeButton.setPreferredSize(new Dimension(200, 40));
+        completeButton.addActionListener(e -> {
+            try {
+                boolean success = enrollmentService.completeLesson(currentUser.getId(), lesson.getId());
+                if (success) {
+                    JOptionPane.showMessageDialog(parentDialog,
+                        "Lesson marked as complete!",
+                        "Success",
+                        JOptionPane.INFORMATION_MESSAGE);
+
+                    // Update progress label
+                    Enrollment updatedEnrollment = enrollmentService.getEnrollment(currentUser.getId(), courseId);
+                    if (updatedEnrollment != null) {
+                        progressLabel.setText(String.format("Progress: %.1f%%", updatedEnrollment.getProgressPercent()));
+                    }
+
+                    completeButton.setEnabled(false);
+                    completeButton.setText("Completed ✓");
+                } else {
+                    JOptionPane.showMessageDialog(parentDialog,
+                        "Failed to mark lesson as complete",
+                        "Error",
+                        JOptionPane.ERROR_MESSAGE);
+                }
+            } catch (Exception ex) {
+                JOptionPane.showMessageDialog(parentDialog,
+                    "Error: " + ex.getMessage(),
+                    "Error",
+                    JOptionPane.ERROR_MESSAGE);
+            }
+        });
+
+        // Check if lesson is already completed
+        try {
+            // This would need a method in enrollmentService to check if lesson is completed
+            // For now, we'll just enable the button
+        } catch (Exception e) {
+            // Ignore
+        }
+
+        actionPanel.add(completeButton);
+
+        // Assemble content panel
+        JPanel contentArea = new JPanel(new BorderLayout(10, 10));
+        contentArea.setBackground(Color.WHITE);
+        contentArea.add(videoPanel, BorderLayout.NORTH);
+        contentArea.add(descriptionPanel, BorderLayout.CENTER);
+        contentArea.add(actionPanel, BorderLayout.SOUTH);
+
+        contentPanel.add(headerPanel, BorderLayout.NORTH);
+        contentPanel.add(contentArea, BorderLayout.CENTER);
+
+        contentPanel.revalidate();
+        contentPanel.repaint();
+    }
+
+    // Custom cell renderer for lesson list
+    class LessonListCellRenderer extends DefaultListCellRenderer {
+        @Override
+        public Component getListCellRendererComponent(JList<?> list, Object value, int index,
+                                                      boolean isSelected, boolean cellHasFocus) {
+            JLabel label = (JLabel) super.getListCellRendererComponent(list, value, index, isSelected, cellHasFocus);
+
+            if (value instanceof Lesson) {
+                Lesson lesson = (Lesson) value;
+                label.setText(String.format("<html><b>%d. %s</b><br/><small>%d min%s</small></html>",
+                    lesson.getOrderIndex(),
+                    lesson.getTitle(),
+                    lesson.getDurationMinutes() != null ? lesson.getDurationMinutes() : 0,
+                    lesson.isPreview() ? " • Preview" : ""));
+                label.setBorder(BorderFactory.createEmptyBorder(8, 10, 8, 10));
+            }
+
+            if (!isSelected) {
+                label.setBackground(Color.WHITE);
+                label.setForeground(new Color(33, 33, 33));
+            } else {
+                label.setBackground(new Color(52, 152, 219));
+                label.setForeground(Color.WHITE);
+            }
+
+            return label;
+        }
     }
 
     private void unenrollFromCourse(int courseId) {

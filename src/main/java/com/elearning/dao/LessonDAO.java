@@ -92,7 +92,9 @@ public class LessonDAO {
             stmt.setInt(1, lesson.getCourseId());
             stmt.setString(2, lesson.getTitle());
             stmt.setString(3, lesson.getVideoPath());
-            stmt.setString(4, lesson.getContentText());
+            // Map description to content_text for database storage
+            String content = lesson.getDescription() != null ? lesson.getDescription() : lesson.getContentText();
+            stmt.setString(4, content);
 
             if (lesson.getDurationMinutes() != null) {
                 stmt.setInt(5, lesson.getDurationMinutes());
@@ -130,7 +132,9 @@ public class LessonDAO {
 
             stmt.setString(1, lesson.getTitle());
             stmt.setString(2, lesson.getVideoPath());
-            stmt.setString(3, lesson.getContentText());
+            // Map description to content_text for database storage
+            String content = lesson.getDescription() != null ? lesson.getDescription() : lesson.getContentText();
+            stmt.setString(3, content);
 
             if (lesson.getDurationMinutes() != null) {
                 stmt.setInt(4, lesson.getDurationMinutes());
@@ -270,7 +274,10 @@ public class LessonDAO {
         lesson.setCourseId(rs.getInt("course_id"));
         lesson.setTitle(rs.getString("title"));
         lesson.setVideoPath(rs.getString("video_path"));
-        lesson.setContentText(rs.getString("content_text"));
+        // Map content_text from database to both contentText and description fields
+        String content = rs.getString("content_text");
+        lesson.setContentText(content);
+        lesson.setDescription(content);
 
         Integer durationMinutes = rs.getInt("duration_minutes");
         if (!rs.wasNull()) {

@@ -9,6 +9,7 @@ public class Lesson {
     private Integer id;
     private Integer courseId;
     private String title;
+    private String description;
     private String videoPath;
     private String contentText;
     private Integer durationMinutes;
@@ -51,6 +52,14 @@ public class Lesson {
 
     public void setTitle(String title) {
         this.title = title;
+    }
+
+    public String getDescription() {
+        return description;
+    }
+
+    public void setDescription(String description) {
+        this.description = description;
     }
 
     public String getVideoPath() {

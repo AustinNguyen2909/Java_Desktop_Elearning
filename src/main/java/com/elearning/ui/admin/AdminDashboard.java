@@ -2,8 +2,14 @@ package com.elearning.ui.admin;
 
 import com.elearning.model.Course;
 import com.elearning.model.User;
+import com.elearning.service.AnalyticsService;
 import com.elearning.service.CourseService;
+import com.elearning.service.UserService;
+import com.elearning.ui.components.ModernButton;
+import com.elearning.ui.components.ModernPasswordField;
+import com.elearning.ui.components.ModernTextField;
 import com.elearning.util.SessionManager;
+import com.elearning.util.ValidationUtil;
 
 import javax.swing.*;
 import javax.swing.table.DefaultTableModel;
@@ -16,20 +22,29 @@ import java.util.List;
 public class AdminDashboard extends JFrame {
     private final User currentUser;
     private final CourseService courseService;
+    private final UserService userService;
+    private final AnalyticsService analyticsService;
 
     private JTabbedPane tabbedPane;
     private JTable pendingCoursesTable;
     private DefaultTableModel pendingCoursesModel;
     private JTable allCoursesTable;
     private DefaultTableModel allCoursesModel;
+    private JTable usersTable;
+    private DefaultTableModel usersModel;
+    private JTextField userSearchField;
+    private JComboBox<String> roleFilterComboBox;
 
     public AdminDashboard() {
         this.currentUser = SessionManager.getInstance().getCurrentUser();
         this.courseService = new CourseService();
+        this.userService = new UserService();
+        this.analyticsService = new AnalyticsService();
 
         initComponents();
         loadPendingCourses();
         loadAllCourses();
+        loadUsers();
     }
 
     private void initComponents() {
@@ -167,23 +182,171 @@ public class AdminDashboard extends JFrame {
     }
 
     private JPanel createUserManagementPanel() {
-        JPanel panel = new JPanel(new BorderLayout());
-        panel.setBackground(Color.WHITE); // Light background
-        JLabel label = new JLabel("User Management - To be implemented in Phase 4", SwingConstants.CENTER);
-        label.setFont(new Font("Segoe UI", Font.PLAIN, 16));
-        label.setForeground(new Color(33, 33, 33)); // Dark text
-        panel.add(label, BorderLayout.CENTER);
+        JPanel panel = new JPanel(new BorderLayout(10, 10));
+        panel.setBackground(Color.WHITE);
+        panel.setBorder(BorderFactory.createEmptyBorder(10, 10, 10, 10));
+
+        // Top panel with search and filters
+        JPanel topPanel = new JPanel(new BorderLayout(10, 10));
+        topPanel.setBackground(Color.WHITE);
+
+        JLabel titleLabel = new JLabel("User Management");
+        titleLabel.setFont(new Font("Segoe UI", Font.BOLD, 18));
+        titleLabel.setForeground(new Color(33, 33, 33));
+
+        // Search and filter panel
+        JPanel searchPanel = new JPanel(new FlowLayout(FlowLayout.LEFT, 10, 5));
+        searchPanel.setBackground(Color.WHITE);
+
+        JLabel searchLabel = new JLabel("Search:");
+        searchLabel.setForeground(new Color(33, 33, 33));
+        searchPanel.add(searchLabel);
+
+        userSearchField = new JTextField(20);
+        searchPanel.add(userSearchField);
+
+        JButton searchButton = new JButton("Search");
+        searchButton.addActionListener(e -> searchUsers());
+        searchPanel.add(searchButton);
+
+        JLabel roleLabel = new JLabel("Role:");
+        roleLabel.setForeground(new Color(33, 33, 33));
+        searchPanel.add(roleLabel);
+
+        String[] roles = {"All", "ADMIN", "INSTRUCTOR", "USER"};
+        roleFilterComboBox = new JComboBox<>(roles);
+        roleFilterComboBox.addActionListener(e -> filterUsersByRole());
+        searchPanel.add(roleFilterComboBox);
+
+        JButton createUserButton = new JButton("Create New User");
+        createUserButton.setBackground(new Color(46, 204, 113));
+        createUserButton.setForeground(Color.WHITE);
+        createUserButton.addActionListener(e -> showCreateUserDialog());
+        searchPanel.add(createUserButton);
+
+        JButton refreshButton = new JButton("Refresh");
+        refreshButton.addActionListener(e -> loadUsers());
+        searchPanel.add(refreshButton);
+
+        JPanel topContainerPanel = new JPanel(new BorderLayout());
+        topContainerPanel.setBackground(Color.WHITE);
+        topContainerPanel.add(titleLabel, BorderLayout.NORTH);
+        topContainerPanel.add(searchPanel, BorderLayout.CENTER);
+
+        // Table
+        String[] columnNames = {"ID", "Username", "Full Name", "Email", "Role", "Status", "Created", "Actions"};
+        usersModel = new DefaultTableModel(columnNames, 0) {
+            @Override
+            public boolean isCellEditable(int row, int column) {
+                return column == 7; // Only Actions column
+            }
+        };
+        usersTable = new JTable(usersModel);
+        usersTable.setRowHeight(30);
+        usersTable.getColumn("Actions").setCellRenderer(new ButtonRenderer());
+        usersTable.getColumn("Actions").setCellEditor(new UserButtonEditor(new JCheckBox()));
+
+        JScrollPane scrollPane = new JScrollPane(usersTable);
+
+        panel.add(topContainerPanel, BorderLayout.NORTH);
+        panel.add(scrollPane, BorderLayout.CENTER);
+
         return panel;
     }
 
     private JPanel createStatisticsPanel() {
-        JPanel panel = new JPanel(new BorderLayout());
-        panel.setBackground(Color.WHITE); // Light background
-        JLabel label = new JLabel("Platform Statistics - To be implemented in Phase 7", SwingConstants.CENTER);
-        label.setFont(new Font("Segoe UI", Font.PLAIN, 16));
-        label.setForeground(new Color(33, 33, 33)); // Dark text
-        panel.add(label, BorderLayout.CENTER);
+        JPanel panel = new JPanel(new BorderLayout(10, 10));
+        panel.setBackground(Color.WHITE);
+        panel.setBorder(BorderFactory.createEmptyBorder(20, 20, 20, 20));
+
+        // Title
+        JLabel titleLabel = new JLabel("Platform Statistics");
+        titleLabel.setFont(new Font("Segoe UI", Font.BOLD, 24));
+        titleLabel.setForeground(new Color(33, 33, 33));
+
+        JButton refreshButton = new JButton("Refresh Statistics");
+        refreshButton.addActionListener(e -> refreshStatistics());
+
+        JPanel topPanel = new JPanel(new BorderLayout());
+        topPanel.setBackground(Color.WHITE);
+        topPanel.add(titleLabel, BorderLayout.WEST);
+        topPanel.add(refreshButton, BorderLayout.EAST);
+
+        // Statistics content
+        JPanel statsContent = new JPanel(new GridLayout(0, 2, 20, 20));
+        statsContent.setBackground(Color.WHITE);
+
+        try {
+            AnalyticsService.PlatformStatistics stats = analyticsService.getPlatformStatistics(currentUser.getRole());
+
+            // User statistics
+            statsContent.add(createStatCard("Total Users",
+                String.format("%d (%d active)", stats.totalUsers + stats.totalInstructors + stats.totalAdmins, stats.activeUsers),
+                new Color(52, 152, 219)));
+            statsContent.add(createStatCard("Students", String.valueOf(stats.totalUsers), new Color(46, 204, 113)));
+            statsContent.add(createStatCard("Instructors", String.valueOf(stats.totalInstructors), new Color(155, 89, 182)));
+            statsContent.add(createStatCard("Admins", String.valueOf(stats.totalAdmins), new Color(231, 76, 60)));
+
+            // Course statistics
+            statsContent.add(createStatCard("Total Courses", String.valueOf(stats.totalCourses), new Color(52, 152, 219)));
+            statsContent.add(createStatCard("Approved Courses", String.valueOf(stats.approvedCourses), new Color(46, 204, 113)));
+            statsContent.add(createStatCard("Pending Approval", String.valueOf(stats.pendingCourses), new Color(241, 196, 15)));
+            statsContent.add(createStatCard("Published Courses", String.valueOf(stats.publishedCourses), new Color(26, 188, 156)));
+
+            // Enrollment statistics
+            statsContent.add(createStatCard("Total Enrollments", String.valueOf(stats.totalEnrollments), new Color(52, 152, 219)));
+            statsContent.add(createStatCard("Active Enrollments", String.valueOf(stats.activeEnrollments), new Color(46, 204, 113)));
+            statsContent.add(createStatCard("Completed Enrollments", String.valueOf(stats.completedEnrollments), new Color(155, 89, 182)));
+            statsContent.add(createStatCard("Average Progress", String.format("%.1f%%", stats.averageProgress), new Color(241, 196, 15)));
+
+            // Additional statistics
+            statsContent.add(createStatCard("Total Reviews", String.valueOf(stats.totalReviews), new Color(52, 152, 219)));
+            statsContent.add(createStatCard("Avg Enrollments/Course", String.format("%.1f", stats.averageEnrollmentsPerCourse), new Color(26, 188, 156)));
+
+        } catch (Exception e) {
+            JLabel errorLabel = new JLabel("Error loading statistics: " + e.getMessage());
+            errorLabel.setForeground(Color.RED);
+            statsContent.add(errorLabel);
+        }
+
+        JScrollPane scrollPane = new JScrollPane(statsContent);
+        scrollPane.setBorder(null);
+        scrollPane.getVerticalScrollBar().setUnitIncrement(16);
+
+        panel.add(topPanel, BorderLayout.NORTH);
+        panel.add(scrollPane, BorderLayout.CENTER);
+
         return panel;
+    }
+
+    private JPanel createStatCard(String title, String value, Color color) {
+        JPanel card = new JPanel(new BorderLayout());
+        card.setBackground(Color.WHITE);
+        card.setBorder(BorderFactory.createCompoundBorder(
+            BorderFactory.createLineBorder(new Color(220, 220, 220), 2),
+            BorderFactory.createEmptyBorder(20, 20, 20, 20)
+        ));
+
+        JLabel titleLabel = new JLabel(title);
+        titleLabel.setFont(new Font("Segoe UI", Font.PLAIN, 14));
+        titleLabel.setForeground(new Color(100, 100, 100));
+
+        JLabel valueLabel = new JLabel(value);
+        valueLabel.setFont(new Font("Segoe UI", Font.BOLD, 32));
+        valueLabel.setForeground(color);
+
+        card.add(titleLabel, BorderLayout.NORTH);
+        card.add(valueLabel, BorderLayout.CENTER);
+
+        return card;
+    }
+
+    private void refreshStatistics() {
+        // Re-create the statistics tab
+        int selectedIndex = tabbedPane.getSelectedIndex();
+        tabbedPane.removeTabAt(3); // Remove Statistics tab
+        tabbedPane.insertTab("Statistics", null, createStatisticsPanel(), null, 3);
+        tabbedPane.setSelectedIndex(selectedIndex);
     }
 
     private void loadPendingCourses() {
@@ -348,6 +511,495 @@ public class AdminDashboard extends JFrame {
         }
     }
 
+    private void loadUsers() {
+        try {
+            List<User> users = userService.getAllUsers(currentUser.getRole());
+            usersModel.setRowCount(0);
+
+            for (User user : users) {
+                Object[] row = {
+                    user.getId(),
+                    user.getUsername(),
+                    user.getFullName(),
+                    user.getEmail(),
+                    user.getRole(),
+                    user.getStatus(),
+                    user.getCreatedAt() != null ? user.getCreatedAt().toLocalDate().toString() : "N/A",
+                    "Actions"
+                };
+                usersModel.addRow(row);
+            }
+        } catch (Exception e) {
+            JOptionPane.showMessageDialog(this,
+                "Error loading users: " + e.getMessage(),
+                "Error",
+                JOptionPane.ERROR_MESSAGE);
+        }
+    }
+
+    private void searchUsers() {
+        String keyword = userSearchField.getText().trim();
+        if (keyword.isEmpty()) {
+            loadUsers();
+            return;
+        }
+
+        try {
+            List<User> users = userService.searchUsers(keyword, currentUser.getRole());
+            usersModel.setRowCount(0);
+
+            for (User user : users) {
+                Object[] row = {
+                    user.getId(),
+                    user.getUsername(),
+                    user.getFullName(),
+                    user.getEmail(),
+                    user.getRole(),
+                    user.getStatus(),
+                    user.getCreatedAt() != null ? user.getCreatedAt().toLocalDate().toString() : "N/A",
+                    "Actions"
+                };
+                usersModel.addRow(row);
+            }
+        } catch (Exception e) {
+            JOptionPane.showMessageDialog(this,
+                "Error searching users: " + e.getMessage(),
+                "Error",
+                JOptionPane.ERROR_MESSAGE);
+        }
+    }
+
+    private void filterUsersByRole() {
+        String selectedRole = (String) roleFilterComboBox.getSelectedItem();
+        if ("All".equals(selectedRole)) {
+            loadUsers();
+            return;
+        }
+
+        try {
+            List<User> users = userService.getUsersByRole(selectedRole, currentUser.getRole());
+            usersModel.setRowCount(0);
+
+            for (User user : users) {
+                Object[] row = {
+                    user.getId(),
+                    user.getUsername(),
+                    user.getFullName(),
+                    user.getEmail(),
+                    user.getRole(),
+                    user.getStatus(),
+                    user.getCreatedAt() != null ? user.getCreatedAt().toLocalDate().toString() : "N/A",
+                    "Actions"
+                };
+                usersModel.addRow(row);
+            }
+        } catch (Exception e) {
+            JOptionPane.showMessageDialog(this,
+                "Error filtering users: " + e.getMessage(),
+                "Error",
+                JOptionPane.ERROR_MESSAGE);
+        }
+    }
+
+    private void showCreateUserDialog() {
+        JDialog dialog = new JDialog(this, "Create New User", true);
+        dialog.setSize(500, 550);
+        dialog.setLocationRelativeTo(this);
+
+        JPanel panel = new JPanel();
+        panel.setLayout(new BoxLayout(panel, BoxLayout.Y_AXIS));
+        panel.setBorder(BorderFactory.createEmptyBorder(20, 20, 20, 20));
+        panel.setBackground(Color.WHITE);
+
+        ModernTextField usernameField = new ModernTextField("Username");
+        ModernTextField emailField = new ModernTextField("Email");
+        ModernTextField fullNameField = new ModernTextField("Full Name");
+        ModernTextField phoneField = new ModernTextField("Phone (optional)");
+        ModernPasswordField passwordField = new ModernPasswordField("Password");
+
+        String[] roles = {"USER", "INSTRUCTOR", "ADMIN"};
+        JComboBox<String> roleComboBox = new JComboBox<>(roles);
+        roleComboBox.setPreferredSize(new Dimension(300, 45));
+
+        String[] statuses = {"ACTIVE", "PENDING", "SUSPENDED"};
+        JComboBox<String> statusComboBox = new JComboBox<>(statuses);
+        statusComboBox.setPreferredSize(new Dimension(300, 45));
+
+        ModernButton createButton = new ModernButton("Create User");
+        createButton.setBackground(new Color(46, 204, 113));
+        ModernButton cancelButton = new ModernButton("Cancel");
+        cancelButton.setBackground(new Color(149, 165, 166));
+
+        panel.add(createLabel("Username:"));
+        panel.add(Box.createRigidArea(new Dimension(0, 5)));
+        panel.add(usernameField);
+        panel.add(Box.createRigidArea(new Dimension(0, 10)));
+
+        panel.add(createLabel("Email:"));
+        panel.add(Box.createRigidArea(new Dimension(0, 5)));
+        panel.add(emailField);
+        panel.add(Box.createRigidArea(new Dimension(0, 10)));
+
+        panel.add(createLabel("Full Name:"));
+        panel.add(Box.createRigidArea(new Dimension(0, 5)));
+        panel.add(fullNameField);
+        panel.add(Box.createRigidArea(new Dimension(0, 10)));
+
+        panel.add(createLabel("Phone:"));
+        panel.add(Box.createRigidArea(new Dimension(0, 5)));
+        panel.add(phoneField);
+        panel.add(Box.createRigidArea(new Dimension(0, 10)));
+
+        panel.add(createLabel("Password:"));
+        panel.add(Box.createRigidArea(new Dimension(0, 5)));
+        panel.add(passwordField);
+        panel.add(Box.createRigidArea(new Dimension(0, 10)));
+
+        panel.add(createLabel("Role:"));
+        panel.add(Box.createRigidArea(new Dimension(0, 5)));
+        panel.add(roleComboBox);
+        panel.add(Box.createRigidArea(new Dimension(0, 10)));
+
+        panel.add(createLabel("Status:"));
+        panel.add(Box.createRigidArea(new Dimension(0, 5)));
+        panel.add(statusComboBox);
+        panel.add(Box.createRigidArea(new Dimension(0, 20)));
+
+        JPanel buttonPanel = new JPanel(new FlowLayout(FlowLayout.CENTER, 10, 0));
+        buttonPanel.setBackground(Color.WHITE);
+        buttonPanel.add(createButton);
+        buttonPanel.add(cancelButton);
+        panel.add(buttonPanel);
+
+        createButton.addActionListener(e -> {
+            try {
+                User newUser = new User();
+                newUser.setUsername(usernameField.getText().trim());
+                newUser.setEmail(emailField.getText().trim());
+                newUser.setFullName(fullNameField.getText().trim());
+                newUser.setPhone(phoneField.getText().trim());
+                newUser.setRole((String) roleComboBox.getSelectedItem());
+                newUser.setStatus((String) statusComboBox.getSelectedItem());
+
+                String password = new String(passwordField.getPassword());
+
+                boolean success = userService.createUser(newUser, password, currentUser.getRole());
+                if (success) {
+                    JOptionPane.showMessageDialog(dialog,
+                        "User created successfully!",
+                        "Success",
+                        JOptionPane.INFORMATION_MESSAGE);
+                    loadUsers();
+                    dialog.dispose();
+                } else {
+                    JOptionPane.showMessageDialog(dialog,
+                        "Failed to create user",
+                        "Error",
+                        JOptionPane.ERROR_MESSAGE);
+                }
+            } catch (Exception ex) {
+                JOptionPane.showMessageDialog(dialog,
+                    "Error: " + ex.getMessage(),
+                    "Error",
+                    JOptionPane.ERROR_MESSAGE);
+            }
+        });
+
+        cancelButton.addActionListener(e -> dialog.dispose());
+
+        dialog.add(new JScrollPane(panel));
+        dialog.setVisible(true);
+    }
+
+    private void showEditUserDialog(int userId) {
+        User user = userService.getUserById(userId);
+        if (user == null) {
+            JOptionPane.showMessageDialog(this, "User not found", "Error", JOptionPane.ERROR_MESSAGE);
+            return;
+        }
+
+        JDialog dialog = new JDialog(this, "Edit User", true);
+        dialog.setSize(500, 550);
+        dialog.setLocationRelativeTo(this);
+
+        JPanel panel = new JPanel();
+        panel.setLayout(new BoxLayout(panel, BoxLayout.Y_AXIS));
+        panel.setBorder(BorderFactory.createEmptyBorder(20, 20, 20, 20));
+        panel.setBackground(Color.WHITE);
+
+        ModernTextField usernameField = new ModernTextField("Username");
+        usernameField.setText(user.getUsername());
+        ModernTextField emailField = new ModernTextField("Email");
+        emailField.setText(user.getEmail());
+        ModernTextField fullNameField = new ModernTextField("Full Name");
+        fullNameField.setText(user.getFullName());
+        ModernTextField phoneField = new ModernTextField("Phone (optional)");
+        phoneField.setText(user.getPhone() != null ? user.getPhone() : "");
+
+        String[] roles = {"USER", "INSTRUCTOR", "ADMIN"};
+        JComboBox<String> roleComboBox = new JComboBox<>(roles);
+        roleComboBox.setSelectedItem(user.getRole());
+        roleComboBox.setPreferredSize(new Dimension(300, 45));
+
+        String[] statuses = {"ACTIVE", "PENDING", "SUSPENDED"};
+        JComboBox<String> statusComboBox = new JComboBox<>(statuses);
+        statusComboBox.setSelectedItem(user.getStatus());
+        statusComboBox.setPreferredSize(new Dimension(300, 45));
+
+        ModernButton saveButton = new ModernButton("Save Changes");
+        saveButton.setBackground(new Color(52, 152, 219));
+        ModernButton cancelButton = new ModernButton("Cancel");
+        cancelButton.setBackground(new Color(149, 165, 166));
+
+        panel.add(createLabel("Username:"));
+        panel.add(Box.createRigidArea(new Dimension(0, 5)));
+        panel.add(usernameField);
+        panel.add(Box.createRigidArea(new Dimension(0, 10)));
+
+        panel.add(createLabel("Email:"));
+        panel.add(Box.createRigidArea(new Dimension(0, 5)));
+        panel.add(emailField);
+        panel.add(Box.createRigidArea(new Dimension(0, 10)));
+
+        panel.add(createLabel("Full Name:"));
+        panel.add(Box.createRigidArea(new Dimension(0, 5)));
+        panel.add(fullNameField);
+        panel.add(Box.createRigidArea(new Dimension(0, 10)));
+
+        panel.add(createLabel("Phone:"));
+        panel.add(Box.createRigidArea(new Dimension(0, 5)));
+        panel.add(phoneField);
+        panel.add(Box.createRigidArea(new Dimension(0, 10)));
+
+        panel.add(createLabel("Role:"));
+        panel.add(Box.createRigidArea(new Dimension(0, 5)));
+        panel.add(roleComboBox);
+        panel.add(Box.createRigidArea(new Dimension(0, 10)));
+
+        panel.add(createLabel("Status:"));
+        panel.add(Box.createRigidArea(new Dimension(0, 5)));
+        panel.add(statusComboBox);
+        panel.add(Box.createRigidArea(new Dimension(0, 20)));
+
+        JPanel buttonPanel = new JPanel(new FlowLayout(FlowLayout.CENTER, 10, 0));
+        buttonPanel.setBackground(Color.WHITE);
+        buttonPanel.add(saveButton);
+        buttonPanel.add(cancelButton);
+        panel.add(buttonPanel);
+
+        saveButton.addActionListener(e -> {
+            try {
+                user.setUsername(usernameField.getText().trim());
+                user.setEmail(emailField.getText().trim());
+                user.setFullName(fullNameField.getText().trim());
+                user.setPhone(phoneField.getText().trim());
+                user.setRole((String) roleComboBox.getSelectedItem());
+                user.setStatus((String) statusComboBox.getSelectedItem());
+
+                boolean success = userService.updateUser(user, currentUser.getId(), currentUser.getRole());
+                if (success) {
+                    JOptionPane.showMessageDialog(dialog,
+                        "User updated successfully!",
+                        "Success",
+                        JOptionPane.INFORMATION_MESSAGE);
+                    loadUsers();
+                    dialog.dispose();
+                } else {
+                    JOptionPane.showMessageDialog(dialog,
+                        "Failed to update user",
+                        "Error",
+                        JOptionPane.ERROR_MESSAGE);
+                }
+            } catch (Exception ex) {
+                JOptionPane.showMessageDialog(dialog,
+                    "Error: " + ex.getMessage(),
+                    "Error",
+                    JOptionPane.ERROR_MESSAGE);
+            }
+        });
+
+        cancelButton.addActionListener(e -> dialog.dispose());
+
+        dialog.add(new JScrollPane(panel));
+        dialog.setVisible(true);
+    }
+
+    private void showResetPasswordDialog(int userId) {
+        User user = userService.getUserById(userId);
+        if (user == null) {
+            JOptionPane.showMessageDialog(this, "User not found", "Error", JOptionPane.ERROR_MESSAGE);
+            return;
+        }
+
+        JDialog dialog = new JDialog(this, "Reset Password for " + user.getUsername(), true);
+        dialog.setSize(400, 250);
+        dialog.setLocationRelativeTo(this);
+
+        JPanel panel = new JPanel();
+        panel.setLayout(new BoxLayout(panel, BoxLayout.Y_AXIS));
+        panel.setBorder(BorderFactory.createEmptyBorder(20, 20, 20, 20));
+        panel.setBackground(Color.WHITE);
+
+        ModernPasswordField newPasswordField = new ModernPasswordField("New Password");
+        ModernPasswordField confirmPasswordField = new ModernPasswordField("Confirm Password");
+
+        ModernButton resetButton = new ModernButton("Reset Password");
+        resetButton.setBackground(new Color(231, 76, 60));
+        ModernButton cancelButton = new ModernButton("Cancel");
+        cancelButton.setBackground(new Color(149, 165, 166));
+
+        panel.add(createLabel("New Password:"));
+        panel.add(Box.createRigidArea(new Dimension(0, 5)));
+        panel.add(newPasswordField);
+        panel.add(Box.createRigidArea(new Dimension(0, 15)));
+
+        panel.add(createLabel("Confirm Password:"));
+        panel.add(Box.createRigidArea(new Dimension(0, 5)));
+        panel.add(confirmPasswordField);
+        panel.add(Box.createRigidArea(new Dimension(0, 20)));
+
+        JPanel buttonPanel = new JPanel(new FlowLayout(FlowLayout.CENTER, 10, 0));
+        buttonPanel.setBackground(Color.WHITE);
+        buttonPanel.add(resetButton);
+        buttonPanel.add(cancelButton);
+        panel.add(buttonPanel);
+
+        resetButton.addActionListener(e -> {
+            String newPassword = new String(newPasswordField.getPassword());
+            String confirmPassword = new String(confirmPasswordField.getPassword());
+
+            if (!newPassword.equals(confirmPassword)) {
+                JOptionPane.showMessageDialog(dialog,
+                    "Passwords do not match",
+                    "Error",
+                    JOptionPane.ERROR_MESSAGE);
+                return;
+            }
+
+            try {
+                boolean success = userService.updatePassword(userId, newPassword, currentUser.getId(), currentUser.getRole());
+                if (success) {
+                    JOptionPane.showMessageDialog(dialog,
+                        "Password reset successfully!",
+                        "Success",
+                        JOptionPane.INFORMATION_MESSAGE);
+                    dialog.dispose();
+                } else {
+                    JOptionPane.showMessageDialog(dialog,
+                        "Failed to reset password",
+                        "Error",
+                        JOptionPane.ERROR_MESSAGE);
+                }
+            } catch (Exception ex) {
+                JOptionPane.showMessageDialog(dialog,
+                    "Error: " + ex.getMessage(),
+                    "Error",
+                    JOptionPane.ERROR_MESSAGE);
+            }
+        });
+
+        cancelButton.addActionListener(e -> dialog.dispose());
+
+        dialog.add(panel);
+        dialog.setVisible(true);
+    }
+
+    private void changeUserStatus(int userId, String newStatus) {
+        try {
+            boolean success = userService.updateUserStatus(userId, newStatus, currentUser.getRole());
+            if (success) {
+                JOptionPane.showMessageDialog(this,
+                    "User status updated to " + newStatus,
+                    "Success",
+                    JOptionPane.INFORMATION_MESSAGE);
+                loadUsers();
+            } else {
+                JOptionPane.showMessageDialog(this,
+                    "Failed to update user status",
+                    "Error",
+                    JOptionPane.ERROR_MESSAGE);
+            }
+        } catch (Exception e) {
+            JOptionPane.showMessageDialog(this,
+                "Error: " + e.getMessage(),
+                "Error",
+                JOptionPane.ERROR_MESSAGE);
+        }
+    }
+
+    private void deleteUser(int userId) {
+        int confirm = JOptionPane.showConfirmDialog(this,
+            "Are you sure you want to delete this user?\nThis will suspend their account.",
+            "Confirm Delete",
+            JOptionPane.YES_NO_OPTION,
+            JOptionPane.WARNING_MESSAGE);
+
+        if (confirm == JOptionPane.YES_OPTION) {
+            try {
+                boolean success = userService.deleteUser(userId, currentUser.getRole());
+                if (success) {
+                    JOptionPane.showMessageDialog(this,
+                        "User deleted successfully",
+                        "Success",
+                        JOptionPane.INFORMATION_MESSAGE);
+                    loadUsers();
+                } else {
+                    JOptionPane.showMessageDialog(this,
+                        "Failed to delete user",
+                        "Error",
+                        JOptionPane.ERROR_MESSAGE);
+                }
+            } catch (Exception e) {
+                JOptionPane.showMessageDialog(this,
+                    "Error: " + e.getMessage(),
+                    "Error",
+                    JOptionPane.ERROR_MESSAGE);
+            }
+        }
+    }
+
+    private void viewUserDetails(int userId) {
+        User user = userService.getUserById(userId);
+        if (user != null) {
+            String details = String.format(
+                "User Details:\n\n" +
+                "ID: %d\n" +
+                "Username: %s\n" +
+                "Full Name: %s\n" +
+                "Email: %s\n" +
+                "Phone: %s\n" +
+                "Role: %s\n" +
+                "Status: %s\n" +
+                "Created: %s\n" +
+                "Updated: %s",
+                user.getId(),
+                user.getUsername(),
+                user.getFullName(),
+                user.getEmail(),
+                user.getPhone() != null ? user.getPhone() : "N/A",
+                user.getRole(),
+                user.getStatus(),
+                user.getCreatedAt() != null ? user.getCreatedAt().toString() : "N/A",
+                user.getUpdatedAt() != null ? user.getUpdatedAt().toString() : "N/A"
+            );
+
+            JTextArea textArea = new JTextArea(details);
+            textArea.setEditable(false);
+            JScrollPane scrollPane = new JScrollPane(textArea);
+            scrollPane.setPreferredSize(new Dimension(400, 300));
+
+            JOptionPane.showMessageDialog(this, scrollPane, "User Details", JOptionPane.INFORMATION_MESSAGE);
+        }
+    }
+
+    private JLabel createLabel(String text) {
+        JLabel label = new JLabel(text);
+        label.setFont(new Font("Segoe UI", Font.BOLD, 13));
+        label.setForeground(new Color(33, 33, 33));
+        label.setAlignmentX(Component.CENTER_ALIGNMENT);
+        return label;
+    }
+
     private void logout() {
         SessionManager.getInstance().logout();
         dispose();
@@ -423,6 +1075,86 @@ public class AdminDashboard extends JFrame {
                 JMenuItem rejectItem = new JMenuItem("Reject");
                 rejectItem.addActionListener(e -> rejectCourse(courseId));
                 menu.add(rejectItem);
+
+                menu.show(button, 0, button.getHeight());
+            }
+        }
+    }
+
+    // Button editor for user management
+    class UserButtonEditor extends DefaultCellEditor {
+        private JButton button;
+        private String label;
+        private boolean clicked;
+        private int currentRow;
+
+        public UserButtonEditor(JCheckBox checkBox) {
+            super(checkBox);
+            button = new JButton();
+            button.setOpaque(true);
+            button.addActionListener(e -> {
+                fireEditingStopped();
+                showUserActionsMenu();
+            });
+        }
+
+        @Override
+        public Component getTableCellEditorComponent(JTable table, Object value,
+                                                      boolean isSelected, int row, int column) {
+            label = (value == null) ? "Actions" : value.toString();
+            button.setText(label);
+            clicked = true;
+            currentRow = row;
+            return button;
+        }
+
+        @Override
+        public Object getCellEditorValue() {
+            clicked = false;
+            return label;
+        }
+
+        private void showUserActionsMenu() {
+            if (clicked && currentRow >= 0) {
+                int userId = (Integer) usersModel.getValueAt(currentRow, 0);
+                String userStatus = (String) usersModel.getValueAt(currentRow, 5);
+
+                JPopupMenu menu = new JPopupMenu();
+
+                JMenuItem viewItem = new JMenuItem("View Details");
+                viewItem.addActionListener(e -> viewUserDetails(userId));
+                menu.add(viewItem);
+
+                JMenuItem editItem = new JMenuItem("Edit User");
+                editItem.addActionListener(e -> showEditUserDialog(userId));
+                menu.add(editItem);
+
+                menu.addSeparator();
+
+                JMenuItem resetPasswordItem = new JMenuItem("Reset Password");
+                resetPasswordItem.addActionListener(e -> showResetPasswordDialog(userId));
+                menu.add(resetPasswordItem);
+
+                menu.addSeparator();
+
+                if (!"ACTIVE".equals(userStatus)) {
+                    JMenuItem activateItem = new JMenuItem("Activate");
+                    activateItem.addActionListener(e -> changeUserStatus(userId, "ACTIVE"));
+                    menu.add(activateItem);
+                }
+
+                if (!"SUSPENDED".equals(userStatus)) {
+                    JMenuItem suspendItem = new JMenuItem("Suspend");
+                    suspendItem.addActionListener(e -> changeUserStatus(userId, "SUSPENDED"));
+                    menu.add(suspendItem);
+                }
+
+                menu.addSeparator();
+
+                JMenuItem deleteItem = new JMenuItem("Delete");
+                deleteItem.setForeground(new Color(231, 76, 60));
+                deleteItem.addActionListener(e -> deleteUser(userId));
+                menu.add(deleteItem);
 
                 menu.show(button, 0, button.getHeight());
             }

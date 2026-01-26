@@ -336,6 +336,82 @@ public class EnrollmentDAO {
     }
 
     /**
+     * Get total enrollment count across all courses
+     */
+    public int getTotalEnrollmentCount() {
+        String sql = "SELECT COUNT(*) FROM enrollments";
+
+        try (Connection conn = DBConnection.getInstance().getConnection();
+             PreparedStatement stmt = conn.prepareStatement(sql);
+             ResultSet rs = stmt.executeQuery()) {
+
+            if (rs.next()) {
+                return rs.getInt(1);
+            }
+        } catch (SQLException e) {
+            e.printStackTrace();
+        }
+        return 0;
+    }
+
+    /**
+     * Get count of in-progress enrollments
+     */
+    public int getInProgressCount() {
+        String sql = "SELECT COUNT(*) FROM enrollments WHERE completed_at IS NULL";
+
+        try (Connection conn = DBConnection.getInstance().getConnection();
+             PreparedStatement stmt = conn.prepareStatement(sql);
+             ResultSet rs = stmt.executeQuery()) {
+
+            if (rs.next()) {
+                return rs.getInt(1);
+            }
+        } catch (SQLException e) {
+            e.printStackTrace();
+        }
+        return 0;
+    }
+
+    /**
+     * Get count of completed enrollments
+     */
+    public int getCompletedCount() {
+        String sql = "SELECT COUNT(*) FROM enrollments WHERE completed_at IS NOT NULL";
+
+        try (Connection conn = DBConnection.getInstance().getConnection();
+             PreparedStatement stmt = conn.prepareStatement(sql);
+             ResultSet rs = stmt.executeQuery()) {
+
+            if (rs.next()) {
+                return rs.getInt(1);
+            }
+        } catch (SQLException e) {
+            e.printStackTrace();
+        }
+        return 0;
+    }
+
+    /**
+     * Get global average progress across all enrollments
+     */
+    public double getGlobalAverageProgress() {
+        String sql = "SELECT AVG(progress_percent) FROM enrollments";
+
+        try (Connection conn = DBConnection.getInstance().getConnection();
+             PreparedStatement stmt = conn.prepareStatement(sql);
+             ResultSet rs = stmt.executeQuery()) {
+
+            if (rs.next()) {
+                return rs.getDouble(1);
+            }
+        } catch (SQLException e) {
+            e.printStackTrace();
+        }
+        return 0.0;
+    }
+
+    /**
      * Map ResultSet to Enrollment object
      */
     private Enrollment mapResultSetToEnrollment(ResultSet rs) throws SQLException {

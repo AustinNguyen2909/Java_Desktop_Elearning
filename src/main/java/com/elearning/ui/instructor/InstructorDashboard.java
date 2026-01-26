@@ -1,14 +1,19 @@
 package com.elearning.ui.instructor;
 
 import com.elearning.model.Course;
+import com.elearning.model.Lesson;
 import com.elearning.model.User;
 import com.elearning.service.CourseService;
 import com.elearning.service.EnrollmentService;
+import com.elearning.service.LessonService;
+import com.elearning.ui.components.ModernButton;
+import com.elearning.ui.components.ModernTextField;
 import com.elearning.util.SessionManager;
 
 import javax.swing.*;
 import javax.swing.table.DefaultTableModel;
 import java.awt.*;
+import java.io.File;
 import java.util.List;
 
 /**
@@ -18,6 +23,7 @@ public class InstructorDashboard extends JFrame {
     private final User currentUser;
     private final CourseService courseService;
     private final EnrollmentService enrollmentService;
+    private final LessonService lessonService;
 
     private JTabbedPane tabbedPane;
     private JTable coursesTable;
@@ -27,6 +33,7 @@ public class InstructorDashboard extends JFrame {
         this.currentUser = SessionManager.getInstance().getCurrentUser();
         this.courseService = new CourseService();
         this.enrollmentService = new EnrollmentService();
+        this.lessonService = new LessonService();
 
         initComponents();
         loadCourses();
@@ -484,7 +491,477 @@ public class InstructorDashboard extends JFrame {
     }
 
     private void manageLessons(int courseId) {
-        JOptionPane.showMessageDialog(this, "Lesson management will be implemented in Phase 4", "Info", JOptionPane.INFORMATION_MESSAGE);
-        // TODO: Open lesson management dialog
+        Course course = courseService.getCourseById(courseId);
+        if (course == null) {
+            JOptionPane.showMessageDialog(this, "Course not found", "Error", JOptionPane.ERROR_MESSAGE);
+            return;
+        }
+
+        // Create lesson management dialog
+        JDialog dialog = new JDialog(this, "Manage Lessons - " + course.getTitle(), true);
+        dialog.setSize(1000, 700);
+        dialog.setLocationRelativeTo(this);
+
+        JPanel mainPanel = new JPanel(new BorderLayout(10, 10));
+        mainPanel.setBackground(Color.WHITE);
+        mainPanel.setBorder(BorderFactory.createEmptyBorder(15, 15, 15, 15));
+
+        // Top panel with course info
+        JPanel topPanel = new JPanel(new BorderLayout());
+        topPanel.setBackground(Color.WHITE);
+        JLabel titleLabel = new JLabel("Lessons for: " + course.getTitle());
+        titleLabel.setFont(new Font("Segoe UI", Font.BOLD, 16));
+        titleLabel.setForeground(new Color(33, 33, 33));
+
+        JButton createLessonButton = new JButton("Create New Lesson");
+        createLessonButton.setBackground(new Color(46, 204, 113));
+        createLessonButton.setForeground(Color.WHITE);
+        createLessonButton.addActionListener(e -> showCreateLessonDialog(dialog, courseId));
+
+        JButton refreshButton = new JButton("Refresh");
+        refreshButton.addActionListener(e -> {
+            dialog.dispose();
+            manageLessons(courseId);
+        });
+
+        JPanel buttonPanel = new JPanel(new FlowLayout(FlowLayout.RIGHT));
+        buttonPanel.setBackground(Color.WHITE);
+        buttonPanel.add(createLessonButton);
+        buttonPanel.add(refreshButton);
+
+        topPanel.add(titleLabel, BorderLayout.WEST);
+        topPanel.add(buttonPanel, BorderLayout.EAST);
+
+        // Lessons table
+        String[] columnNames = {"Order", "ID", "Title", "Duration (min)", "Preview", "Video", "Actions"};
+        DefaultTableModel lessonsModel = new DefaultTableModel(columnNames, 0) {
+            @Override
+            public boolean isCellEditable(int row, int column) {
+                return column == 6; // Only Actions column
+            }
+        };
+
+        JTable lessonsTable = new JTable(lessonsModel);
+        lessonsTable.setRowHeight(35);
+        lessonsTable.getColumn("Actions").setCellRenderer(new ButtonRenderer());
+        lessonsTable.getColumn("Actions").setCellEditor(new LessonButtonEditor(new JCheckBox(), lessonsModel, courseId, dialog));
+
+        // Load lessons
+        try {
+            List<Lesson> lessons = lessonService.getCourseLessons(courseId, currentUser.getRole(), currentUser.getId(), false);
+            for (Lesson lesson : lessons) {
+                Object[] row = {
+                    lesson.getOrderIndex(),
+                    lesson.getId(),
+                    lesson.getTitle(),
+                    lesson.getDurationMinutes() != null ? lesson.getDurationMinutes() : 0,
+                    lesson.isPreview() ? "Yes" : "No",
+                    lesson.getVideoPath() != null ? "✓" : "✗",
+                    "Actions"
+                };
+                lessonsModel.addRow(row);
+            }
+        } catch (Exception e) {
+            JOptionPane.showMessageDialog(dialog,
+                "Error loading lessons: " + e.getMessage(),
+                "Error",
+                JOptionPane.ERROR_MESSAGE);
+        }
+
+        JScrollPane scrollPane = new JScrollPane(lessonsTable);
+
+        // Bottom panel with statistics
+        JPanel bottomPanel = new JPanel(new FlowLayout(FlowLayout.LEFT));
+        bottomPanel.setBackground(Color.WHITE);
+        try {
+            LessonService.CourseStatistics stats = lessonService.getCourseStatistics(courseId);
+            JLabel statsLabel = new JLabel(String.format("Total Lessons: %d | Total Duration: %.1f hours",
+                stats.getLessonCount(), stats.getTotalDurationHours()));
+            statsLabel.setFont(new Font("Segoe UI", Font.PLAIN, 12));
+            statsLabel.setForeground(new Color(88, 88, 88));
+            bottomPanel.add(statsLabel);
+        } catch (Exception e) {
+            // Ignore statistics error
+        }
+
+        mainPanel.add(topPanel, BorderLayout.NORTH);
+        mainPanel.add(scrollPane, BorderLayout.CENTER);
+        mainPanel.add(bottomPanel, BorderLayout.SOUTH);
+
+        dialog.add(mainPanel);
+        dialog.setVisible(true);
+    }
+
+    private void showCreateLessonDialog(JDialog parentDialog, int courseId) {
+        JDialog dialog = new JDialog(parentDialog, "Create New Lesson", true);
+        dialog.setSize(600, 600);
+        dialog.setLocationRelativeTo(parentDialog);
+
+        JPanel panel = new JPanel();
+        panel.setLayout(new BoxLayout(panel, BoxLayout.Y_AXIS));
+        panel.setBorder(BorderFactory.createEmptyBorder(20, 20, 20, 20));
+        panel.setBackground(Color.WHITE);
+
+        ModernTextField titleField = new ModernTextField("Lesson Title");
+        JTextArea descriptionArea = new JTextArea(5, 30);
+        descriptionArea.setLineWrap(true);
+        descriptionArea.setWrapStyleWord(true);
+        descriptionArea.setBorder(BorderFactory.createCompoundBorder(
+            BorderFactory.createLineBorder(new Color(200, 200, 200)),
+            BorderFactory.createEmptyBorder(10, 10, 10, 10)
+        ));
+        JScrollPane descScrollPane = new JScrollPane(descriptionArea);
+        descScrollPane.setPreferredSize(new Dimension(400, 120));
+
+        JSpinner durationSpinner = new JSpinner(new SpinnerNumberModel(30, 1, 300, 5));
+        durationSpinner.setPreferredSize(new Dimension(300, 40));
+
+        JCheckBox previewCheckbox = new JCheckBox("Allow preview (accessible without enrollment)");
+        previewCheckbox.setBackground(Color.WHITE);
+
+        JLabel videoLabel = new JLabel("No video selected");
+        videoLabel.setForeground(new Color(88, 88, 88));
+        final String[] selectedVideoPath = {null};
+
+        JButton chooseVideoButton = new JButton("Choose Video File");
+        chooseVideoButton.addActionListener(e -> {
+            JFileChooser fileChooser = new JFileChooser();
+            fileChooser.setFileFilter(new javax.swing.filechooser.FileFilter() {
+                @Override
+                public boolean accept(File f) {
+                    if (f.isDirectory()) return true;
+                    String name = f.getName().toLowerCase();
+                    return name.endsWith(".mp4") || name.endsWith(".avi") ||
+                           name.endsWith(".mov") || name.endsWith(".mkv");
+                }
+
+                @Override
+                public String getDescription() {
+                    return "Video Files (*.mp4, *.avi, *.mov, *.mkv)";
+                }
+            });
+
+            int result = fileChooser.showOpenDialog(dialog);
+            if (result == JFileChooser.APPROVE_OPTION) {
+                File selectedFile = fileChooser.getSelectedFile();
+                selectedVideoPath[0] = selectedFile.getAbsolutePath();
+                videoLabel.setText("Selected: " + selectedFile.getName());
+            }
+        });
+
+        ModernButton createButton = new ModernButton("Create Lesson");
+        createButton.setBackground(new Color(46, 204, 113));
+        ModernButton cancelButton = new ModernButton("Cancel");
+        cancelButton.setBackground(new Color(149, 165, 166));
+
+        panel.add(createLabel("Lesson Title:"));
+        panel.add(Box.createRigidArea(new Dimension(0, 5)));
+        panel.add(titleField);
+        panel.add(Box.createRigidArea(new Dimension(0, 15)));
+
+        panel.add(createLabel("Description:"));
+        panel.add(Box.createRigidArea(new Dimension(0, 5)));
+        panel.add(descScrollPane);
+        panel.add(Box.createRigidArea(new Dimension(0, 15)));
+
+        panel.add(createLabel("Duration (minutes):"));
+        panel.add(Box.createRigidArea(new Dimension(0, 5)));
+        panel.add(durationSpinner);
+        panel.add(Box.createRigidArea(new Dimension(0, 15)));
+
+        panel.add(previewCheckbox);
+        panel.add(Box.createRigidArea(new Dimension(0, 15)));
+
+        panel.add(createLabel("Video File:"));
+        panel.add(Box.createRigidArea(new Dimension(0, 5)));
+        panel.add(chooseVideoButton);
+        panel.add(Box.createRigidArea(new Dimension(0, 5)));
+        panel.add(videoLabel);
+        panel.add(Box.createRigidArea(new Dimension(0, 20)));
+
+        JPanel buttonPanel = new JPanel(new FlowLayout(FlowLayout.CENTER, 10, 0));
+        buttonPanel.setBackground(Color.WHITE);
+        buttonPanel.add(createButton);
+        buttonPanel.add(cancelButton);
+        panel.add(buttonPanel);
+
+        createButton.addActionListener(e -> {
+            try {
+                Lesson lesson = new Lesson();
+                lesson.setCourseId(courseId);
+                lesson.setTitle(titleField.getText().trim());
+                lesson.setDescription(descriptionArea.getText().trim());
+                lesson.setDurationMinutes((Integer) durationSpinner.getValue());
+                lesson.setPreview(previewCheckbox.isSelected());
+                lesson.setVideoPath(selectedVideoPath[0]);
+
+                boolean success = lessonService.createLesson(lesson, currentUser.getId(), currentUser.getRole());
+                if (success) {
+                    JOptionPane.showMessageDialog(dialog,
+                        "Lesson created successfully!",
+                        "Success",
+                        JOptionPane.INFORMATION_MESSAGE);
+                    dialog.dispose();
+                    parentDialog.dispose();
+                    manageLessons(courseId);
+                } else {
+                    JOptionPane.showMessageDialog(dialog,
+                        "Failed to create lesson",
+                        "Error",
+                        JOptionPane.ERROR_MESSAGE);
+                }
+            } catch (Exception ex) {
+                JOptionPane.showMessageDialog(dialog,
+                    "Error: " + ex.getMessage(),
+                    "Error",
+                    JOptionPane.ERROR_MESSAGE);
+            }
+        });
+
+        cancelButton.addActionListener(e -> dialog.dispose());
+
+        dialog.add(new JScrollPane(panel));
+        dialog.setVisible(true);
+    }
+
+    private void showEditLessonDialog(JDialog parentDialog, int lessonId, int courseId) {
+        Lesson lesson = lessonService.getLessonById(lessonId, currentUser.getRole(), currentUser.getId(), false);
+        if (lesson == null) {
+            JOptionPane.showMessageDialog(parentDialog, "Lesson not found", "Error", JOptionPane.ERROR_MESSAGE);
+            return;
+        }
+
+        JDialog dialog = new JDialog(parentDialog, "Edit Lesson", true);
+        dialog.setSize(600, 600);
+        dialog.setLocationRelativeTo(parentDialog);
+
+        JPanel panel = new JPanel();
+        panel.setLayout(new BoxLayout(panel, BoxLayout.Y_AXIS));
+        panel.setBorder(BorderFactory.createEmptyBorder(20, 20, 20, 20));
+        panel.setBackground(Color.WHITE);
+
+        ModernTextField titleField = new ModernTextField("Lesson Title");
+        titleField.setText(lesson.getTitle());
+
+        JTextArea descriptionArea = new JTextArea(5, 30);
+        descriptionArea.setText(lesson.getDescription() != null ? lesson.getDescription() : "");
+        descriptionArea.setLineWrap(true);
+        descriptionArea.setWrapStyleWord(true);
+        descriptionArea.setBorder(BorderFactory.createCompoundBorder(
+            BorderFactory.createLineBorder(new Color(200, 200, 200)),
+            BorderFactory.createEmptyBorder(10, 10, 10, 10)
+        ));
+        JScrollPane descScrollPane = new JScrollPane(descriptionArea);
+        descScrollPane.setPreferredSize(new Dimension(400, 120));
+
+        JSpinner durationSpinner = new JSpinner(new SpinnerNumberModel(
+            lesson.getDurationMinutes() != null ? lesson.getDurationMinutes() : 30, 1, 300, 5));
+        durationSpinner.setPreferredSize(new Dimension(300, 40));
+
+        JCheckBox previewCheckbox = new JCheckBox("Allow preview (accessible without enrollment)");
+        previewCheckbox.setSelected(lesson.isPreview());
+        previewCheckbox.setBackground(Color.WHITE);
+
+        JLabel videoLabel = new JLabel(lesson.getVideoPath() != null ?
+            "Current: " + new File(lesson.getVideoPath()).getName() : "No video selected");
+        videoLabel.setForeground(new Color(88, 88, 88));
+        final String[] selectedVideoPath = {lesson.getVideoPath()};
+
+        JButton chooseVideoButton = new JButton("Change Video File");
+        chooseVideoButton.addActionListener(e -> {
+            JFileChooser fileChooser = new JFileChooser();
+            fileChooser.setFileFilter(new javax.swing.filechooser.FileFilter() {
+                @Override
+                public boolean accept(File f) {
+                    if (f.isDirectory()) return true;
+                    String name = f.getName().toLowerCase();
+                    return name.endsWith(".mp4") || name.endsWith(".avi") ||
+                           name.endsWith(".mov") || name.endsWith(".mkv");
+                }
+
+                @Override
+                public String getDescription() {
+                    return "Video Files (*.mp4, *.avi, *.mov, *.mkv)";
+                }
+            });
+
+            int result = fileChooser.showOpenDialog(dialog);
+            if (result == JFileChooser.APPROVE_OPTION) {
+                File selectedFile = fileChooser.getSelectedFile();
+                selectedVideoPath[0] = selectedFile.getAbsolutePath();
+                videoLabel.setText("Selected: " + selectedFile.getName());
+            }
+        });
+
+        ModernButton saveButton = new ModernButton("Save Changes");
+        saveButton.setBackground(new Color(52, 152, 219));
+        ModernButton cancelButton = new ModernButton("Cancel");
+        cancelButton.setBackground(new Color(149, 165, 166));
+
+        panel.add(createLabel("Lesson Title:"));
+        panel.add(Box.createRigidArea(new Dimension(0, 5)));
+        panel.add(titleField);
+        panel.add(Box.createRigidArea(new Dimension(0, 15)));
+
+        panel.add(createLabel("Description:"));
+        panel.add(Box.createRigidArea(new Dimension(0, 5)));
+        panel.add(descScrollPane);
+        panel.add(Box.createRigidArea(new Dimension(0, 15)));
+
+        panel.add(createLabel("Duration (minutes):"));
+        panel.add(Box.createRigidArea(new Dimension(0, 5)));
+        panel.add(durationSpinner);
+        panel.add(Box.createRigidArea(new Dimension(0, 15)));
+
+        panel.add(previewCheckbox);
+        panel.add(Box.createRigidArea(new Dimension(0, 15)));
+
+        panel.add(createLabel("Video File:"));
+        panel.add(Box.createRigidArea(new Dimension(0, 5)));
+        panel.add(chooseVideoButton);
+        panel.add(Box.createRigidArea(new Dimension(0, 5)));
+        panel.add(videoLabel);
+        panel.add(Box.createRigidArea(new Dimension(0, 20)));
+
+        JPanel buttonPanel = new JPanel(new FlowLayout(FlowLayout.CENTER, 10, 0));
+        buttonPanel.setBackground(Color.WHITE);
+        buttonPanel.add(saveButton);
+        buttonPanel.add(cancelButton);
+        panel.add(buttonPanel);
+
+        saveButton.addActionListener(e -> {
+            try {
+                lesson.setTitle(titleField.getText().trim());
+                lesson.setDescription(descriptionArea.getText().trim());
+                lesson.setDurationMinutes((Integer) durationSpinner.getValue());
+                lesson.setPreview(previewCheckbox.isSelected());
+                lesson.setVideoPath(selectedVideoPath[0]);
+
+                boolean success = lessonService.updateLesson(lesson, currentUser.getId(), currentUser.getRole());
+                if (success) {
+                    JOptionPane.showMessageDialog(dialog,
+                        "Lesson updated successfully!",
+                        "Success",
+                        JOptionPane.INFORMATION_MESSAGE);
+                    dialog.dispose();
+                    parentDialog.dispose();
+                    manageLessons(courseId);
+                } else {
+                    JOptionPane.showMessageDialog(dialog,
+                        "Failed to update lesson",
+                        "Error",
+                        JOptionPane.ERROR_MESSAGE);
+                }
+            } catch (Exception ex) {
+                JOptionPane.showMessageDialog(dialog,
+                    "Error: " + ex.getMessage(),
+                    "Error",
+                    JOptionPane.ERROR_MESSAGE);
+            }
+        });
+
+        cancelButton.addActionListener(e -> dialog.dispose());
+
+        dialog.add(new JScrollPane(panel));
+        dialog.setVisible(true);
+    }
+
+    private void deleteLesson(JDialog parentDialog, int lessonId, int courseId) {
+        int confirm = JOptionPane.showConfirmDialog(parentDialog,
+            "Are you sure you want to delete this lesson?\nThis cannot be undone if students have progress.",
+            "Confirm Delete",
+            JOptionPane.YES_NO_OPTION,
+            JOptionPane.WARNING_MESSAGE);
+
+        if (confirm == JOptionPane.YES_OPTION) {
+            try {
+                boolean success = lessonService.deleteLesson(lessonId, currentUser.getId(), currentUser.getRole());
+                if (success) {
+                    JOptionPane.showMessageDialog(parentDialog,
+                        "Lesson deleted successfully",
+                        "Success",
+                        JOptionPane.INFORMATION_MESSAGE);
+                    parentDialog.dispose();
+                    manageLessons(courseId);
+                } else {
+                    JOptionPane.showMessageDialog(parentDialog,
+                        "Failed to delete lesson. It may have student progress.",
+                        "Error",
+                        JOptionPane.ERROR_MESSAGE);
+                }
+            } catch (Exception e) {
+                JOptionPane.showMessageDialog(parentDialog,
+                    "Error: " + e.getMessage(),
+                    "Error",
+                    JOptionPane.ERROR_MESSAGE);
+            }
+        }
+    }
+
+    private JLabel createLabel(String text) {
+        JLabel label = new JLabel(text);
+        label.setFont(new Font("Segoe UI", Font.BOLD, 13));
+        label.setForeground(new Color(33, 33, 33));
+        label.setAlignmentX(Component.CENTER_ALIGNMENT);
+        return label;
+    }
+
+    // Lesson button editor
+    class LessonButtonEditor extends DefaultCellEditor {
+        private JButton button;
+        private String label;
+        private boolean clicked;
+        private int currentRow;
+        private DefaultTableModel tableModel;
+        private int courseId;
+        private JDialog parentDialog;
+
+        public LessonButtonEditor(JCheckBox checkBox, DefaultTableModel model, int courseId, JDialog parentDialog) {
+            super(checkBox);
+            this.tableModel = model;
+            this.courseId = courseId;
+            this.parentDialog = parentDialog;
+            button = new JButton();
+            button.setOpaque(true);
+            button.addActionListener(e -> {
+                fireEditingStopped();
+                showLessonActionsMenu();
+            });
+        }
+
+        @Override
+        public Component getTableCellEditorComponent(JTable table, Object value,
+                                                      boolean isSelected, int row, int column) {
+            label = (value == null) ? "Actions" : value.toString();
+            button.setText(label);
+            clicked = true;
+            currentRow = row;
+            return button;
+        }
+
+        @Override
+        public Object getCellEditorValue() {
+            clicked = false;
+            return label;
+        }
+
+        private void showLessonActionsMenu() {
+            if (clicked && currentRow >= 0) {
+                int lessonId = (Integer) tableModel.getValueAt(currentRow, 1);
+
+                JPopupMenu menu = new JPopupMenu();
+
+                JMenuItem editItem = new JMenuItem("Edit");
+                editItem.addActionListener(e -> showEditLessonDialog(parentDialog, lessonId, courseId));
+                menu.add(editItem);
+
+                JMenuItem deleteItem = new JMenuItem("Delete");
+                deleteItem.setForeground(new Color(231, 76, 60));
+                deleteItem.addActionListener(e -> deleteLesson(parentDialog, lessonId, courseId));
+                menu.add(deleteItem);
+
+                menu.show(button, 0, button.getHeight());
+            }
+        }
     }
 }
