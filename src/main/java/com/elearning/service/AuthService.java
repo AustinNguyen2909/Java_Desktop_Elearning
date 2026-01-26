@@ -51,7 +51,7 @@ public class AuthService {
             // Hash password
             String passwordHash = PasswordUtil.hashPassword(password);
             user.setPasswordHash(passwordHash);
-            user.setActive(true);
+            user.setStatus("ACTIVE");  // Set user status to ACTIVE upon registration
 
             // Insert user
             return userDAO.insert(user);

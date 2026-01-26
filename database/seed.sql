@@ -1,18 +1,18 @@
 USE elearning_db;
 
 -- Default password for all seeded users
--- admin: admin123 (hash: $2a$12$LQv3c1yqBWVHxkd0LHAkCOYz6TtxMQJqhN8/LewY5GyYKBXHXxeYy)
--- instructor: instructor123 (hash: $2a$12$92IXUNpkjO0rOQ5byMi.Ye4oKoEa3Ro9llC/.og/at2.uheWG/igi)
--- student: student123 (hash: $2a$12$hZsmvadZLfIfzxe4ZUkIveFCbVU4rTDdVLVTrJvLON8GK3TnN8dMG)
+-- admin: admin123 (hash: $2a$12$Q4.X/aF4MtZmhRaZXQs5nOWlCpLq/eQ1OIwEOxa3VqXoUy4Uj4uVS)
+-- instructor: instructor123 (hash: $2a$12$Fz/Cxu1LfkT3lXF34j7dBup1s7i4EpHiD3F1wEkStw3LT0.nZWDFG)
+-- student: student123 (hash: $2a$12$kbVTJlaxqzxk1ppPjhfxa.88oVSfcAzDZJLU96YSwvYpof.hHltIW)
 
 -- Insert users
 INSERT INTO users (username, password_hash, role, email, phone, full_name, status) VALUES
-('admin', '$2a$12$LQv3c1yqBWVHxkd0LHAkCOYz6TtxMQJqhN8/LewY5GyYKBXHXxeYy', 'ADMIN', 'admin@elearning.com', '1000000001', 'System Administrator', 'ACTIVE'),
-('instructor1', '$2a$12$92IXUNpkjO0rOQ5byMi.Ye4oKoEa3Ro9llC/.og/at2.uheWG/igi', 'INSTRUCTOR', 'instructor1@elearning.com', '1000000002', 'John Instructor', 'ACTIVE'),
-('instructor2', '$2a$12$92IXUNpkjO0rOQ5byMi.Ye4oKoEa3Ro9llC/.og/at2.uheWG/igi', 'INSTRUCTOR', 'instructor2@elearning.com', '1000000003', 'Sarah Teacher', 'ACTIVE'),
-('student1', '$2a$12$hZsmvadZLfIfzxe4ZUkIveFCbVU4rTDdVLVTrJvLON8GK3TnN8dMG', 'USER', 'student1@elearning.com', '1000000004', 'Jane Student', 'ACTIVE'),
-('student2', '$2a$12$hZsmvadZLfIfzxe4ZUkIveFCbVU4rTDdVLVTrJvLON8GK3TnN8dMG', 'USER', 'student2@elearning.com', '1000000005', 'Bob Learner', 'ACTIVE'),
-('student3', '$2a$12$hZsmvadZLfIfzxe4ZUkIveFCbVU4rTDdVLVTrJvLON8GK3TnN8dMG', 'USER', 'student3@elearning.com', NULL, 'Alice Brown', 'PENDING');
+('admin', '$2a$12$Q4.X/aF4MtZmhRaZXQs5nOWlCpLq/eQ1OIwEOxa3VqXoUy4Uj4uVS', 'ADMIN', 'admin@elearning.com', '1000000001', 'System Administrator', 'ACTIVE'),
+('instructor1', '$2a$12$Fz/Cxu1LfkT3lXF34j7dBup1s7i4EpHiD3F1wEkStw3LT0.nZWDFG', 'INSTRUCTOR', 'instructor1@elearning.com', '1000000002', 'John Instructor', 'ACTIVE'),
+('instructor2', '$2a$12$Fz/Cxu1LfkT3lXF34j7dBup1s7i4EpHiD3F1wEkStw3LT0.nZWDFG', 'INSTRUCTOR', 'instructor2@elearning.com', '1000000003', 'Sarah Teacher', 'ACTIVE'),
+('student1', '$2a$12$kbVTJlaxqzxk1ppPjhfxa.88oVSfcAzDZJLU96YSwvYpof.hHltIW', 'USER', 'student1@elearning.com', '1000000004', 'Jane Student', 'ACTIVE'),
+('student2', '$2a$12$kbVTJlaxqzxk1ppPjhfxa.88oVSfcAzDZJLU96YSwvYpof.hHltIW', 'USER', 'student2@elearning.com', '1000000005', 'Bob Learner', 'ACTIVE'),
+('student3', '$2a$12$kbVTJlaxqzxk1ppPjhfxa.88oVSfcAzDZJLU96YSwvYpof.hHltIW', 'USER', 'student3@elearning.com', NULL, 'Alice Brown', 'PENDING');
 
 -- Insert courses
 INSERT INTO courses (instructor_id, title, description, status, category, difficulty_level, estimated_hours, is_published, approved_by, approved_at) VALUES
