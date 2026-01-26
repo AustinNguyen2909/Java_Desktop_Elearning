@@ -534,91 +534,12 @@ public class UserDashboard extends JFrame {
             return;
         }
 
-        // Create learning interface dialog
-        JDialog dialog = new JDialog(this, "Learning: " + course.getTitle(), true);
-        dialog.setSize(1200, 800);
-        dialog.setLocationRelativeTo(this);
-
-        JPanel mainPanel = new JPanel(new BorderLayout(10, 10));
-        mainPanel.setBackground(Color.WHITE);
-        mainPanel.setBorder(BorderFactory.createEmptyBorder(15, 15, 15, 15));
-
-        // Left panel - Lesson list
-        JPanel leftPanel = new JPanel(new BorderLayout());
-        leftPanel.setBackground(Color.WHITE);
-        leftPanel.setPreferredSize(new Dimension(300, 0));
-        leftPanel.setBorder(BorderFactory.createLineBorder(new Color(200, 200, 200)));
-
-        JLabel lessonsTitle = new JLabel("  Course Content");
-        lessonsTitle.setFont(new Font("Segoe UI", Font.BOLD, 14));
-        lessonsTitle.setForeground(new Color(33, 33, 33));
-        lessonsTitle.setPreferredSize(new Dimension(0, 40));
-        lessonsTitle.setOpaque(true);
-        lessonsTitle.setBackground(new Color(240, 240, 240));
-
-        // Lessons list
-        DefaultListModel<Lesson> lessonListModel = new DefaultListModel<>();
-        JList<Lesson> lessonList = new JList<>(lessonListModel);
-        lessonList.setCellRenderer(new LessonListCellRenderer());
-        lessonList.setSelectionMode(ListSelectionModel.SINGLE_SELECTION);
-
-        // Load lessons
-        try {
-            List<Lesson> lessons = lessonService.getCourseLessons(courseId, currentUser.getRole(), currentUser.getId(), true);
-            for (Lesson lesson : lessons) {
-                lessonListModel.addElement(lesson);
-            }
-        } catch (Exception e) {
-            JOptionPane.showMessageDialog(dialog,
-                "Error loading lessons: " + e.getMessage(),
-                "Error",
-                JOptionPane.ERROR_MESSAGE);
-        }
-
-        JScrollPane lessonsScrollPane = new JScrollPane(lessonList);
-        lessonsScrollPane.setBackground(Color.WHITE);
-        lessonsScrollPane.getViewport().setBackground(Color.WHITE);
-        leftPanel.add(lessonsTitle, BorderLayout.NORTH);
-        leftPanel.add(lessonsScrollPane, BorderLayout.CENTER);
-
-        // Progress panel
-        JPanel progressPanel = new JPanel(new FlowLayout(FlowLayout.LEFT));
-        progressPanel.setBackground(Color.WHITE);
-        JLabel progressLabel = new JLabel(String.format("Progress: %.1f%%", enrollment.getProgressPercent()));
-        progressLabel.setFont(new Font("Segoe UI", Font.PLAIN, 12));
-        progressLabel.setForeground(new Color(88, 88, 88));
-        progressPanel.add(progressLabel);
-        leftPanel.add(progressPanel, BorderLayout.SOUTH);
-
-        // Right panel - Lesson viewer
-        JPanel rightPanel = new JPanel(new BorderLayout(10, 10));
-        rightPanel.setBackground(Color.WHITE);
-
-        JLabel instructionLabel = new JLabel("<html><div style='text-align: center; padding: 50px;'>" +
-            "<h2>Select a lesson from the left to start learning</h2>" +
-            "<p>Click on any lesson to view its content</p></div></html>",
-            SwingConstants.CENTER);
-        instructionLabel.setFont(new Font("Segoe UI", Font.PLAIN, 14));
-        instructionLabel.setForeground(new Color(88, 88, 88));
-        rightPanel.add(instructionLabel, BorderLayout.CENTER);
-
-        // Lesson selection listener
-        lessonList.addListSelectionListener(e -> {
-            if (!e.getValueIsAdjusting()) {
-                Lesson selectedLesson = lessonList.getSelectedValue();
-                if (selectedLesson != null) {
-                    showLessonContent(dialog, rightPanel, selectedLesson, courseId, enrollment, progressLabel);
-                }
-            }
-        });
-
-        mainPanel.add(leftPanel, BorderLayout.WEST);
-        mainPanel.add(rightPanel, BorderLayout.CENTER);
-
-        dialog.add(mainPanel);
+        // Open LessonViewerDialog with video player and progress tracking
+        // FEATURE 2 & 3: Video Viewing and Progress Tracking
+        LessonViewerDialog dialog = new LessonViewerDialog(this, course);
         dialog.setVisible(true);
 
-        // Refresh course list when dialog closes
+        // Refresh course list when dialog closes to show updated progress
         loadMyCourses();
     }
 

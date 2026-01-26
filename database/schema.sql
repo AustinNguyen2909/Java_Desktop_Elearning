@@ -1,5 +1,18 @@
 -- E-Learning Platform Database Schema
 -- MySQL version
+--
+-- CRITICAL FEATURES IMPLEMENTED:
+-- 1. Course Creation with Hero Images (thumbnail_path)
+-- 2. Video Upload per Lesson (video_path)
+-- 3. Video-Based Progress Tracking (progress_percent, is_completed)
+--
+-- File Storage Strategy:
+-- - Hero Images: Stored in thumbnails/course_X/ directory
+-- - Videos: Stored in videos/course_X/ directory
+-- - Only file paths are stored in database, not the files themselves
+--
+-- Progress Tracking Formula:
+-- progress_percent = (completed_lessons / total_lessons) × 100
 
 -- Create database
 CREATE DATABASE IF NOT EXISTS elearning_db;
@@ -35,18 +48,20 @@ CREATE TABLE users (
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4;
 
 -- Courses table
+-- FEATURE 1: Hero Image Upload
+-- thumbnail_path stores absolute path to hero image (e.g., /path/to/project/thumbnails/course_1/course_1_1674567890.jpg)
 CREATE TABLE courses (
     id INT PRIMARY KEY AUTO_INCREMENT,
     instructor_id INT NOT NULL,
     title VARCHAR(200) NOT NULL,
     description TEXT,
-    thumbnail_path VARCHAR(255),
+    thumbnail_path VARCHAR(255),              -- Hero image path (locally stored)
     status ENUM('PENDING', 'APPROVED', 'REJECTED') DEFAULT 'PENDING',
     rejection_reason TEXT,
     category VARCHAR(50),
     difficulty_level ENUM('BEGINNER', 'INTERMEDIATE', 'ADVANCED'),
     estimated_hours INT,
-    is_published BOOLEAN DEFAULT FALSE,
+    is_published BOOLEAN DEFAULT FALSE,       -- Students can only see published courses
     created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
     updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
     approved_at TIMESTAMP NULL,
@@ -61,15 +76,18 @@ CREATE TABLE courses (
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4;
 
 -- Lessons table
+-- FEATURE 2: Video Upload per Lesson
+-- video_path stores absolute path to video file (e.g., /path/to/project/videos/course_1/lesson_1_1674567890.mp4)
+-- Supported formats: MP4, AVI, MOV, MKV, FLV, WMV (max 500 MB)
 CREATE TABLE lessons (
     id INT PRIMARY KEY AUTO_INCREMENT,
     course_id INT NOT NULL,
     title VARCHAR(200) NOT NULL,
-    video_path VARCHAR(500),
-    content_text TEXT,
+    video_path VARCHAR(500),                  -- Video file path (locally stored)
+    content_text TEXT,                        -- Lesson description
     duration_minutes INT,
-    order_index INT NOT NULL DEFAULT 0,
-    is_preview BOOLEAN DEFAULT FALSE,
+    order_index INT NOT NULL DEFAULT 0,       -- Display order in course
+    is_preview BOOLEAN DEFAULT FALSE,         -- Allow non-enrolled users to preview
     created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
     updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
 
@@ -80,14 +98,17 @@ CREATE TABLE lessons (
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4;
 
 -- Enrollments table
+-- FEATURE 3: Video-Based Progress Tracking (Course Level)
+-- progress_percent is calculated as: (completed_lessons / total_lessons) × 100
+-- Automatically updated when student marks a lesson as complete
 CREATE TABLE enrollments (
     id INT PRIMARY KEY AUTO_INCREMENT,
     user_id INT NOT NULL,
     course_id INT NOT NULL,
     enrolled_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
-    progress_percent DECIMAL(5,2) DEFAULT 0.00,
-    last_accessed_at TIMESTAMP NULL,
-    completed_at TIMESTAMP NULL,
+    progress_percent DECIMAL(5,2) DEFAULT 0.00,    -- Progress: 0.00 to 100.00
+    last_accessed_at TIMESTAMP NULL,                -- Last time student accessed course
+    completed_at TIMESTAMP NULL,                    -- Set when progress reaches 100%
 
     FOREIGN KEY (user_id) REFERENCES users(id) ON DELETE CASCADE,
     FOREIGN KEY (course_id) REFERENCES courses(id) ON DELETE CASCADE,
@@ -98,13 +119,16 @@ CREATE TABLE enrollments (
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4;
 
 -- Lesson Progress table
+-- FEATURE 3: Video-Based Progress Tracking (Lesson Level)
+-- Tracks which videos each student has watched and completed
+-- Used to calculate course progress_percent in enrollments table
 CREATE TABLE lesson_progress (
     id INT PRIMARY KEY AUTO_INCREMENT,
     user_id INT NOT NULL,
     lesson_id INT NOT NULL,
-    is_completed BOOLEAN DEFAULT FALSE,
-    completed_at TIMESTAMP NULL,
-    last_opened_at TIMESTAMP NULL,
+    is_completed BOOLEAN DEFAULT FALSE,         -- Video marked as complete by student
+    completed_at TIMESTAMP NULL,                -- When student marked video complete
+    last_opened_at TIMESTAMP NULL,              -- Last time student opened this video
 
     FOREIGN KEY (user_id) REFERENCES users(id) ON DELETE CASCADE,
     FOREIGN KEY (lesson_id) REFERENCES lessons(id) ON DELETE CASCADE,

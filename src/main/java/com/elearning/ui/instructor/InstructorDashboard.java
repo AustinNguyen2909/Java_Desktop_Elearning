@@ -11,6 +11,7 @@ import com.elearning.ui.components.ModernButton;
 import com.elearning.ui.components.ModernTextField;
 import com.elearning.util.ChartUtil;
 import com.elearning.util.SessionManager;
+import com.elearning.util.FileUtil;
 import com.elearning.util.VideoUtil;
 import org.jfree.chart.ChartPanel;
 
@@ -289,19 +290,41 @@ public class InstructorDashboard extends JFrame {
         JSpinner hoursSpinner = new JSpinner(new SpinnerNumberModel(10, 1, 500, 1));
         formPanel.add(hoursSpinner, gbc);
 
-        // Thumbnail Path (optional)
+        // Hero Image Upload
         gbc.gridx = 0;
         gbc.gridy = 5;
-        JLabel thumbLbl = new JLabel("Thumbnail Path:");
+        JLabel thumbLbl = new JLabel("Hero Image:");
         thumbLbl.setForeground(new Color(33, 33, 33)); // Dark text
         formPanel.add(thumbLbl, gbc);
 
         gbc.gridx = 1;
-        JTextField thumbnailField = new JTextField(30);
-        thumbnailField.setBackground(Color.WHITE);
-        thumbnailField.setForeground(new Color(33, 33, 33));
-        thumbnailField.setCaretColor(new Color(33, 33, 33));
-        formPanel.add(thumbnailField, gbc);
+        JPanel thumbnailPanel = new JPanel(new BorderLayout(10, 0));
+        thumbnailPanel.setBackground(Color.WHITE);
+
+        JLabel thumbnailInfoLabel = new JLabel("No image selected");
+        thumbnailInfoLabel.setForeground(new Color(100, 100, 100));
+
+        JButton uploadThumbnailBtn = new JButton("Upload Image");
+        uploadThumbnailBtn.setBackground(new Color(30, 64, 175));
+        uploadThumbnailBtn.setForeground(Color.WHITE);
+        uploadThumbnailBtn.setFocusPainted(false);
+        uploadThumbnailBtn.setBorderPainted(false);
+        uploadThumbnailBtn.setFont(new Font("Segoe UI", Font.PLAIN, 12));
+        uploadThumbnailBtn.setPreferredSize(new Dimension(120, 30));
+
+        final String[] thumbnailPath = {null};
+
+        uploadThumbnailBtn.addActionListener(e -> {
+            String path = FileUtil.uploadThumbnailTemp(this);
+            if (path != null) {
+                thumbnailPath[0] = path;
+                thumbnailInfoLabel.setText(FileUtil.getImageInfo(path));
+            }
+        });
+
+        thumbnailPanel.add(thumbnailInfoLabel, BorderLayout.CENTER);
+        thumbnailPanel.add(uploadThumbnailBtn, BorderLayout.EAST);
+        formPanel.add(thumbnailPanel, gbc);
 
         // Submit button
         gbc.gridx = 1;
@@ -320,7 +343,6 @@ public class InstructorDashboard extends JFrame {
             String category = (String) categoryCombo.getSelectedItem();
             String difficulty = (String) difficultyCombo.getSelectedItem();
             int hours = (Integer) hoursSpinner.getValue();
-            String thumbnail = thumbnailField.getText().trim();
 
             if (title.isEmpty()) {
                 JOptionPane.showMessageDialog(this, "Please enter a course title", "Error", JOptionPane.ERROR_MESSAGE);
@@ -340,11 +362,20 @@ public class InstructorDashboard extends JFrame {
                 course.setCategory(category);
                 course.setDifficultyLevel(difficulty);
                 course.setEstimatedHours(hours);
-                course.setThumbnailPath(thumbnail.isEmpty() ? null : thumbnail);
+                course.setThumbnailPath(thumbnailPath[0]); // Temp path for now
 
                 boolean success = courseService.createCourse(course, currentUser.getRole());
 
                 if (success) {
+                    // Move thumbnail from temp to course directory if uploaded
+                    if (thumbnailPath[0] != null) {
+                        String finalPath = FileUtil.moveThumbnailFromTemp(thumbnailPath[0], course.getId());
+                        if (finalPath != null) {
+                            course.setThumbnailPath(finalPath);
+                            courseService.updateCourse(course, currentUser.getId(), currentUser.getRole());
+                        }
+                    }
+
                     JOptionPane.showMessageDialog(this,
                         "Course created successfully! It will be PENDING until admin approval.",
                         "Success",
@@ -353,7 +384,8 @@ public class InstructorDashboard extends JFrame {
                     // Clear form
                     titleField.setText("");
                     descriptionArea.setText("");
-                    thumbnailField.setText("");
+                    thumbnailPath[0] = null;
+                    thumbnailInfoLabel.setText("No image selected");
                     hoursSpinner.setValue(10);
 
                     // Refresh courses list
