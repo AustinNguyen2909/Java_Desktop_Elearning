@@ -35,7 +35,7 @@ public class RegisterDialog extends JDialog {
     }
 
     private void initComponents() {
-        setSize(500, 650);
+        setSize(500, 700);
         setLocationRelativeTo(getParent());
         setResizable(false);
 
@@ -62,6 +62,49 @@ public class RegisterDialog extends JDialog {
         errorLabel.setForeground(new Color(231, 76, 60));
         errorLabel.setFont(new Font("Segoe UI", Font.PLAIN, 12));
         errorLabel.setAlignmentX(Component.CENTER_ALIGNMENT);
+    }
+
+    private JPanel createPasswordFieldWithToggle(ModernPasswordField field) {
+        JPanel passwordPanel = new JPanel();
+        passwordPanel.setLayout(new BorderLayout());
+        passwordPanel.setBackground(Color.WHITE);
+        passwordPanel.setMaximumSize(new Dimension(300, 45));
+        passwordPanel.setAlignmentX(Component.CENTER_ALIGNMENT);
+
+        // Adjust password field padding
+        field.setBorder(BorderFactory.createCompoundBorder(
+            BorderFactory.createLineBorder(new Color(200, 200, 200), 1, true),
+            BorderFactory.createEmptyBorder(8, 12, 8, 45)
+        ));
+
+        // Toggle button with eye icon
+        JButton toggleButton = new JButton("👁");
+        toggleButton.setFont(new Font("Segoe UI Emoji", Font.PLAIN, 16));
+        toggleButton.setPreferredSize(new Dimension(40, 45));
+        toggleButton.setFocusPainted(false);
+        toggleButton.setBorderPainted(false);
+        toggleButton.setContentAreaFilled(false);
+        toggleButton.setCursor(new Cursor(Cursor.HAND_CURSOR));
+        toggleButton.setForeground(new Color(100, 100, 100));
+
+        toggleButton.addActionListener(e -> {
+            if (field.getEchoChar() == '\u0000') {
+                // Hide password
+                field.setEchoChar('•');
+                toggleButton.setText("👁");
+                toggleButton.setForeground(new Color(100, 100, 100));
+            } else {
+                // Show password
+                field.setEchoChar('\u0000');
+                toggleButton.setText("👁‍🗨");
+                toggleButton.setForeground(new Color(52, 152, 219));
+            }
+        });
+
+        passwordPanel.add(field, BorderLayout.CENTER);
+        passwordPanel.add(toggleButton, BorderLayout.EAST);
+
+        return passwordPanel;
     }
 
     private void setupLayout() {
@@ -109,12 +152,12 @@ public class RegisterDialog extends JDialog {
 
         mainPanel.add(createFieldLabel("Password"));
         mainPanel.add(Box.createRigidArea(new Dimension(0, 8)));
-        mainPanel.add(passwordField);
+        mainPanel.add(createPasswordFieldWithToggle(passwordField));
         mainPanel.add(Box.createRigidArea(new Dimension(0, 15)));
 
         mainPanel.add(createFieldLabel("Confirm Password"));
         mainPanel.add(Box.createRigidArea(new Dimension(0, 8)));
-        mainPanel.add(confirmPasswordField);
+        mainPanel.add(createPasswordFieldWithToggle(confirmPasswordField));
         mainPanel.add(Box.createRigidArea(new Dimension(0, 15)));
 
         mainPanel.add(errorLabel);

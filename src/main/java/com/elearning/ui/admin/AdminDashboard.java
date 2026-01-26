@@ -27,7 +27,7 @@ public class AdminDashboard extends JFrame {
     private final UserService userService;
     private final AnalyticsService analyticsService;
 
-    private JTabbedPane tabbedPane;
+    private JPanel contentPanel;
     private JTable pendingCoursesTable;
     private DefaultTableModel pendingCoursesModel;
     private JTable allCoursesTable;
@@ -56,21 +56,31 @@ public class AdminDashboard extends JFrame {
         setLocationRelativeTo(null);
 
         JPanel mainPanel = new JPanel(new BorderLayout());
-        mainPanel.setBackground(Color.WHITE); // Light background
+        mainPanel.setBackground(Color.WHITE);
 
         // Header
         JPanel headerPanel = createHeader();
 
-        // Tabbed pane
-        tabbedPane = new JTabbedPane();
-        tabbedPane.setBackground(Color.WHITE); // Light background
-        tabbedPane.addTab("Pending Courses", createPendingCoursesPanel());
-        tabbedPane.addTab("All Courses", createAllCoursesPanel());
-        tabbedPane.addTab("User Management", createUserManagementPanel());
-        tabbedPane.addTab("Statistics", createStatisticsPanel());
+        // Sidebar + Content layout
+        JPanel contentArea = new JPanel(new BorderLayout());
+        contentArea.setBackground(Color.WHITE);
+
+        // Create sidebar
+        JPanel sidebar = createSidebar();
+
+        // Create content panel with CardLayout
+        contentPanel = new JPanel(new CardLayout());
+        contentPanel.setBackground(Color.WHITE);
+        contentPanel.add(createPendingCoursesPanel(), "Pending Courses");
+        contentPanel.add(createAllCoursesPanel(), "All Courses");
+        contentPanel.add(createUserManagementPanel(), "User Management");
+        contentPanel.add(createStatisticsPanel(), "Statistics");
+
+        contentArea.add(sidebar, BorderLayout.WEST);
+        contentArea.add(contentPanel, BorderLayout.CENTER);
 
         mainPanel.add(headerPanel, BorderLayout.NORTH);
-        mainPanel.add(tabbedPane, BorderLayout.CENTER);
+        mainPanel.add(contentArea, BorderLayout.CENTER);
 
         setContentPane(mainPanel);
     }
@@ -85,18 +95,62 @@ public class AdminDashboard extends JFrame {
         titleLabel.setFont(new Font("Segoe UI", Font.BOLD, 20));
         titleLabel.setForeground(new Color(33, 33, 33));
 
+        headerPanel.add(titleLabel, BorderLayout.WEST);
+
+        return headerPanel;
+    }
+
+    private JPanel createSidebar() {
+        JPanel sidebar = new JPanel();
+        sidebar.setLayout(new BoxLayout(sidebar, BoxLayout.Y_AXIS));
+        sidebar.setBackground(new Color(248, 249, 250));
+        sidebar.setPreferredSize(new Dimension(250, 0));
+        sidebar.setBorder(BorderFactory.createMatteBorder(0, 0, 0, 1, new Color(230, 230, 230)));
+
+        // Add menu items
+        sidebar.add(Box.createRigidArea(new Dimension(0, 20)));
+        sidebar.add(createMenuItem("Pending Courses", "Pending Courses"));
+        sidebar.add(Box.createRigidArea(new Dimension(0, 5)));
+        sidebar.add(createMenuItem("All Courses", "All Courses"));
+        sidebar.add(Box.createRigidArea(new Dimension(0, 5)));
+        sidebar.add(createMenuItem("User Management", "User Management"));
+        sidebar.add(Box.createRigidArea(new Dimension(0, 5)));
+        sidebar.add(createMenuItem("Statistics", "Statistics"));
+
+        // Push logout button to bottom
+        sidebar.add(Box.createVerticalGlue());
+
+        // Logout button at bottom
         JButton logoutButton = new JButton("Logout");
-        logoutButton.setBackground(new Color(220, 53, 69)); // Red for logout
+        logoutButton.setBackground(new Color(220, 53, 69));
         logoutButton.setForeground(Color.WHITE);
         logoutButton.setFocusPainted(false);
         logoutButton.setBorderPainted(false);
-        logoutButton.setFont(new Font("Segoe UI", Font.BOLD, 12));
+        logoutButton.setFont(new Font("Segoe UI", Font.BOLD, 14));
+        logoutButton.setAlignmentX(Component.CENTER_ALIGNMENT);
+        logoutButton.setMaximumSize(new Dimension(220, 45));
         logoutButton.addActionListener(e -> logout());
 
-        headerPanel.add(titleLabel, BorderLayout.WEST);
-        headerPanel.add(logoutButton, BorderLayout.EAST);
+        sidebar.add(logoutButton);
+        sidebar.add(Box.createRigidArea(new Dimension(0, 20)));
 
-        return headerPanel;
+        return sidebar;
+    }
+
+    private JButton createMenuItem(String text, String panelName) {
+        JButton menuItem = new JButton(text);
+        menuItem.setBackground(new Color(30, 64, 175));
+        menuItem.setForeground(Color.WHITE);
+        menuItem.setFocusPainted(false);
+        menuItem.setBorderPainted(false);
+        menuItem.setFont(new Font("Segoe UI", Font.BOLD, 14));
+        menuItem.setAlignmentX(Component.CENTER_ALIGNMENT);
+        menuItem.setMaximumSize(new Dimension(220, 45));
+        menuItem.addActionListener(e -> {
+            CardLayout cl = (CardLayout) contentPanel.getLayout();
+            cl.show(contentPanel, panelName);
+        });
+        return menuItem;
     }
 
     private JPanel createPendingCoursesPanel() {
@@ -332,10 +386,12 @@ public class AdminDashboard extends JFrame {
         JPanel mainContent = new JPanel();
         mainContent.setLayout(new BoxLayout(mainContent, BoxLayout.Y_AXIS));
         mainContent.setBackground(Color.WHITE);
+        mainContent.setBorder(BorderFactory.createEmptyBorder(0, 10, 0, 10));
 
-        // Statistics cards grid
-        JPanel statsContent = new JPanel(new GridLayout(0, 2, 20, 20));
+        // Statistics cards grid - responsive
+        JPanel statsContent = new JPanel(new GridLayout(0, 2, 15, 15));
         statsContent.setBackground(Color.WHITE);
+        statsContent.setMaximumSize(new Dimension(Integer.MAX_VALUE, Integer.MAX_VALUE));
 
         try {
             AnalyticsService.PlatformStatistics stats = analyticsService.getPlatformStatistics(currentUser.getRole());
@@ -380,10 +436,10 @@ public class AdminDashboard extends JFrame {
             chartsTitle.setAlignmentX(Component.LEFT_ALIGNMENT);
             chartsSection.add(chartsTitle);
 
-            // Charts panel - 3 charts in a row
-            JPanel chartsPanel = new JPanel(new GridLayout(1, 3, 15, 15));
+            // Charts panel - 3 charts in a responsive grid
+            JPanel chartsPanel = new JPanel(new GridLayout(1, 3, 10, 10));
             chartsPanel.setBackground(Color.WHITE);
-            chartsPanel.setAlignmentX(Component.LEFT_ALIGNMENT);
+            chartsPanel.setMaximumSize(new Dimension(Integer.MAX_VALUE, 300));
 
             // User role distribution pie chart
             ChartPanel userRoleChart = ChartUtil.createUserRolePieChart(
@@ -391,6 +447,7 @@ public class AdminDashboard extends JFrame {
                 stats.totalInstructors,
                 stats.totalAdmins
             );
+            userRoleChart.setPreferredSize(new Dimension(280, 250));
             chartsPanel.add(userRoleChart);
 
             // Course status pie chart
@@ -400,6 +457,7 @@ public class AdminDashboard extends JFrame {
                 stats.pendingCourses,
                 rejectedCourses
             );
+            courseStatusChart.setPreferredSize(new Dimension(280, 250));
             chartsPanel.add(courseStatusChart);
 
             // Enrollment status pie chart
@@ -407,9 +465,11 @@ public class AdminDashboard extends JFrame {
                 stats.activeEnrollments,
                 stats.completedEnrollments
             );
+            enrollmentStatusChart.setPreferredSize(new Dimension(280, 250));
             chartsPanel.add(enrollmentStatusChart);
 
             chartsSection.add(chartsPanel);
+            mainContent.add(Box.createRigidArea(new Dimension(0, 10)));
             mainContent.add(chartsSection);
 
             // Top courses chart (if available)
@@ -435,9 +495,12 @@ public class AdminDashboard extends JFrame {
                 }
 
                 ChartPanel topCoursesChart = ChartUtil.createTopCoursesChart(courseTitles, enrollmentCounts, 5);
+                topCoursesChart.setPreferredSize(new Dimension(850, 300));
+                topCoursesChart.setMaximumSize(new Dimension(Integer.MAX_VALUE, 300));
                 topCoursesChart.setAlignmentX(Component.LEFT_ALIGNMENT);
                 topCoursesSection.add(topCoursesChart);
 
+                mainContent.add(Box.createRigidArea(new Dimension(0, 10)));
                 mainContent.add(topCoursesSection);
             }
 
@@ -451,6 +514,7 @@ public class AdminDashboard extends JFrame {
         scrollPane.setBackground(Color.WHITE);
         scrollPane.getViewport().setBackground(Color.WHITE);
         scrollPane.setBorder(null);
+        scrollPane.setHorizontalScrollBarPolicy(JScrollPane.HORIZONTAL_SCROLLBAR_NEVER);
         scrollPane.getVerticalScrollBar().setUnitIncrement(16);
 
         panel.add(topPanel, BorderLayout.NORTH);
@@ -464,8 +528,10 @@ public class AdminDashboard extends JFrame {
         card.setBackground(Color.WHITE);
         card.setBorder(BorderFactory.createCompoundBorder(
             BorderFactory.createLineBorder(new Color(220, 220, 220), 2),
-            BorderFactory.createEmptyBorder(20, 20, 20, 20)
+            BorderFactory.createEmptyBorder(15, 15, 15, 15)
         ));
+        card.setPreferredSize(new Dimension(200, 100));
+        card.setMaximumSize(new Dimension(Integer.MAX_VALUE, 100));
 
         JLabel titleLabel = new JLabel(title);
         titleLabel.setFont(new Font("Segoe UI", Font.PLAIN, 14));
@@ -482,11 +548,19 @@ public class AdminDashboard extends JFrame {
     }
 
     private void refreshStatistics() {
-        // Re-create the statistics tab
-        int selectedIndex = tabbedPane.getSelectedIndex();
-        tabbedPane.removeTabAt(3); // Remove Statistics tab
-        tabbedPane.insertTab("Statistics", null, createStatisticsPanel(), null, 3);
-        tabbedPane.setSelectedIndex(selectedIndex);
+        // Re-create the statistics panel
+        Component[] components = contentPanel.getComponents();
+        for (int i = 0; i < components.length; i++) {
+            if ("Statistics".equals(components[i].getName())) {
+                contentPanel.remove(i);
+                break;
+            }
+        }
+        JPanel statsPanel = createStatisticsPanel();
+        statsPanel.setName("Statistics");
+        contentPanel.add(statsPanel, "Statistics");
+        CardLayout cl = (CardLayout) contentPanel.getLayout();
+        cl.show(contentPanel, "Statistics");
     }
 
     private void loadPendingCourses() {

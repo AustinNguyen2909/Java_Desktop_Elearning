@@ -26,7 +26,7 @@ public class UserDashboard extends JFrame {
     private final EnrollmentService enrollmentService;
     private final LessonService lessonService;
 
-    private JTabbedPane tabbedPane;
+    private JPanel contentPanel;
     private JTable availableCoursesTable;
     private DefaultTableModel availableCoursesModel;
     private JTable myCoursesTable;
@@ -51,20 +51,30 @@ public class UserDashboard extends JFrame {
         setLocationRelativeTo(null);
 
         JPanel mainPanel = new JPanel(new BorderLayout());
-        mainPanel.setBackground(Color.WHITE); // Light background
+        mainPanel.setBackground(Color.WHITE);
 
         // Header
         JPanel headerPanel = createHeader();
 
-        // Tabbed pane
-        tabbedPane = new JTabbedPane();
-        tabbedPane.setBackground(Color.WHITE); // Light background
-        tabbedPane.addTab("Browse Courses", createBrowseCoursesPanel());
-        tabbedPane.addTab("My Courses", createMyCoursesPanel());
-        tabbedPane.addTab("My Profile", createProfilePanel());
+        // Sidebar + Content layout
+        JPanel contentArea = new JPanel(new BorderLayout());
+        contentArea.setBackground(Color.WHITE);
+
+        // Create sidebar
+        JPanel sidebar = createSidebar();
+
+        // Create content panel with CardLayout
+        contentPanel = new JPanel(new CardLayout());
+        contentPanel.setBackground(Color.WHITE);
+        contentPanel.add(createBrowseCoursesPanel(), "Browse Courses");
+        contentPanel.add(createMyCoursesPanel(), "My Courses");
+        contentPanel.add(createProfilePanel(), "My Profile");
+
+        contentArea.add(sidebar, BorderLayout.WEST);
+        contentArea.add(contentPanel, BorderLayout.CENTER);
 
         mainPanel.add(headerPanel, BorderLayout.NORTH);
-        mainPanel.add(tabbedPane, BorderLayout.CENTER);
+        mainPanel.add(contentArea, BorderLayout.CENTER);
 
         setContentPane(mainPanel);
     }
@@ -79,18 +89,60 @@ public class UserDashboard extends JFrame {
         titleLabel.setFont(new Font("Segoe UI", Font.BOLD, 20));
         titleLabel.setForeground(new Color(33, 33, 33));
 
+        headerPanel.add(titleLabel, BorderLayout.WEST);
+
+        return headerPanel;
+    }
+
+    private JPanel createSidebar() {
+        JPanel sidebar = new JPanel();
+        sidebar.setLayout(new BoxLayout(sidebar, BoxLayout.Y_AXIS));
+        sidebar.setBackground(new Color(248, 249, 250));
+        sidebar.setPreferredSize(new Dimension(250, 0));
+        sidebar.setBorder(BorderFactory.createMatteBorder(0, 0, 0, 1, new Color(230, 230, 230)));
+
+        // Add menu items
+        sidebar.add(Box.createRigidArea(new Dimension(0, 20)));
+        sidebar.add(createMenuItem("Browse Courses", "Browse Courses"));
+        sidebar.add(Box.createRigidArea(new Dimension(0, 5)));
+        sidebar.add(createMenuItem("My Courses", "My Courses"));
+        sidebar.add(Box.createRigidArea(new Dimension(0, 5)));
+        sidebar.add(createMenuItem("My Profile", "My Profile"));
+
+        // Push logout button to bottom
+        sidebar.add(Box.createVerticalGlue());
+
+        // Logout button at bottom
         JButton logoutButton = new JButton("Logout");
-        logoutButton.setBackground(new Color(220, 53, 69)); // Red for logout
+        logoutButton.setBackground(new Color(220, 53, 69));
         logoutButton.setForeground(Color.WHITE);
         logoutButton.setFocusPainted(false);
         logoutButton.setBorderPainted(false);
-        logoutButton.setFont(new Font("Segoe UI", Font.BOLD, 12));
+        logoutButton.setFont(new Font("Segoe UI", Font.BOLD, 14));
+        logoutButton.setAlignmentX(Component.CENTER_ALIGNMENT);
+        logoutButton.setMaximumSize(new Dimension(220, 45));
         logoutButton.addActionListener(e -> logout());
 
-        headerPanel.add(titleLabel, BorderLayout.WEST);
-        headerPanel.add(logoutButton, BorderLayout.EAST);
+        sidebar.add(logoutButton);
+        sidebar.add(Box.createRigidArea(new Dimension(0, 20)));
 
-        return headerPanel;
+        return sidebar;
+    }
+
+    private JButton createMenuItem(String text, String panelName) {
+        JButton menuItem = new JButton(text);
+        menuItem.setBackground(new Color(30, 64, 175));
+        menuItem.setForeground(Color.WHITE);
+        menuItem.setFocusPainted(false);
+        menuItem.setBorderPainted(false);
+        menuItem.setFont(new Font("Segoe UI", Font.BOLD, 14));
+        menuItem.setAlignmentX(Component.CENTER_ALIGNMENT);
+        menuItem.setMaximumSize(new Dimension(220, 45));
+        menuItem.addActionListener(e -> {
+            CardLayout cl = (CardLayout) contentPanel.getLayout();
+            cl.show(contentPanel, panelName);
+        });
+        return menuItem;
     }
 
     private JPanel createBrowseCoursesPanel() {
