@@ -443,50 +443,10 @@ public class UserDashboard extends JFrame {
     }
 
     private void viewCourseDetails(int courseId) {
-        try {
-            Course course = courseService.getCourseById(courseId);
-            if (course != null) {
-                boolean enrolled = enrollmentService.isEnrolled(currentUser.getId(), courseId);
-
-                String details = String.format(
-                    "Course Details:\n\n" +
-                    "Title: %s\n" +
-                    "Instructor: %s\n" +
-                    "Category: %s\n" +
-                    "Difficulty: %s\n" +
-                    "Estimated Hours: %d\n" +
-                    "Average Rating: %.1f / 5.0\n" +
-                    "Students Enrolled: %d\n" +
-                    "Your Status: %s\n\n" +
-                    "Description:\n%s",
-                    course.getTitle(),
-                    course.getInstructorName(),
-                    course.getCategory(),
-                    course.getDifficultyLevel(),
-                    course.getEstimatedHours(),
-                    course.getAverageRating(),
-                    course.getEnrollmentCount(),
-                    enrolled ? "Enrolled" : "Not Enrolled",
-                    course.getDescription()
-                );
-
-                JTextArea textArea = new JTextArea(details);
-                textArea.setBackground(Color.WHITE);
-                textArea.setForeground(new Color(33, 33, 33));
-                textArea.setCaretColor(new Color(33, 33, 33));
-                textArea.setEditable(false);
-                textArea.setLineWrap(true);
-                textArea.setWrapStyleWord(true);
-                JScrollPane scrollPane = new JScrollPane(textArea);
-                scrollPane.setBackground(Color.WHITE);
-                scrollPane.getViewport().setBackground(Color.WHITE);
-                scrollPane.setPreferredSize(new Dimension(500, 400));
-
-                JOptionPane.showMessageDialog(this, scrollPane, "Course Details", JOptionPane.INFORMATION_MESSAGE);
-            }
-        } catch (Exception e) {
-            JOptionPane.showMessageDialog(this, "Error: " + e.getMessage(), "Error", JOptionPane.ERROR_MESSAGE);
-        }
+        com.elearning.ui.components.CourseDetailsDialog dialog = 
+            new com.elearning.ui.components.CourseDetailsDialog(this, courseId);
+        dialog.setVisible(true);
+        loadAvailableCourses();
     }
 
     private void enrollInCourse(int courseId) {

@@ -1298,23 +1298,11 @@ public class AdminDashboard extends JFrame {
             if (clicked && currentRow >= 0) {
                 int courseId = (Integer) pendingCoursesModel.getValueAt(currentRow, 0);
 
-                JPopupMenu menu = new JPopupMenu();
-
-                JMenuItem viewItem = new JMenuItem("View Details");
-                viewItem.addActionListener(e -> viewCourseDetails(courseId));
-                menu.add(viewItem);
-
-                menu.addSeparator();
-
-                JMenuItem approveItem = new JMenuItem("Approve");
-                approveItem.addActionListener(e -> approveCourse(courseId));
-                menu.add(approveItem);
-
-                JMenuItem rejectItem = new JMenuItem("Reject");
-                rejectItem.addActionListener(e -> rejectCourse(courseId));
-                menu.add(rejectItem);
-
-                menu.show(button, 0, button.getHeight());
+                com.elearning.ui.components.CourseDetailsDialog dialog = 
+                    new com.elearning.ui.components.CourseDetailsDialog(AdminDashboard.this, courseId);
+                dialog.setVisible(true);
+                loadPendingCourses();
+                loadAllCourses();
             }
         }
     }

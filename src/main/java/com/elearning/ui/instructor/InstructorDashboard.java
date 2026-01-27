@@ -638,11 +638,21 @@ public class InstructorDashboard extends JFrame {
                 JPopupMenu menu = new JPopupMenu();
 
                 JMenuItem viewItem = new JMenuItem("View Details");
-                viewItem.addActionListener(e -> viewCourse(courseId));
+                viewItem.addActionListener(e -> {
+                    com.elearning.ui.components.CourseDetailsDialog dialog = 
+                        new com.elearning.ui.components.CourseDetailsDialog(InstructorDashboard.this, courseId);
+                    dialog.setVisible(true);
+                    loadCourses(); // Refresh list after dialog closes
+                });
                 menu.add(viewItem);
 
                 JMenuItem lessonsItem = new JMenuItem("Manage Lessons");
-                lessonsItem.addActionListener(e -> manageLessons(courseId));
+                lessonsItem.addActionListener(e -> {
+                    com.elearning.ui.components.CourseDetailsDialog dialog = 
+                        new com.elearning.ui.components.CourseDetailsDialog(InstructorDashboard.this, courseId);
+                    dialog.setVisible(true);
+                    loadCourses();
+                });
                 menu.add(lessonsItem);
 
                 if ("APPROVED".equals(status)) {
@@ -667,53 +677,17 @@ public class InstructorDashboard extends JFrame {
     }
 
     private void viewCourse(int courseId) {
-        try {
-            Course course = courseService.getCourseById(courseId);
-            if (course != null) {
-                String details = String.format(
-                    "Course Details:\n\n" +
-                    "ID: %d\n" +
-                    "Title: %s\n" +
-                    "Category: %s\n" +
-                    "Difficulty: %s\n" +
-                    "Estimated Hours: %d\n" +
-                    "Status: %s\n" +
-                    "Published: %s\n" +
-                    "Enrollments: %d\n" +
-                    "Average Rating: %.1f\n\n" +
-                    "Description:\n%s",
-                    course.getId(),
-                    course.getTitle(),
-                    course.getCategory(),
-                    course.getDifficultyLevel(),
-                    course.getEstimatedHours(),
-                    course.getStatus(),
-                    course.isPublished() ? "Yes" : "No",
-                    course.getEnrollmentCount(),
-                    course.getAverageRating(),
-                    course.getDescription()
-                );
-
-                JTextArea textArea = new JTextArea(details);
-                textArea.setBackground(Color.WHITE);
-                textArea.setForeground(new Color(33, 33, 33));
-                textArea.setCaretColor(new Color(33, 33, 33));
-                textArea.setEditable(false);
-                JScrollPane scrollPane = new JScrollPane(textArea);
-                scrollPane.setBackground(Color.WHITE);
-                scrollPane.getViewport().setBackground(Color.WHITE);
-                scrollPane.setPreferredSize(new Dimension(500, 400));
-
-                JOptionPane.showMessageDialog(this, scrollPane, "Course Details", JOptionPane.INFORMATION_MESSAGE);
-            }
-        } catch (Exception e) {
-            JOptionPane.showMessageDialog(this, "Error: " + e.getMessage(), "Error", JOptionPane.ERROR_MESSAGE);
-        }
+        com.elearning.ui.components.CourseDetailsDialog dialog = 
+            new com.elearning.ui.components.CourseDetailsDialog(this, courseId);
+        dialog.setVisible(true);
+        loadCourses();
     }
 
     private void editCourse(int courseId) {
-        JOptionPane.showMessageDialog(this, "Edit course feature will be implemented in Phase 4", "Info", JOptionPane.INFORMATION_MESSAGE);
-        // TODO: Implement edit dialog
+        com.elearning.ui.components.CourseDetailsDialog dialog = 
+            new com.elearning.ui.components.CourseDetailsDialog(this, courseId);
+        dialog.setVisible(true);
+        loadCourses();
     }
 
     private void deleteCourse(int courseId) {
