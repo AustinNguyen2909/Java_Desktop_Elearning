@@ -1,6 +1,7 @@
 package com.elearning.ui.components;
 
 import javafx.application.Platform;
+import javafx.beans.value.ChangeListener;
 import javafx.embed.swing.JFXPanel;
 import javafx.scene.Scene;
 import javafx.scene.control.Button;
@@ -18,29 +19,34 @@ import javafx.util.Duration;
 import javax.swing.*;
 import java.awt.*;
 import java.io.File;
+import java.util.concurrent.CountDownLatch;
+import java.util.concurrent.TimeUnit;
 
 /**
  * Video player component using JavaFX Media embedded in Swing
  * Provides play, pause, seek, and volume controls
  */
 public class VideoPlayerPanel extends JPanel {
-    private final JFXPanel fxPanel;
+    private JFXPanel fxPanel;
     private MediaPlayer mediaPlayer;
     private MediaView mediaView;
-    private final String videoPath;
+    private String videoPath;
     private boolean isInitialized = false;
+    private volatile boolean disposed = false;
 
     public VideoPlayerPanel(String videoPath) {
         this.videoPath = videoPath;
-        this.fxPanel = new JFXPanel();
 
         setLayout(new BorderLayout());
         setBackground(Color.BLACK);
         setPreferredSize(new Dimension(800, 450));
 
+        // Create and initialize JFXPanel
+        // This implicitly initializes JavaFX toolkit if needed
+        fxPanel = new JFXPanel();
         add(fxPanel, BorderLayout.CENTER);
 
-        // Initialize JavaFX on the JavaFX Application Thread
+        // Initialize JavaFX scene on the JavaFX Application Thread
         Platform.runLater(this::initFX);
     }
 
@@ -49,19 +55,39 @@ public class VideoPlayerPanel extends JPanel {
      * Must be called on JavaFX Application Thread
      */
     private void initFX() {
+        // Check if already disposed
+        if (disposed) {
+            System.out.println("VideoPlayerPanel already disposed, skipping initFX for: " + videoPath);
+            return;
+        }
+
         try {
+            System.out.println("VideoPlayerPanel.initFX() starting for: " + videoPath);
+
             // Validate video file
             File videoFile = new File(videoPath);
             if (!videoFile.exists()) {
+                System.err.println("Video file not found: " + videoPath);
                 showError("Video file not found: " + videoPath);
+                return;
+            }
+
+            System.out.println("Video file exists, creating Media object...");
+
+            // Check again if disposed during file validation
+            if (disposed) {
+                System.out.println("VideoPlayerPanel disposed during initialization for: " + videoPath);
                 return;
             }
 
             // Create Media and MediaPlayer
             String mediaUrl = videoFile.toURI().toString();
+            System.out.println("Media URL: " + mediaUrl);
             Media media = new Media(mediaUrl);
             mediaPlayer = new MediaPlayer(media);
             mediaView = new MediaView(mediaPlayer);
+
+            System.out.println("MediaPlayer created successfully");
 
             // Configure MediaView
             mediaView.setPreserveRatio(true);
@@ -90,15 +116,19 @@ public class VideoPlayerPanel extends JPanel {
             fxPanel.setScene(scene);
 
             isInitialized = true;
+            System.out.println("VideoPlayerPanel initialized successfully, ready to play");
 
             // Handle media errors
             mediaPlayer.setOnError(() -> {
-                showError("Media error: " + mediaPlayer.getError().getMessage());
+                String errorMsg = "Media error: " + mediaPlayer.getError().getMessage();
+                System.err.println(errorMsg);
+                showError(errorMsg);
             });
 
         } catch (Exception e) {
-            showError("Failed to load video: " + e.getMessage());
+            System.err.println("Failed to initialize VideoPlayerPanel: " + e.getMessage());
             e.printStackTrace();
+            showError("Failed to load video: " + e.getMessage());
         }
     }
 
@@ -113,10 +143,10 @@ public class VideoPlayerPanel extends JPanel {
         Button playPauseBtn = new Button("▶");
         playPauseBtn.setStyle("-fx-font-size: 16px; -fx-background-color: #3498db; -fx-text-fill: white;");
         playPauseBtn.setOnAction(e -> {
-            if (mediaPlayer.getStatus() == MediaPlayer.Status.PLAYING) {
+            if (mediaPlayer != null && mediaPlayer.getStatus() == MediaPlayer.Status.PLAYING) {
                 mediaPlayer.pause();
                 playPauseBtn.setText("▶");
-            } else {
+            } else if (mediaPlayer != null) {
                 mediaPlayer.play();
                 playPauseBtn.setText("⏸");
             }
@@ -126,8 +156,10 @@ public class VideoPlayerPanel extends JPanel {
         Button stopBtn = new Button("⏹");
         stopBtn.setStyle("-fx-font-size: 16px; -fx-background-color: #e74c3c; -fx-text-fill: white;");
         stopBtn.setOnAction(e -> {
-            mediaPlayer.stop();
-            playPauseBtn.setText("▶");
+            if (mediaPlayer != null) {
+                mediaPlayer.stop();
+                playPauseBtn.setText("▶");
+            }
         });
 
         // Time label
@@ -144,7 +176,7 @@ public class VideoPlayerPanel extends JPanel {
 
         // Update progress slider and time label
         mediaPlayer.currentTimeProperty().addListener((obs, oldTime, newTime) -> {
-            if (!progressSlider.isValueChanging()) {
+            if (!progressSlider.isValueChanging() && mediaPlayer != null) {
                 Duration total = mediaPlayer.getTotalDuration();
                 if (total != null && total.toMillis() > 0) {
                     progressSlider.setValue(newTime.toMillis() / total.toMillis() * 100);
@@ -155,7 +187,7 @@ public class VideoPlayerPanel extends JPanel {
 
         // Seek when slider is moved
         progressSlider.valueProperty().addListener((obs, oldVal, newVal) -> {
-            if (progressSlider.isValueChanging()) {
+            if (progressSlider.isValueChanging() && mediaPlayer != null) {
                 Duration total = mediaPlayer.getTotalDuration();
                 if (total != null) {
                     mediaPlayer.seek(total.multiply(newVal.doubleValue() / 100));
@@ -177,13 +209,13 @@ public class VideoPlayerPanel extends JPanel {
         HBox.setHgrow(spacer, Priority.ALWAYS);
 
         controls.getChildren().addAll(
-            playPauseBtn,
-            stopBtn,
-            timeLabel,
-            progressSlider,
-            spacer,
-            volumeLabel,
-            volumeSlider
+                playPauseBtn,
+                stopBtn,
+                timeLabel,
+                progressSlider,
+                spacer,
+                volumeLabel,
+                volumeSlider
         );
 
         return controls;
@@ -244,15 +276,135 @@ public class VideoPlayerPanel extends JPanel {
     }
 
     /**
+     * Load a new video source without recreating the entire player
+     * This reuses the existing MediaView and just swaps the MediaPlayer
+     */
+    public void loadVideo(String newVideoPath) {
+        System.out.println("VideoPlayerPanel.loadVideo() called for: " + newVideoPath);
+
+        if (disposed) {
+            System.err.println("Cannot load video - panel is disposed");
+            return;
+        }
+
+        // Wait for initialization to complete (max 5 seconds)
+        int attempts = 0;
+        while (!isInitialized && attempts < 50) {
+            try {
+                Thread.sleep(100);
+                attempts++;
+            } catch (InterruptedException e) {
+                System.err.println("Wait for initialization interrupted");
+                return;
+            }
+        }
+
+        if (!isInitialized) {
+            System.err.println("Cannot load video - panel initialization timed out");
+            return;
+        }
+
+        this.videoPath = newVideoPath;
+
+        CountDownLatch latch = new CountDownLatch(1);
+
+        Platform.runLater(() -> {
+            try {
+                // Validate new video file
+                File videoFile = new File(newVideoPath);
+                if (!videoFile.exists()) {
+                    System.err.println("Video file not found: " + newVideoPath);
+                    showError("Video file not found: " + newVideoPath);
+                    latch.countDown();
+                    return;
+                }
+
+                // Dispose old MediaPlayer
+                if (mediaPlayer != null) {
+                    System.out.println("Disposing old MediaPlayer");
+                    mediaPlayer.stop();
+                    mediaPlayer.dispose();
+                }
+
+                // Create new MediaPlayer with new video
+                String mediaUrl = videoFile.toURI().toString();
+                System.out.println("Loading new video: " + mediaUrl);
+                Media media = new Media(mediaUrl);
+                mediaPlayer = new MediaPlayer(media);
+
+                // Update the MediaView to use the new MediaPlayer
+                mediaView.setMediaPlayer(mediaPlayer);
+
+                // Handle media errors
+                mediaPlayer.setOnError(() -> {
+                    String errorMsg = "Media error: " + mediaPlayer.getError().getMessage();
+                    System.err.println(errorMsg);
+                    showError(errorMsg);
+                });
+
+                System.out.println("Video loaded successfully");
+
+            } catch (Exception e) {
+                System.err.println("Failed to load video: " + e.getMessage());
+                e.printStackTrace();
+                showError("Failed to load video: " + e.getMessage());
+            } finally {
+                latch.countDown();
+            }
+        });
+
+        // Wait for video loading to complete
+        try {
+            latch.await(2000, TimeUnit.MILLISECONDS);
+        } catch (InterruptedException e) {
+            System.err.println("Video loading wait interrupted");
+        }
+    }
+
+    /**
      * Release resources
      * IMPORTANT: Call this when disposing the panel
      */
     public void dispose() {
+        System.out.println("VideoPlayerPanel.dispose() called for: " + videoPath);
+
+        // Mark as disposed to prevent any pending initFX from running
+        disposed = true;
+        isInitialized = false;
+
         if (mediaPlayer != null) {
+            final MediaPlayer playerToDispose = mediaPlayer;
+            mediaPlayer = null;
+
+            CountDownLatch latch = new CountDownLatch(1);
+
             Platform.runLater(() -> {
-                mediaPlayer.stop();
-                mediaPlayer.dispose();
+                try {
+                    System.out.println("Disposing MediaPlayer on FX thread");
+                    playerToDispose.stop();
+                    playerToDispose.dispose();
+
+                    // Also clear the scene
+                    if (fxPanel != null) {
+                        fxPanel.setScene(null);
+                        System.out.println("JFXPanel scene cleared");
+                    }
+
+                    System.out.println("MediaPlayer disposed successfully");
+                } catch (Exception e) {
+                    System.err.println("Error during MediaPlayer disposal: " + e.getMessage());
+                } finally {
+                    latch.countDown();
+                }
             });
+
+            // Wait for disposal to complete
+            try {
+                latch.await(1000, TimeUnit.MILLISECONDS);
+                System.out.println("Disposal completed");
+            } catch (InterruptedException e) {
+                System.err.println("Disposal wait interrupted");
+            }
         }
     }
 

@@ -259,7 +259,7 @@ public class InstructorDashboard extends JFrame {
 
         gbc.gridx = 1;
         String[] categories = {"Programming", "Web Development", "Database", "Mobile Development",
-                               "Data Science", "DevOps", "Security", "Other"};
+                "Data Science", "DevOps", "Security", "Other"};
         JComboBox<String> categoryCombo = new JComboBox<>(categories);
         categoryCombo.setBackground(Color.WHITE);
         categoryCombo.setForeground(new Color(33, 33, 33));
@@ -377,9 +377,9 @@ public class InstructorDashboard extends JFrame {
                     }
 
                     JOptionPane.showMessageDialog(this,
-                        "Course created successfully! It will be PENDING until admin approval.",
-                        "Success",
-                        JOptionPane.INFORMATION_MESSAGE);
+                            "Course created successfully! It will be PENDING until admin approval.",
+                            "Success",
+                            JOptionPane.INFORMATION_MESSAGE);
 
                     // Clear form
                     titleField.setText("");
@@ -412,9 +412,9 @@ public class InstructorDashboard extends JFrame {
     private void loadCourses() {
         try {
             List<Course> courses = courseService.getInstructorCourses(
-                currentUser.getId(),
-                currentUser.getRole(),
-                currentUser.getId()
+                    currentUser.getId(),
+                    currentUser.getRole(),
+                    currentUser.getId()
             );
 
             // Clear existing rows
@@ -423,22 +423,22 @@ public class InstructorDashboard extends JFrame {
             // Add courses to table
             for (Course course : courses) {
                 Object[] row = {
-                    course.getId(),
-                    course.getTitle(),
-                    course.getCategory(),
-                    course.getStatus(),
-                    course.isPublished() ? "Yes" : "No",
-                    course.getEnrollmentCount(),
-                    String.format("%.1f", course.getAverageRating()),
-                    "Actions"
+                        course.getId(),
+                        course.getTitle(),
+                        course.getCategory(),
+                        course.getStatus(),
+                        course.isPublished() ? "Yes" : "No",
+                        course.getEnrollmentCount(),
+                        String.format("%.1f", course.getAverageRating()),
+                        "Actions"
                 };
                 coursesTableModel.addRow(row);
             }
         } catch (Exception e) {
             JOptionPane.showMessageDialog(this,
-                "Error loading courses: " + e.getMessage(),
-                "Error",
-                JOptionPane.ERROR_MESSAGE);
+                    "Error loading courses: " + e.getMessage(),
+                    "Error",
+                    JOptionPane.ERROR_MESSAGE);
         }
     }
 
@@ -473,8 +473,8 @@ public class InstructorDashboard extends JFrame {
 
         try {
             AnalyticsService.InstructorStatistics stats = analyticsService.getInstructorStatistics(
-                currentUser.getId(),
-                currentUser.getRole()
+                    currentUser.getId(),
+                    currentUser.getRole()
             );
 
             // Statistics cards panel
@@ -484,21 +484,21 @@ public class InstructorDashboard extends JFrame {
 
             // Create stat cards
             statsCardsPanel.add(createStatCard("Total Courses", String.valueOf(stats.totalCourses),
-                new Color(52, 152, 219))); // Blue
+                    new Color(52, 152, 219))); // Blue
             statsCardsPanel.add(createStatCard("Approved Courses", String.valueOf(stats.approvedCourses),
-                new Color(46, 204, 113))); // Green
+                    new Color(46, 204, 113))); // Green
             statsCardsPanel.add(createStatCard("Published Courses", String.valueOf(stats.publishedCourses),
-                new Color(155, 89, 182))); // Purple
+                    new Color(155, 89, 182))); // Purple
             statsCardsPanel.add(createStatCard("Total Students", String.valueOf(stats.totalStudents),
-                new Color(52, 152, 219))); // Blue
+                    new Color(52, 152, 219))); // Blue
             statsCardsPanel.add(createStatCard("Total Reviews", String.valueOf(stats.totalReviews),
-                new Color(241, 196, 15))); // Yellow
+                    new Color(241, 196, 15))); // Yellow
             statsCardsPanel.add(createStatCard("Average Rating", String.format("%.1f / 5.0", stats.averageRating),
-                new Color(230, 126, 34))); // Orange
+                    new Color(230, 126, 34))); // Orange
             statsCardsPanel.add(createStatCard("Avg Enrollments/Course", String.format("%.1f", stats.averageEnrollmentsPerCourse),
-                new Color(26, 188, 156))); // Teal
+                    new Color(26, 188, 156))); // Teal
             statsCardsPanel.add(createStatCard("Completion Rate", String.format("%.1f%%", stats.completionRate),
-                new Color(46, 204, 113))); // Green
+                    new Color(46, 204, 113))); // Green
 
             contentPanel.add(statsCardsPanel);
 
@@ -509,9 +509,9 @@ public class InstructorDashboard extends JFrame {
 
             // Course performance chart
             ChartPanel performanceChart = ChartUtil.createInstructorPerformanceChart(
-                stats.totalCourses,
-                stats.approvedCourses,
-                stats.publishedCourses
+                    stats.totalCourses,
+                    stats.approvedCourses,
+                    stats.publishedCourses
             );
             chartsPanel.add(performanceChart);
 
@@ -539,8 +539,8 @@ public class InstructorDashboard extends JFrame {
         JPanel card = new JPanel(new BorderLayout(5, 5));
         card.setBackground(Color.WHITE);
         card.setBorder(BorderFactory.createCompoundBorder(
-            BorderFactory.createLineBorder(new Color(220, 220, 220), 1),
-            BorderFactory.createEmptyBorder(15, 15, 15, 15)
+                BorderFactory.createLineBorder(new Color(220, 220, 220), 1),
+                BorderFactory.createEmptyBorder(15, 15, 15, 15)
         ));
 
         JLabel titleLabel = new JLabel(title);
@@ -600,47 +600,47 @@ public class InstructorDashboard extends JFrame {
     class ButtonEditor extends DefaultCellEditor {
         private JButton button;
         private String label;
-        private boolean clicked;
         private int currentRow;
+        private JTable table;
 
         public ButtonEditor(JCheckBox checkBox) {
             super(checkBox);
             button = new JButton();
             button.setOpaque(true);
             button.addActionListener(e -> {
+                int row = currentRow;
                 fireEditingStopped();
-                showActionsMenu();
+                SwingUtilities.invokeLater(() -> showActionsMenu(row));
             });
         }
 
         @Override
         public Component getTableCellEditorComponent(JTable table, Object value,
-                                                      boolean isSelected, int row, int column) {
+                                                     boolean isSelected, int row, int column) {
+            this.table = table;
             label = (value == null) ? "Actions" : value.toString();
             button.setText(label);
-            clicked = true;
             currentRow = row;
             return button;
         }
 
         @Override
         public Object getCellEditorValue() {
-            clicked = false;
             return label;
         }
 
-        private void showActionsMenu() {
-            if (clicked && currentRow >= 0) {
-                int courseId = (Integer) coursesTableModel.getValueAt(currentRow, 0);
-                String status = (String) coursesTableModel.getValueAt(currentRow, 3);
-                boolean published = coursesTableModel.getValueAt(currentRow, 4).equals("Yes");
+        private void showActionsMenu(int row) {
+            if (row >= 0 && table != null) {
+                int courseId = (Integer) coursesTableModel.getValueAt(row, 0);
+                String status = (String) coursesTableModel.getValueAt(row, 3);
+                boolean published = coursesTableModel.getValueAt(row, 4).equals("Yes");
 
                 JPopupMenu menu = new JPopupMenu();
 
                 JMenuItem viewItem = new JMenuItem("View Details");
                 viewItem.addActionListener(e -> {
-                    com.elearning.ui.components.CourseDetailsDialog dialog = 
-                        new com.elearning.ui.components.CourseDetailsDialog(InstructorDashboard.this, courseId);
+                    com.elearning.ui.components.CourseDetailsDialog dialog =
+                            new com.elearning.ui.components.CourseDetailsDialog(InstructorDashboard.this, courseId);
                     dialog.setVisible(true);
                     loadCourses(); // Refresh list after dialog closes
                 });
@@ -648,8 +648,8 @@ public class InstructorDashboard extends JFrame {
 
                 JMenuItem lessonsItem = new JMenuItem("Manage Lessons");
                 lessonsItem.addActionListener(e -> {
-                    com.elearning.ui.components.CourseDetailsDialog dialog = 
-                        new com.elearning.ui.components.CourseDetailsDialog(InstructorDashboard.this, courseId);
+                    com.elearning.ui.components.CourseDetailsDialog dialog =
+                            new com.elearning.ui.components.CourseDetailsDialog(InstructorDashboard.this, courseId);
                     dialog.setVisible(true);
                     loadCourses();
                 });
@@ -671,30 +671,32 @@ public class InstructorDashboard extends JFrame {
                     menu.add(deleteItem);
                 }
 
-                menu.show(button, 0, button.getHeight());
+                // Show popup relative to the table cell location
+                Rectangle cellRect = table.getCellRect(row, table.getColumnCount() - 1, true);
+                menu.show(table, cellRect.x, cellRect.y + cellRect.height);
             }
         }
     }
 
     private void viewCourse(int courseId) {
-        com.elearning.ui.components.CourseDetailsDialog dialog = 
-            new com.elearning.ui.components.CourseDetailsDialog(this, courseId);
+        com.elearning.ui.components.CourseDetailsDialog dialog =
+                new com.elearning.ui.components.CourseDetailsDialog(this, courseId);
         dialog.setVisible(true);
         loadCourses();
     }
 
     private void editCourse(int courseId) {
-        com.elearning.ui.components.CourseDetailsDialog dialog = 
-            new com.elearning.ui.components.CourseDetailsDialog(this, courseId);
+        com.elearning.ui.components.CourseDetailsDialog dialog =
+                new com.elearning.ui.components.CourseDetailsDialog(this, courseId);
         dialog.setVisible(true);
         loadCourses();
     }
 
     private void deleteCourse(int courseId) {
         int confirm = JOptionPane.showConfirmDialog(this,
-            "Are you sure you want to delete this course?\nThis cannot be undone if there are enrollments.",
-            "Confirm Delete",
-            JOptionPane.YES_NO_OPTION);
+                "Are you sure you want to delete this course?\nThis cannot be undone if there are enrollments.",
+                "Confirm Delete",
+                JOptionPane.YES_NO_OPTION);
 
         if (confirm == JOptionPane.YES_OPTION) {
             try {
@@ -716,9 +718,9 @@ public class InstructorDashboard extends JFrame {
             boolean success = courseService.togglePublishCourse(courseId, currentUser.getId(), publish, currentUser.getRole());
             if (success) {
                 JOptionPane.showMessageDialog(this,
-                    "Course " + (publish ? "published" : "unpublished") + " successfully",
-                    "Success",
-                    JOptionPane.INFORMATION_MESSAGE);
+                        "Course " + (publish ? "published" : "unpublished") + " successfully",
+                        "Success",
+                        JOptionPane.INFORMATION_MESSAGE);
                 loadCourses();
             } else {
                 JOptionPane.showMessageDialog(this, "Failed to update course", "Error", JOptionPane.ERROR_MESSAGE);
@@ -800,21 +802,21 @@ public class InstructorDashboard extends JFrame {
             List<Lesson> lessons = lessonService.getCourseLessons(courseId, currentUser.getRole(), currentUser.getId(), false);
             for (Lesson lesson : lessons) {
                 Object[] row = {
-                    lesson.getOrderIndex(),
-                    lesson.getId(),
-                    lesson.getTitle(),
-                    lesson.getDurationMinutes() != null ? lesson.getDurationMinutes() : 0,
-                    lesson.isPreview() ? "Yes" : "No",
-                    lesson.getVideoPath() != null ? "✓" : "✗",
-                    "Actions"
+                        lesson.getOrderIndex(),
+                        lesson.getId(),
+                        lesson.getTitle(),
+                        lesson.getDurationMinutes() != null ? lesson.getDurationMinutes() : 0,
+                        lesson.isPreview() ? "Yes" : "No",
+                        lesson.getVideoPath() != null ? "✓" : "✗",
+                        "Actions"
                 };
                 lessonsModel.addRow(row);
             }
         } catch (Exception e) {
             JOptionPane.showMessageDialog(dialog,
-                "Error loading lessons: " + e.getMessage(),
-                "Error",
-                JOptionPane.ERROR_MESSAGE);
+                    "Error loading lessons: " + e.getMessage(),
+                    "Error",
+                    JOptionPane.ERROR_MESSAGE);
         }
 
         JScrollPane scrollPane = new JScrollPane(lessonsTable);
@@ -827,7 +829,7 @@ public class InstructorDashboard extends JFrame {
         try {
             LessonService.CourseStatistics stats = lessonService.getCourseStatistics(courseId);
             JLabel statsLabel = new JLabel(String.format("Total Lessons: %d | Total Duration: %.1f hours",
-                stats.getLessonCount(), stats.getTotalDurationHours()));
+                    stats.getLessonCount(), stats.getTotalDurationHours()));
             statsLabel.setFont(new Font("Segoe UI", Font.PLAIN, 12));
             statsLabel.setForeground(new Color(88, 88, 88));
             bottomPanel.add(statsLabel);
@@ -861,8 +863,8 @@ public class InstructorDashboard extends JFrame {
         descriptionArea.setLineWrap(true);
         descriptionArea.setWrapStyleWord(true);
         descriptionArea.setBorder(BorderFactory.createCompoundBorder(
-            BorderFactory.createLineBorder(new Color(200, 200, 200)),
-            BorderFactory.createEmptyBorder(10, 10, 10, 10)
+                BorderFactory.createLineBorder(new Color(200, 200, 200)),
+                BorderFactory.createEmptyBorder(10, 10, 10, 10)
         ));
         JScrollPane descScrollPane = new JScrollPane(descriptionArea);
         descScrollPane.setBackground(Color.WHITE);
@@ -895,8 +897,8 @@ public class InstructorDashboard extends JFrame {
                     if (f.isDirectory()) return true;
                     String name = f.getName().toLowerCase();
                     return name.endsWith(".mp4") || name.endsWith(".avi") ||
-                           name.endsWith(".mov") || name.endsWith(".mkv") ||
-                           name.endsWith(".flv") || name.endsWith(".wmv");
+                            name.endsWith(".mov") || name.endsWith(".mkv") ||
+                            name.endsWith(".flv") || name.endsWith(".wmv");
                 }
 
                 @Override
@@ -913,15 +915,15 @@ public class InstructorDashboard extends JFrame {
                 long maxSize = VideoUtil.getMaxFileSize();
                 if (selectedFile.length() > maxSize) {
                     JOptionPane.showMessageDialog(dialog,
-                        "File size exceeds maximum allowed size (" + VideoUtil.formatFileSize(maxSize) + ")",
-                        "File Too Large",
-                        JOptionPane.ERROR_MESSAGE);
+                            "File size exceeds maximum allowed size (" + VideoUtil.formatFileSize(maxSize) + ")",
+                            "File Too Large",
+                            JOptionPane.ERROR_MESSAGE);
                     return;
                 }
 
                 selectedVideoPath[0] = selectedFile.getAbsolutePath();
                 videoLabel.setText("Selected: " + selectedFile.getName() + " (" +
-                                 VideoUtil.formatFileSize(selectedFile.length()) + ")");
+                        VideoUtil.formatFileSize(selectedFile.length()) + ")");
             }
         });
 
@@ -995,36 +997,36 @@ public class InstructorDashboard extends JFrame {
                                 lessonService.updateLesson(lesson, currentUser.getId(), currentUser.getRole());
                             } else {
                                 JOptionPane.showMessageDialog(dialog,
-                                    "Lesson created but video upload failed. You can edit the lesson to upload the video later.",
-                                    "Partial Success",
-                                    JOptionPane.WARNING_MESSAGE);
+                                        "Lesson created but video upload failed. You can edit the lesson to upload the video later.",
+                                        "Partial Success",
+                                        JOptionPane.WARNING_MESSAGE);
                             }
                         } catch (Exception ex) {
                             JOptionPane.showMessageDialog(dialog,
-                                "Lesson created but video upload failed: " + ex.getMessage(),
-                                "Partial Success",
-                                JOptionPane.WARNING_MESSAGE);
+                                    "Lesson created but video upload failed: " + ex.getMessage(),
+                                    "Partial Success",
+                                    JOptionPane.WARNING_MESSAGE);
                         }
                     }
 
                     JOptionPane.showMessageDialog(dialog,
-                        "Lesson created successfully!",
-                        "Success",
-                        JOptionPane.INFORMATION_MESSAGE);
+                            "Lesson created successfully!",
+                            "Success",
+                            JOptionPane.INFORMATION_MESSAGE);
                     dialog.dispose();
                     parentDialog.dispose();
                     manageLessons(courseId);
                 } else {
                     JOptionPane.showMessageDialog(dialog,
-                        "Failed to create lesson",
-                        "Error",
-                        JOptionPane.ERROR_MESSAGE);
+                            "Failed to create lesson",
+                            "Error",
+                            JOptionPane.ERROR_MESSAGE);
                 }
             } catch (Exception ex) {
                 JOptionPane.showMessageDialog(dialog,
-                    "Error: " + ex.getMessage(),
-                    "Error",
-                    JOptionPane.ERROR_MESSAGE);
+                        "Error: " + ex.getMessage(),
+                        "Error",
+                        JOptionPane.ERROR_MESSAGE);
             }
         });
 
@@ -1064,8 +1066,8 @@ public class InstructorDashboard extends JFrame {
         descriptionArea.setLineWrap(true);
         descriptionArea.setWrapStyleWord(true);
         descriptionArea.setBorder(BorderFactory.createCompoundBorder(
-            BorderFactory.createLineBorder(new Color(200, 200, 200)),
-            BorderFactory.createEmptyBorder(10, 10, 10, 10)
+                BorderFactory.createLineBorder(new Color(200, 200, 200)),
+                BorderFactory.createEmptyBorder(10, 10, 10, 10)
         ));
         JScrollPane descScrollPane = new JScrollPane(descriptionArea);
         descScrollPane.setBackground(Color.WHITE);
@@ -1073,7 +1075,7 @@ public class InstructorDashboard extends JFrame {
         descScrollPane.setPreferredSize(new Dimension(400, 120));
 
         JSpinner durationSpinner = new JSpinner(new SpinnerNumberModel(
-            lesson.getDurationMinutes() != null ? lesson.getDurationMinutes() : 30, 1, 300, 5));
+                lesson.getDurationMinutes() != null ? lesson.getDurationMinutes() : 30, 1, 300, 5));
         durationSpinner.setPreferredSize(new Dimension(300, 40));
 
         JCheckBox previewCheckbox = new JCheckBox("Allow preview (accessible without enrollment)");
@@ -1081,7 +1083,7 @@ public class InstructorDashboard extends JFrame {
         previewCheckbox.setBackground(Color.WHITE);
 
         JLabel videoLabel = new JLabel(lesson.getVideoPath() != null ?
-            "Current: " + new File(lesson.getVideoPath()).getName() : "No video selected");
+                "Current: " + new File(lesson.getVideoPath()).getName() : "No video selected");
         videoLabel.setForeground(new Color(88, 88, 88));
         final String[] selectedVideoPath = {lesson.getVideoPath()};
 
@@ -1096,7 +1098,7 @@ public class InstructorDashboard extends JFrame {
             if (newVideoPath != null) {
                 selectedVideoPath[0] = newVideoPath;
                 videoLabel.setText("New video: " + new File(newVideoPath).getName() +
-                                 " (" + VideoUtil.getVideoInfo(newVideoPath) + ")");
+                        " (" + VideoUtil.getVideoInfo(newVideoPath) + ")");
             }
         });
 
@@ -1147,23 +1149,23 @@ public class InstructorDashboard extends JFrame {
                 boolean success = lessonService.updateLesson(lesson, currentUser.getId(), currentUser.getRole());
                 if (success) {
                     JOptionPane.showMessageDialog(dialog,
-                        "Lesson updated successfully!",
-                        "Success",
-                        JOptionPane.INFORMATION_MESSAGE);
+                            "Lesson updated successfully!",
+                            "Success",
+                            JOptionPane.INFORMATION_MESSAGE);
                     dialog.dispose();
                     parentDialog.dispose();
                     manageLessons(courseId);
                 } else {
                     JOptionPane.showMessageDialog(dialog,
-                        "Failed to update lesson",
-                        "Error",
-                        JOptionPane.ERROR_MESSAGE);
+                            "Failed to update lesson",
+                            "Error",
+                            JOptionPane.ERROR_MESSAGE);
                 }
             } catch (Exception ex) {
                 JOptionPane.showMessageDialog(dialog,
-                    "Error: " + ex.getMessage(),
-                    "Error",
-                    JOptionPane.ERROR_MESSAGE);
+                        "Error: " + ex.getMessage(),
+                        "Error",
+                        JOptionPane.ERROR_MESSAGE);
             }
         });
 
@@ -1178,32 +1180,32 @@ public class InstructorDashboard extends JFrame {
 
     private void deleteLesson(JDialog parentDialog, int lessonId, int courseId) {
         int confirm = JOptionPane.showConfirmDialog(parentDialog,
-            "Are you sure you want to delete this lesson?\nThis cannot be undone if students have progress.",
-            "Confirm Delete",
-            JOptionPane.YES_NO_OPTION,
-            JOptionPane.WARNING_MESSAGE);
+                "Are you sure you want to delete this lesson?\nThis cannot be undone if students have progress.",
+                "Confirm Delete",
+                JOptionPane.YES_NO_OPTION,
+                JOptionPane.WARNING_MESSAGE);
 
         if (confirm == JOptionPane.YES_OPTION) {
             try {
                 boolean success = lessonService.deleteLesson(lessonId, currentUser.getId(), currentUser.getRole());
                 if (success) {
                     JOptionPane.showMessageDialog(parentDialog,
-                        "Lesson deleted successfully",
-                        "Success",
-                        JOptionPane.INFORMATION_MESSAGE);
+                            "Lesson deleted successfully",
+                            "Success",
+                            JOptionPane.INFORMATION_MESSAGE);
                     parentDialog.dispose();
                     manageLessons(courseId);
                 } else {
                     JOptionPane.showMessageDialog(parentDialog,
-                        "Failed to delete lesson. It may have student progress.",
-                        "Error",
-                        JOptionPane.ERROR_MESSAGE);
+                            "Failed to delete lesson. It may have student progress.",
+                            "Error",
+                            JOptionPane.ERROR_MESSAGE);
                 }
             } catch (Exception e) {
                 JOptionPane.showMessageDialog(parentDialog,
-                    "Error: " + e.getMessage(),
-                    "Error",
-                    JOptionPane.ERROR_MESSAGE);
+                        "Error: " + e.getMessage(),
+                        "Error",
+                        JOptionPane.ERROR_MESSAGE);
             }
         }
     }
@@ -1220,11 +1222,11 @@ public class InstructorDashboard extends JFrame {
     class LessonButtonEditor extends DefaultCellEditor {
         private JButton button;
         private String label;
-        private boolean clicked;
         private int currentRow;
         private DefaultTableModel tableModel;
         private int courseId;
         private JDialog parentDialog;
+        private JTable table;
 
         public LessonButtonEditor(JCheckBox checkBox, DefaultTableModel model, int courseId, JDialog parentDialog) {
             super(checkBox);
@@ -1234,30 +1236,30 @@ public class InstructorDashboard extends JFrame {
             button = new JButton();
             button.setOpaque(true);
             button.addActionListener(e -> {
+                int row = currentRow;
                 fireEditingStopped();
-                showLessonActionsMenu();
+                SwingUtilities.invokeLater(() -> showLessonActionsMenu(row));
             });
         }
 
         @Override
         public Component getTableCellEditorComponent(JTable table, Object value,
-                                                      boolean isSelected, int row, int column) {
+                                                     boolean isSelected, int row, int column) {
+            this.table = table;
             label = (value == null) ? "Actions" : value.toString();
             button.setText(label);
-            clicked = true;
             currentRow = row;
             return button;
         }
 
         @Override
         public Object getCellEditorValue() {
-            clicked = false;
             return label;
         }
 
-        private void showLessonActionsMenu() {
-            if (clicked && currentRow >= 0) {
-                int lessonId = (Integer) tableModel.getValueAt(currentRow, 1);
+        private void showLessonActionsMenu(int row) {
+            if (row >= 0 && table != null) {
+                int lessonId = (Integer) tableModel.getValueAt(row, 1);
 
                 JPopupMenu menu = new JPopupMenu();
 
@@ -1270,7 +1272,9 @@ public class InstructorDashboard extends JFrame {
                 deleteItem.addActionListener(e -> deleteLesson(parentDialog, lessonId, courseId));
                 menu.add(deleteItem);
 
-                menu.show(button, 0, button.getHeight());
+                // Show popup relative to the table cell location
+                Rectangle cellRect = table.getCellRect(row, table.getColumnCount() - 1, true);
+                menu.show(table, cellRect.x, cellRect.y + cellRect.height);
             }
         }
     }

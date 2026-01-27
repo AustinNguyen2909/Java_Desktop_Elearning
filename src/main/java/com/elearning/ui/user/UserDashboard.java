@@ -375,9 +375,9 @@ public class UserDashboard extends JFrame {
             displayAvailableCourses(courses);
         } catch (Exception e) {
             JOptionPane.showMessageDialog(this,
-                "Error loading courses: " + e.getMessage(),
-                "Error",
-                JOptionPane.ERROR_MESSAGE);
+                    "Error loading courses: " + e.getMessage(),
+                    "Error",
+                    JOptionPane.ERROR_MESSAGE);
         }
     }
 
@@ -388,9 +388,9 @@ public class UserDashboard extends JFrame {
             displayAvailableCourses(courses);
         } catch (Exception e) {
             JOptionPane.showMessageDialog(this,
-                "Error searching courses: " + e.getMessage(),
-                "Error",
-                JOptionPane.ERROR_MESSAGE);
+                    "Error searching courses: " + e.getMessage(),
+                    "Error",
+                    JOptionPane.ERROR_MESSAGE);
         }
     }
 
@@ -402,15 +402,15 @@ public class UserDashboard extends JFrame {
             boolean enrolled = enrollmentService.isEnrolled(currentUser.getId(), course.getId());
 
             Object[] row = {
-                course.getId(),
-                course.getTitle(),
-                course.getInstructorName(),
-                course.getCategory(),
-                course.getDifficultyLevel(),
-                course.getEstimatedHours(),
-                String.format("%.1f", course.getAverageRating()),
-                course.getEnrollmentCount(),
-                enrolled ? "Enrolled" : "Enroll"
+                    course.getId(),
+                    course.getTitle(),
+                    course.getInstructorName(),
+                    course.getCategory(),
+                    course.getDifficultyLevel(),
+                    course.getEstimatedHours(),
+                    String.format("%.1f", course.getAverageRating()),
+                    course.getEnrollmentCount(),
+                    enrolled ? "Enrolled" : "Enroll"
             };
             availableCoursesModel.addRow(row);
         }
@@ -424,58 +424,58 @@ public class UserDashboard extends JFrame {
 
             for (Enrollment enrollment : enrollments) {
                 Object[] row = {
-                    enrollment.getCourseId(),
-                    enrollment.getCourseTitle(),
-                    enrollment.getCourseCategory() != null ? enrollment.getCourseCategory() : "N/A",
-                    String.format("%.1f%%", enrollment.getProgressPercent()),
-                    enrollment.getEnrolledAt(),
-                    enrollment.getLastAccessedAt() != null ? enrollment.getLastAccessedAt() : "Never",
-                    "Actions"
+                        enrollment.getCourseId(),
+                        enrollment.getCourseTitle(),
+                        enrollment.getCourseCategory() != null ? enrollment.getCourseCategory() : "N/A",
+                        String.format("%.1f%%", enrollment.getProgressPercent()),
+                        enrollment.getEnrolledAt(),
+                        enrollment.getLastAccessedAt() != null ? enrollment.getLastAccessedAt() : "Never",
+                        "Actions"
                 };
                 myCoursesModel.addRow(row);
             }
         } catch (Exception e) {
             JOptionPane.showMessageDialog(this,
-                "Error loading enrollments: " + e.getMessage(),
-                "Error",
-                JOptionPane.ERROR_MESSAGE);
+                    "Error loading enrollments: " + e.getMessage(),
+                    "Error",
+                    JOptionPane.ERROR_MESSAGE);
         }
     }
 
     private void viewCourseDetails(int courseId) {
-        com.elearning.ui.components.CourseDetailsDialog dialog = 
-            new com.elearning.ui.components.CourseDetailsDialog(this, courseId);
+        com.elearning.ui.components.CourseDetailsDialog dialog =
+                new com.elearning.ui.components.CourseDetailsDialog(this, courseId);
         dialog.setVisible(true);
         loadAvailableCourses();
     }
 
     private void enrollInCourse(int courseId) {
         int confirm = JOptionPane.showConfirmDialog(this,
-            "Do you want to enroll in this course?",
-            "Confirm Enrollment",
-            JOptionPane.YES_NO_OPTION);
+                "Do you want to enroll in this course?",
+                "Confirm Enrollment",
+                JOptionPane.YES_NO_OPTION);
 
         if (confirm == JOptionPane.YES_OPTION) {
             try {
                 boolean success = enrollmentService.enrollInCourse(currentUser.getId(), courseId, currentUser.getRole());
                 if (success) {
                     JOptionPane.showMessageDialog(this,
-                        "Successfully enrolled in the course!",
-                        "Success",
-                        JOptionPane.INFORMATION_MESSAGE);
+                            "Successfully enrolled in the course!",
+                            "Success",
+                            JOptionPane.INFORMATION_MESSAGE);
                     loadAvailableCourses();
                     loadMyCourses();
                 } else {
                     JOptionPane.showMessageDialog(this,
-                        "Failed to enroll in course",
-                        "Error",
-                        JOptionPane.ERROR_MESSAGE);
+                            "Failed to enroll in course",
+                            "Error",
+                            JOptionPane.ERROR_MESSAGE);
                 }
             } catch (Exception e) {
                 JOptionPane.showMessageDialog(this,
-                    "Error: " + e.getMessage(),
-                    "Error",
-                    JOptionPane.ERROR_MESSAGE);
+                        "Error: " + e.getMessage(),
+                        "Error",
+                        JOptionPane.ERROR_MESSAGE);
             }
         }
     }
@@ -532,7 +532,7 @@ public class UserDashboard extends JFrame {
         videoPanel.setPreferredSize(new Dimension(0, 450));
 
         if (lesson.getVideoPath() != null && !lesson.getVideoPath().isEmpty() &&
-            VideoUtil.videoExists(lesson.getVideoPath())) {
+                VideoUtil.videoExists(lesson.getVideoPath())) {
             try {
                 // Create video player
                 VideoPlayerPanel playerPanel = new VideoPlayerPanel(lesson.getVideoPath());
@@ -547,11 +547,11 @@ public class UserDashboard extends JFrame {
                 });
             } catch (Exception e) {
                 JLabel errorLabel = new JLabel(
-                    "<html><div style='text-align: center; color: white;'>" +
-                    "<h2>Video Player Error</h2>" +
-                    "<p>" + e.getMessage() + "</p>" +
-                    "</div></html>",
-                    SwingConstants.CENTER);
+                        "<html><div style='text-align: center; color: white;'>" +
+                                "<h2>Video Player Error</h2>" +
+                                "<p>" + e.getMessage() + "</p>" +
+                                "</div></html>",
+                        SwingConstants.CENTER);
                 errorLabel.setForeground(Color.WHITE);
                 videoPanel.add(errorLabel, BorderLayout.CENTER);
             }
@@ -606,9 +606,9 @@ public class UserDashboard extends JFrame {
                 boolean success = enrollmentService.completeLesson(currentUser.getId(), lesson.getId());
                 if (success) {
                     JOptionPane.showMessageDialog(parentDialog,
-                        "Lesson marked as complete!",
-                        "Success",
-                        JOptionPane.INFORMATION_MESSAGE);
+                            "Lesson marked as complete!",
+                            "Success",
+                            JOptionPane.INFORMATION_MESSAGE);
 
                     // Update progress label
                     Enrollment updatedEnrollment = enrollmentService.getEnrollment(currentUser.getId(), courseId);
@@ -620,15 +620,15 @@ public class UserDashboard extends JFrame {
                     completeButton.setText("Completed ✓");
                 } else {
                     JOptionPane.showMessageDialog(parentDialog,
-                        "Failed to mark lesson as complete",
-                        "Error",
-                        JOptionPane.ERROR_MESSAGE);
+                            "Failed to mark lesson as complete",
+                            "Error",
+                            JOptionPane.ERROR_MESSAGE);
                 }
             } catch (Exception ex) {
                 JOptionPane.showMessageDialog(parentDialog,
-                    "Error: " + ex.getMessage(),
-                    "Error",
-                    JOptionPane.ERROR_MESSAGE);
+                        "Error: " + ex.getMessage(),
+                        "Error",
+                        JOptionPane.ERROR_MESSAGE);
             }
         });
 
@@ -666,10 +666,10 @@ public class UserDashboard extends JFrame {
             if (value instanceof Lesson) {
                 Lesson lesson = (Lesson) value;
                 label.setText(String.format("<html><b>%d. %s</b><br/><small>%d min%s</small></html>",
-                    lesson.getOrderIndex(),
-                    lesson.getTitle(),
-                    lesson.getDurationMinutes() != null ? lesson.getDurationMinutes() : 0,
-                    lesson.isPreview() ? " • Preview" : ""));
+                        lesson.getOrderIndex(),
+                        lesson.getTitle(),
+                        lesson.getDurationMinutes() != null ? lesson.getDurationMinutes() : 0,
+                        lesson.isPreview() ? " • Preview" : ""));
                 label.setBorder(BorderFactory.createEmptyBorder(8, 10, 8, 10));
             }
 
@@ -687,32 +687,32 @@ public class UserDashboard extends JFrame {
 
     private void unenrollFromCourse(int courseId) {
         int confirm = JOptionPane.showConfirmDialog(this,
-            "Are you sure you want to unenroll from this course?\nYou can only unenroll if you have completed less than 10% of the course.",
-            "Confirm Unenrollment",
-            JOptionPane.YES_NO_OPTION,
-            JOptionPane.WARNING_MESSAGE);
+                "Are you sure you want to unenroll from this course?\nYou can only unenroll if you have completed less than 10% of the course.",
+                "Confirm Unenrollment",
+                JOptionPane.YES_NO_OPTION,
+                JOptionPane.WARNING_MESSAGE);
 
         if (confirm == JOptionPane.YES_OPTION) {
             try {
                 boolean success = enrollmentService.unenrollFromCourse(currentUser.getId(), courseId, currentUser.getRole());
                 if (success) {
                     JOptionPane.showMessageDialog(this,
-                        "Successfully unenrolled from the course",
-                        "Success",
-                        JOptionPane.INFORMATION_MESSAGE);
+                            "Successfully unenrolled from the course",
+                            "Success",
+                            JOptionPane.INFORMATION_MESSAGE);
                     loadMyCourses();
                     loadAvailableCourses();
                 } else {
                     JOptionPane.showMessageDialog(this,
-                        "Failed to unenroll. You may have completed more than 10% of the course.",
-                        "Error",
-                        JOptionPane.ERROR_MESSAGE);
+                            "Failed to unenroll. You may have completed more than 10% of the course.",
+                            "Error",
+                            JOptionPane.ERROR_MESSAGE);
                 }
             } catch (Exception e) {
                 JOptionPane.showMessageDialog(this,
-                    "Error: " + e.getMessage(),
-                    "Error",
-                    JOptionPane.ERROR_MESSAGE);
+                        "Error: " + e.getMessage(),
+                        "Error",
+                        JOptionPane.ERROR_MESSAGE);
             }
         }
     }
@@ -744,7 +744,6 @@ public class UserDashboard extends JFrame {
     class AvailableCourseButtonEditor extends DefaultCellEditor {
         private JButton button;
         private String label;
-        private boolean clicked;
         private int currentRow;
 
         public AvailableCourseButtonEditor(JCheckBox checkBox) {
@@ -752,31 +751,30 @@ public class UserDashboard extends JFrame {
             button = new JButton();
             button.setOpaque(true);
             button.addActionListener(e -> {
+                int row = currentRow;
                 fireEditingStopped();
-                handleAction();
+                handleAction(row);
             });
         }
 
         @Override
         public Component getTableCellEditorComponent(JTable table, Object value,
-                                                      boolean isSelected, int row, int column) {
+                                                     boolean isSelected, int row, int column) {
             label = (value == null) ? "Actions" : value.toString();
             button.setText(label);
-            clicked = true;
             currentRow = row;
             return button;
         }
 
         @Override
         public Object getCellEditorValue() {
-            clicked = false;
             return label;
         }
 
-        private void handleAction() {
-            if (clicked && currentRow >= 0) {
-                int courseId = (Integer) availableCoursesModel.getValueAt(currentRow, 0);
-                String actionText = (String) availableCoursesModel.getValueAt(currentRow, 8);
+        private void handleAction(int row) {
+            if (row >= 0) {
+                int courseId = (Integer) availableCoursesModel.getValueAt(row, 0);
+                String actionText = (String) availableCoursesModel.getValueAt(row, 8);
 
                 if ("Enroll".equals(actionText)) {
                     enrollInCourse(courseId);
@@ -791,38 +789,38 @@ public class UserDashboard extends JFrame {
     class MyEnrollmentButtonEditor extends DefaultCellEditor {
         private JButton button;
         private String label;
-        private boolean clicked;
         private int currentRow;
+        private JTable table;
 
         public MyEnrollmentButtonEditor(JCheckBox checkBox) {
             super(checkBox);
             button = new JButton();
             button.setOpaque(true);
             button.addActionListener(e -> {
+                int row = currentRow;
                 fireEditingStopped();
-                showActionsMenu();
+                SwingUtilities.invokeLater(() -> showActionsMenu(row));
             });
         }
 
         @Override
         public Component getTableCellEditorComponent(JTable table, Object value,
-                                                      boolean isSelected, int row, int column) {
+                                                     boolean isSelected, int row, int column) {
+            this.table = table;
             label = (value == null) ? "Actions" : value.toString();
             button.setText(label);
-            clicked = true;
             currentRow = row;
             return button;
         }
 
         @Override
         public Object getCellEditorValue() {
-            clicked = false;
             return label;
         }
 
-        private void showActionsMenu() {
-            if (clicked && currentRow >= 0) {
-                int courseId = (Integer) myCoursesModel.getValueAt(currentRow, 0);
+        private void showActionsMenu(int row) {
+            if (row >= 0 && table != null) {
+                int courseId = (Integer) myCoursesModel.getValueAt(row, 0);
 
                 JPopupMenu menu = new JPopupMenu();
 
@@ -840,7 +838,9 @@ public class UserDashboard extends JFrame {
                 unenrollItem.addActionListener(e -> unenrollFromCourse(courseId));
                 menu.add(unenrollItem);
 
-                menu.show(button, 0, button.getHeight());
+                // Show popup relative to the table cell location
+                Rectangle cellRect = table.getCellRect(row, table.getColumnCount() - 1, true);
+                menu.show(table, cellRect.x, cellRect.y + cellRect.height);
             }
         }
     }

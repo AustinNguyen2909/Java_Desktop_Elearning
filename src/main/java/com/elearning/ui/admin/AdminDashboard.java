@@ -11,6 +11,7 @@ import com.elearning.ui.components.ModernTextField;
 import com.elearning.util.ChartUtil;
 import com.elearning.util.SessionManager;
 import com.elearning.util.ValidationUtil;
+import com.mysql.cj.log.Log;
 import org.jfree.chart.ChartPanel;
 
 import javax.swing.*;
@@ -398,8 +399,8 @@ public class AdminDashboard extends JFrame {
 
             // User statistics
             statsContent.add(createStatCard("Total Users",
-                String.format("%d (%d active)", stats.totalUsers + stats.totalInstructors + stats.totalAdmins, stats.activeUsers),
-                new Color(52, 152, 219)));
+                    String.format("%d (%d active)", stats.totalUsers + stats.totalInstructors + stats.totalAdmins, stats.activeUsers),
+                    new Color(52, 152, 219)));
             statsContent.add(createStatCard("Students", String.valueOf(stats.totalUsers), new Color(46, 204, 113)));
             statsContent.add(createStatCard("Instructors", String.valueOf(stats.totalInstructors), new Color(155, 89, 182)));
             statsContent.add(createStatCard("Admins", String.valueOf(stats.totalAdmins), new Color(231, 76, 60)));
@@ -443,9 +444,9 @@ public class AdminDashboard extends JFrame {
 
             // User role distribution pie chart
             ChartPanel userRoleChart = ChartUtil.createUserRolePieChart(
-                stats.totalUsers,
-                stats.totalInstructors,
-                stats.totalAdmins
+                    stats.totalUsers,
+                    stats.totalInstructors,
+                    stats.totalAdmins
             );
             userRoleChart.setPreferredSize(new Dimension(280, 250));
             chartsPanel.add(userRoleChart);
@@ -453,17 +454,17 @@ public class AdminDashboard extends JFrame {
             // Course status pie chart
             int rejectedCourses = stats.totalCourses - stats.approvedCourses - stats.pendingCourses;
             ChartPanel courseStatusChart = ChartUtil.createCourseStatusPieChart(
-                stats.approvedCourses,
-                stats.pendingCourses,
-                rejectedCourses
+                    stats.approvedCourses,
+                    stats.pendingCourses,
+                    rejectedCourses
             );
             courseStatusChart.setPreferredSize(new Dimension(280, 250));
             chartsPanel.add(courseStatusChart);
 
             // Enrollment status pie chart
             ChartPanel enrollmentStatusChart = ChartUtil.createEnrollmentStatusPieChart(
-                stats.activeEnrollments,
-                stats.completedEnrollments
+                    stats.activeEnrollments,
+                    stats.completedEnrollments
             );
             enrollmentStatusChart.setPreferredSize(new Dimension(280, 250));
             chartsPanel.add(enrollmentStatusChart);
@@ -527,8 +528,8 @@ public class AdminDashboard extends JFrame {
         JPanel card = new JPanel(new BorderLayout());
         card.setBackground(Color.WHITE);
         card.setBorder(BorderFactory.createCompoundBorder(
-            BorderFactory.createLineBorder(new Color(220, 220, 220), 2),
-            BorderFactory.createEmptyBorder(15, 15, 15, 15)
+                BorderFactory.createLineBorder(new Color(220, 220, 220), 2),
+                BorderFactory.createEmptyBorder(15, 15, 15, 15)
         ));
         card.setPreferredSize(new Dimension(200, 100));
         card.setMaximumSize(new Dimension(Integer.MAX_VALUE, 100));
@@ -571,21 +572,21 @@ public class AdminDashboard extends JFrame {
 
             for (Course course : courses) {
                 Object[] row = {
-                    course.getId(),
-                    course.getTitle(),
-                    course.getInstructorName(),
-                    course.getCategory(),
-                    course.getDifficultyLevel(),
-                    course.getEstimatedHours(),
-                    "Actions"
+                        course.getId(),
+                        course.getTitle(),
+                        course.getInstructorName(),
+                        course.getCategory(),
+                        course.getDifficultyLevel(),
+                        course.getEstimatedHours(),
+                        "Actions"
                 };
                 pendingCoursesModel.addRow(row);
             }
         } catch (Exception e) {
             JOptionPane.showMessageDialog(this,
-                "Error loading pending courses: " + e.getMessage(),
-                "Error",
-                JOptionPane.ERROR_MESSAGE);
+                    "Error loading pending courses: " + e.getMessage(),
+                    "Error",
+                    JOptionPane.ERROR_MESSAGE);
         }
     }
 
@@ -597,22 +598,22 @@ public class AdminDashboard extends JFrame {
 
             for (Course course : courses) {
                 Object[] row = {
-                    course.getId(),
-                    course.getTitle(),
-                    course.getInstructorName(),
-                    course.getCategory(),
-                    course.getStatus(),
-                    course.isPublished() ? "Yes" : "No",
-                    course.getEnrollmentCount() != 0 ? course.getEnrollmentCount() : 0,
-                    course.getAverageRating() != 0 ? String.format("%.1f", course.getAverageRating()) : "N/A"
+                        course.getId(),
+                        course.getTitle(),
+                        course.getInstructorName(),
+                        course.getCategory(),
+                        course.getStatus(),
+                        course.isPublished() ? "Yes" : "No",
+                        course.getEnrollmentCount() != 0 ? course.getEnrollmentCount() : 0,
+                        course.getAverageRating() != 0 ? String.format("%.1f", course.getAverageRating()) : "N/A"
                 };
                 allCoursesModel.addRow(row);
             }
         } catch (Exception e) {
             JOptionPane.showMessageDialog(this,
-                "Error loading courses: " + e.getMessage(),
-                "Error",
-                JOptionPane.ERROR_MESSAGE);
+                    "Error loading courses: " + e.getMessage(),
+                    "Error",
+                    JOptionPane.ERROR_MESSAGE);
         }
     }
 
@@ -621,29 +622,29 @@ public class AdminDashboard extends JFrame {
             Course course = courseService.getCourseById(courseId);
             if (course != null) {
                 String details = String.format(
-                    "Course Details:\n\n" +
-                    "ID: %d\n" +
-                    "Title: %s\n" +
-                    "Instructor: %s\n" +
-                    "Category: %s\n" +
-                    "Difficulty: %s\n" +
-                    "Estimated Hours: %d\n" +
-                    "Status: %s\n" +
-                    "Published: %s\n" +
-                    "Created: %s\n" +
-                    "Rejection Reason: %s\n\n" +
-                    "Description:\n%s",
-                    course.getId(),
-                    course.getTitle(),
-                    course.getInstructorName(),
-                    course.getCategory(),
-                    course.getDifficultyLevel(),
-                    course.getEstimatedHours(),
-                    course.getStatus(),
-                    course.isPublished() ? "Yes" : "No",
-                    course.getCreatedAt(),
-                    course.getRejectionReason() != null ? course.getRejectionReason() : "N/A",
-                    course.getDescription()
+                        "Course Details:\n\n" +
+                                "ID: %d\n" +
+                                "Title: %s\n" +
+                                "Instructor: %s\n" +
+                                "Category: %s\n" +
+                                "Difficulty: %s\n" +
+                                "Estimated Hours: %d\n" +
+                                "Status: %s\n" +
+                                "Published: %s\n" +
+                                "Created: %s\n" +
+                                "Rejection Reason: %s\n\n" +
+                                "Description:\n%s",
+                        course.getId(),
+                        course.getTitle(),
+                        course.getInstructorName(),
+                        course.getCategory(),
+                        course.getDifficultyLevel(),
+                        course.getEstimatedHours(),
+                        course.getStatus(),
+                        course.isPublished() ? "Yes" : "No",
+                        course.getCreatedAt(),
+                        course.getRejectionReason() != null ? course.getRejectionReason() : "N/A",
+                        course.getDescription()
                 );
 
                 JTextArea textArea = new JTextArea(details);
@@ -665,68 +666,68 @@ public class AdminDashboard extends JFrame {
 
     private void approveCourse(int courseId) {
         int confirm = JOptionPane.showConfirmDialog(this,
-            "Approve this course?\nIt will become visible to students.",
-            "Confirm Approval",
-            JOptionPane.YES_NO_OPTION);
+                "Approve this course?\nIt will become visible to students.",
+                "Confirm Approval",
+                JOptionPane.YES_NO_OPTION);
 
         if (confirm == JOptionPane.YES_OPTION) {
             try {
                 boolean success = courseService.approveCourse(courseId, currentUser.getId(), currentUser.getRole());
                 if (success) {
                     JOptionPane.showMessageDialog(this,
-                        "Course approved successfully",
-                        "Success",
-                        JOptionPane.INFORMATION_MESSAGE);
+                            "Course approved successfully",
+                            "Success",
+                            JOptionPane.INFORMATION_MESSAGE);
                     loadPendingCourses();
                     loadAllCourses();
                 } else {
                     JOptionPane.showMessageDialog(this,
-                        "Failed to approve course",
-                        "Error",
-                        JOptionPane.ERROR_MESSAGE);
+                            "Failed to approve course",
+                            "Error",
+                            JOptionPane.ERROR_MESSAGE);
                 }
             } catch (Exception e) {
                 JOptionPane.showMessageDialog(this,
-                    "Error: " + e.getMessage(),
-                    "Error",
-                    JOptionPane.ERROR_MESSAGE);
+                        "Error: " + e.getMessage(),
+                        "Error",
+                        JOptionPane.ERROR_MESSAGE);
             }
         }
     }
 
     private void rejectCourse(int courseId) {
         String reason = JOptionPane.showInputDialog(this,
-            "Enter rejection reason:",
-            "Reject Course",
-            JOptionPane.QUESTION_MESSAGE);
+                "Enter rejection reason:",
+                "Reject Course",
+                JOptionPane.QUESTION_MESSAGE);
 
         if (reason != null && !reason.trim().isEmpty()) {
             try {
                 boolean success = courseService.rejectCourse(courseId, reason, currentUser.getRole());
                 if (success) {
                     JOptionPane.showMessageDialog(this,
-                        "Course rejected successfully",
-                        "Success",
-                        JOptionPane.INFORMATION_MESSAGE);
+                            "Course rejected successfully",
+                            "Success",
+                            JOptionPane.INFORMATION_MESSAGE);
                     loadPendingCourses();
                     loadAllCourses();
                 } else {
                     JOptionPane.showMessageDialog(this,
-                        "Failed to reject course",
-                        "Error",
-                        JOptionPane.ERROR_MESSAGE);
+                            "Failed to reject course",
+                            "Error",
+                            JOptionPane.ERROR_MESSAGE);
                 }
             } catch (Exception e) {
                 JOptionPane.showMessageDialog(this,
-                    "Error: " + e.getMessage(),
-                    "Error",
-                    JOptionPane.ERROR_MESSAGE);
+                        "Error: " + e.getMessage(),
+                        "Error",
+                        JOptionPane.ERROR_MESSAGE);
             }
         } else if (reason != null) {
             JOptionPane.showMessageDialog(this,
-                "Rejection reason is required",
-                "Error",
-                JOptionPane.ERROR_MESSAGE);
+                    "Rejection reason is required",
+                    "Error",
+                    JOptionPane.ERROR_MESSAGE);
         }
     }
 
@@ -737,22 +738,22 @@ public class AdminDashboard extends JFrame {
 
             for (User user : users) {
                 Object[] row = {
-                    user.getId(),
-                    user.getUsername(),
-                    user.getFullName(),
-                    user.getEmail(),
-                    user.getRole(),
-                    user.getStatus(),
-                    user.getCreatedAt() != null ? user.getCreatedAt().toLocalDate().toString() : "N/A",
-                    "Actions"
+                        user.getId(),
+                        user.getUsername(),
+                        user.getFullName(),
+                        user.getEmail(),
+                        user.getRole(),
+                        user.getStatus(),
+                        user.getCreatedAt() != null ? user.getCreatedAt().toLocalDate().toString() : "N/A",
+                        "Actions"
                 };
                 usersModel.addRow(row);
             }
         } catch (Exception e) {
             JOptionPane.showMessageDialog(this,
-                "Error loading users: " + e.getMessage(),
-                "Error",
-                JOptionPane.ERROR_MESSAGE);
+                    "Error loading users: " + e.getMessage(),
+                    "Error",
+                    JOptionPane.ERROR_MESSAGE);
         }
     }
 
@@ -769,22 +770,22 @@ public class AdminDashboard extends JFrame {
 
             for (User user : users) {
                 Object[] row = {
-                    user.getId(),
-                    user.getUsername(),
-                    user.getFullName(),
-                    user.getEmail(),
-                    user.getRole(),
-                    user.getStatus(),
-                    user.getCreatedAt() != null ? user.getCreatedAt().toLocalDate().toString() : "N/A",
-                    "Actions"
+                        user.getId(),
+                        user.getUsername(),
+                        user.getFullName(),
+                        user.getEmail(),
+                        user.getRole(),
+                        user.getStatus(),
+                        user.getCreatedAt() != null ? user.getCreatedAt().toLocalDate().toString() : "N/A",
+                        "Actions"
                 };
                 usersModel.addRow(row);
             }
         } catch (Exception e) {
             JOptionPane.showMessageDialog(this,
-                "Error searching users: " + e.getMessage(),
-                "Error",
-                JOptionPane.ERROR_MESSAGE);
+                    "Error searching users: " + e.getMessage(),
+                    "Error",
+                    JOptionPane.ERROR_MESSAGE);
         }
     }
 
@@ -801,22 +802,22 @@ public class AdminDashboard extends JFrame {
 
             for (User user : users) {
                 Object[] row = {
-                    user.getId(),
-                    user.getUsername(),
-                    user.getFullName(),
-                    user.getEmail(),
-                    user.getRole(),
-                    user.getStatus(),
-                    user.getCreatedAt() != null ? user.getCreatedAt().toLocalDate().toString() : "N/A",
-                    "Actions"
+                        user.getId(),
+                        user.getUsername(),
+                        user.getFullName(),
+                        user.getEmail(),
+                        user.getRole(),
+                        user.getStatus(),
+                        user.getCreatedAt() != null ? user.getCreatedAt().toLocalDate().toString() : "N/A",
+                        "Actions"
                 };
                 usersModel.addRow(row);
             }
         } catch (Exception e) {
             JOptionPane.showMessageDialog(this,
-                "Error filtering users: " + e.getMessage(),
-                "Error",
-                JOptionPane.ERROR_MESSAGE);
+                    "Error filtering users: " + e.getMessage(),
+                    "Error",
+                    JOptionPane.ERROR_MESSAGE);
         }
     }
 
@@ -909,22 +910,22 @@ public class AdminDashboard extends JFrame {
                 boolean success = userService.createUser(newUser, password, currentUser.getRole());
                 if (success) {
                     JOptionPane.showMessageDialog(dialog,
-                        "User created successfully!",
-                        "Success",
-                        JOptionPane.INFORMATION_MESSAGE);
+                            "User created successfully!",
+                            "Success",
+                            JOptionPane.INFORMATION_MESSAGE);
                     loadUsers();
                     dialog.dispose();
                 } else {
                     JOptionPane.showMessageDialog(dialog,
-                        "Failed to create user",
-                        "Error",
-                        JOptionPane.ERROR_MESSAGE);
+                            "Failed to create user",
+                            "Error",
+                            JOptionPane.ERROR_MESSAGE);
                 }
             } catch (Exception ex) {
                 JOptionPane.showMessageDialog(dialog,
-                    "Error: " + ex.getMessage(),
-                    "Error",
-                    JOptionPane.ERROR_MESSAGE);
+                        "Error: " + ex.getMessage(),
+                        "Error",
+                        JOptionPane.ERROR_MESSAGE);
             }
         });
 
@@ -1029,22 +1030,22 @@ public class AdminDashboard extends JFrame {
                 boolean success = userService.updateUser(user, currentUser.getId(), currentUser.getRole());
                 if (success) {
                     JOptionPane.showMessageDialog(dialog,
-                        "User updated successfully!",
-                        "Success",
-                        JOptionPane.INFORMATION_MESSAGE);
+                            "User updated successfully!",
+                            "Success",
+                            JOptionPane.INFORMATION_MESSAGE);
                     loadUsers();
                     dialog.dispose();
                 } else {
                     JOptionPane.showMessageDialog(dialog,
-                        "Failed to update user",
-                        "Error",
-                        JOptionPane.ERROR_MESSAGE);
+                            "Failed to update user",
+                            "Error",
+                            JOptionPane.ERROR_MESSAGE);
                 }
             } catch (Exception ex) {
                 JOptionPane.showMessageDialog(dialog,
-                    "Error: " + ex.getMessage(),
-                    "Error",
-                    JOptionPane.ERROR_MESSAGE);
+                        "Error: " + ex.getMessage(),
+                        "Error",
+                        JOptionPane.ERROR_MESSAGE);
             }
         });
 
@@ -1103,9 +1104,9 @@ public class AdminDashboard extends JFrame {
 
             if (!newPassword.equals(confirmPassword)) {
                 JOptionPane.showMessageDialog(dialog,
-                    "Passwords do not match",
-                    "Error",
-                    JOptionPane.ERROR_MESSAGE);
+                        "Passwords do not match",
+                        "Error",
+                        JOptionPane.ERROR_MESSAGE);
                 return;
             }
 
@@ -1113,21 +1114,21 @@ public class AdminDashboard extends JFrame {
                 boolean success = userService.updatePassword(userId, newPassword, currentUser.getId(), currentUser.getRole());
                 if (success) {
                     JOptionPane.showMessageDialog(dialog,
-                        "Password reset successfully!",
-                        "Success",
-                        JOptionPane.INFORMATION_MESSAGE);
+                            "Password reset successfully!",
+                            "Success",
+                            JOptionPane.INFORMATION_MESSAGE);
                     dialog.dispose();
                 } else {
                     JOptionPane.showMessageDialog(dialog,
-                        "Failed to reset password",
-                        "Error",
-                        JOptionPane.ERROR_MESSAGE);
+                            "Failed to reset password",
+                            "Error",
+                            JOptionPane.ERROR_MESSAGE);
                 }
             } catch (Exception ex) {
                 JOptionPane.showMessageDialog(dialog,
-                    "Error: " + ex.getMessage(),
-                    "Error",
-                    JOptionPane.ERROR_MESSAGE);
+                        "Error: " + ex.getMessage(),
+                        "Error",
+                        JOptionPane.ERROR_MESSAGE);
             }
         });
 
@@ -1142,51 +1143,51 @@ public class AdminDashboard extends JFrame {
             boolean success = userService.updateUserStatus(userId, newStatus, currentUser.getRole());
             if (success) {
                 JOptionPane.showMessageDialog(this,
-                    "User status updated to " + newStatus,
-                    "Success",
-                    JOptionPane.INFORMATION_MESSAGE);
+                        "User status updated to " + newStatus,
+                        "Success",
+                        JOptionPane.INFORMATION_MESSAGE);
                 loadUsers();
             } else {
                 JOptionPane.showMessageDialog(this,
-                    "Failed to update user status",
-                    "Error",
-                    JOptionPane.ERROR_MESSAGE);
+                        "Failed to update user status",
+                        "Error",
+                        JOptionPane.ERROR_MESSAGE);
             }
         } catch (Exception e) {
             JOptionPane.showMessageDialog(this,
-                "Error: " + e.getMessage(),
-                "Error",
-                JOptionPane.ERROR_MESSAGE);
+                    "Error: " + e.getMessage(),
+                    "Error",
+                    JOptionPane.ERROR_MESSAGE);
         }
     }
 
     private void deleteUser(int userId) {
         int confirm = JOptionPane.showConfirmDialog(this,
-            "Are you sure you want to delete this user?\nThis will suspend their account.",
-            "Confirm Delete",
-            JOptionPane.YES_NO_OPTION,
-            JOptionPane.WARNING_MESSAGE);
+                "Are you sure you want to delete this user?\nThis will suspend their account.",
+                "Confirm Delete",
+                JOptionPane.YES_NO_OPTION,
+                JOptionPane.WARNING_MESSAGE);
 
         if (confirm == JOptionPane.YES_OPTION) {
             try {
                 boolean success = userService.deleteUser(userId, currentUser.getRole());
                 if (success) {
                     JOptionPane.showMessageDialog(this,
-                        "User deleted successfully",
-                        "Success",
-                        JOptionPane.INFORMATION_MESSAGE);
+                            "User deleted successfully",
+                            "Success",
+                            JOptionPane.INFORMATION_MESSAGE);
                     loadUsers();
                 } else {
                     JOptionPane.showMessageDialog(this,
-                        "Failed to delete user",
-                        "Error",
-                        JOptionPane.ERROR_MESSAGE);
+                            "Failed to delete user",
+                            "Error",
+                            JOptionPane.ERROR_MESSAGE);
                 }
             } catch (Exception e) {
                 JOptionPane.showMessageDialog(this,
-                    "Error: " + e.getMessage(),
-                    "Error",
-                    JOptionPane.ERROR_MESSAGE);
+                        "Error: " + e.getMessage(),
+                        "Error",
+                        JOptionPane.ERROR_MESSAGE);
             }
         }
     }
@@ -1195,25 +1196,25 @@ public class AdminDashboard extends JFrame {
         User user = userService.getUserById(userId);
         if (user != null) {
             String details = String.format(
-                "User Details:\n\n" +
-                "ID: %d\n" +
-                "Username: %s\n" +
-                "Full Name: %s\n" +
-                "Email: %s\n" +
-                "Phone: %s\n" +
-                "Role: %s\n" +
-                "Status: %s\n" +
-                "Created: %s\n" +
-                "Updated: %s",
-                user.getId(),
-                user.getUsername(),
-                user.getFullName(),
-                user.getEmail(),
-                user.getPhone() != null ? user.getPhone() : "N/A",
-                user.getRole(),
-                user.getStatus(),
-                user.getCreatedAt() != null ? user.getCreatedAt().toString() : "N/A",
-                user.getUpdatedAt() != null ? user.getUpdatedAt().toString() : "N/A"
+                    "User Details:\n\n" +
+                            "ID: %d\n" +
+                            "Username: %s\n" +
+                            "Full Name: %s\n" +
+                            "Email: %s\n" +
+                            "Phone: %s\n" +
+                            "Role: %s\n" +
+                            "Status: %s\n" +
+                            "Created: %s\n" +
+                            "Updated: %s",
+                    user.getId(),
+                    user.getUsername(),
+                    user.getFullName(),
+                    user.getEmail(),
+                    user.getPhone() != null ? user.getPhone() : "N/A",
+                    user.getRole(),
+                    user.getStatus(),
+                    user.getCreatedAt() != null ? user.getCreatedAt().toString() : "N/A",
+                    user.getUpdatedAt() != null ? user.getUpdatedAt().toString() : "N/A"
             );
 
             JTextArea textArea = new JTextArea(details);
@@ -1265,7 +1266,6 @@ public class AdminDashboard extends JFrame {
     class PendingCourseButtonEditor extends DefaultCellEditor {
         private JButton button;
         private String label;
-        private boolean clicked;
         private int currentRow;
 
         public PendingCourseButtonEditor(JCheckBox checkBox) {
@@ -1273,36 +1273,43 @@ public class AdminDashboard extends JFrame {
             button = new JButton();
             button.setOpaque(true);
             button.addActionListener(e -> {
+                int row = currentRow;
                 fireEditingStopped();
-                showActionsMenu();
+                showActionsMenu(row);
             });
         }
 
         @Override
         public Component getTableCellEditorComponent(JTable table, Object value,
-                                                      boolean isSelected, int row, int column) {
+                                                     boolean isSelected, int row, int column) {
             label = (value == null) ? "Actions" : value.toString();
             button.setText(label);
-            clicked = true;
             currentRow = row;
             return button;
         }
 
         @Override
         public Object getCellEditorValue() {
-            clicked = false;
             return label;
         }
 
-        private void showActionsMenu() {
-            if (clicked && currentRow >= 0) {
-                int courseId = (Integer) pendingCoursesModel.getValueAt(currentRow, 0);
+        private void showActionsMenu(int row) {
+            if (row >= 0) {
+                int courseId = (Integer) pendingCoursesModel.getValueAt(row, 0);
 
-                com.elearning.ui.components.CourseDetailsDialog dialog = 
-                    new com.elearning.ui.components.CourseDetailsDialog(AdminDashboard.this, courseId);
-                dialog.setVisible(true);
-                loadPendingCourses();
-                loadAllCourses();
+                try {
+                    com.elearning.ui.components.CourseDetailsDialog dialog =
+                            new com.elearning.ui.components.CourseDetailsDialog(AdminDashboard.this, courseId);
+                    dialog.setVisible(true);
+                    loadPendingCourses();
+                    loadAllCourses();
+                } catch (Exception e) {
+                    e.printStackTrace();
+                    JOptionPane.showMessageDialog(AdminDashboard.this,
+                            "Error opening course details: " + e.getMessage(),
+                            "Error",
+                            JOptionPane.ERROR_MESSAGE);
+                }
             }
         }
     }
@@ -1311,39 +1318,39 @@ public class AdminDashboard extends JFrame {
     class UserButtonEditor extends DefaultCellEditor {
         private JButton button;
         private String label;
-        private boolean clicked;
         private int currentRow;
+        private JTable table;
 
         public UserButtonEditor(JCheckBox checkBox) {
             super(checkBox);
             button = new JButton();
             button.setOpaque(true);
             button.addActionListener(e -> {
+                int row = currentRow;
                 fireEditingStopped();
-                showUserActionsMenu();
+                SwingUtilities.invokeLater(() -> showUserActionsMenu(row));
             });
         }
 
         @Override
         public Component getTableCellEditorComponent(JTable table, Object value,
-                                                      boolean isSelected, int row, int column) {
+                                                     boolean isSelected, int row, int column) {
+            this.table = table;
             label = (value == null) ? "Actions" : value.toString();
             button.setText(label);
-            clicked = true;
             currentRow = row;
             return button;
         }
 
         @Override
         public Object getCellEditorValue() {
-            clicked = false;
             return label;
         }
 
-        private void showUserActionsMenu() {
-            if (clicked && currentRow >= 0) {
-                int userId = (Integer) usersModel.getValueAt(currentRow, 0);
-                String userStatus = (String) usersModel.getValueAt(currentRow, 5);
+        private void showUserActionsMenu(int row) {
+            if (row >= 0 && table != null) {
+                int userId = (Integer) usersModel.getValueAt(row, 0);
+                String userStatus = (String) usersModel.getValueAt(row, 5);
 
                 JPopupMenu menu = new JPopupMenu();
 
@@ -1382,7 +1389,9 @@ public class AdminDashboard extends JFrame {
                 deleteItem.addActionListener(e -> deleteUser(userId));
                 menu.add(deleteItem);
 
-                menu.show(button, 0, button.getHeight());
+                // Show popup relative to the table cell location
+                Rectangle cellRect = table.getCellRect(row, table.getColumnCount() - 1, true);
+                menu.show(table, cellRect.x, cellRect.y + cellRect.height);
             }
         }
     }

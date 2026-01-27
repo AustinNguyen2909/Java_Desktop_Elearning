@@ -257,17 +257,18 @@ public class LessonViewerDialog extends JDialog {
             updateCourseProgress();
         } catch (Exception e) {
             JOptionPane.showMessageDialog(this,
-                "Error loading progress: " + e.getMessage(),
-                "Error", JOptionPane.ERROR_MESSAGE);
+                    "Error loading progress: " + e.getMessage(),
+                    "Error", JOptionPane.ERROR_MESSAGE);
         }
     }
 
     private void loadSelectedLesson(Lesson lesson) {
         this.currentLesson = lesson;
 
+        System.out.println("Loading lesson: " + lesson.getTitle() + " (ID: " + lesson.getId() + ")");
         // Update lesson title
         lessonTitleLabel.setText(String.format("Lesson %d: %s",
-            lessons.indexOf(lesson) + 1, lesson.getTitle()));
+                lessons.indexOf(lesson) + 1, lesson.getTitle()));
 
         // Update description
         String description = lesson.getDescription();
@@ -276,28 +277,46 @@ public class LessonViewerDialog extends JDialog {
         }
         lessonDescriptionArea.setText(description);
 
-        // Load video player
+        // Get panels first
         JPanel contentPanel = (JPanel) ((JSplitPane) getContentPane().getComponent(1)).getRightComponent();
         JPanel centerPanel = (JPanel) contentPanel.getComponent(1);
-        centerPanel.removeAll();
 
+        // Handle video
         if (lesson.getVideoPath() != null && !lesson.getVideoPath().isEmpty()) {
-            try {
-                videoPlayer = new VideoPlayerPanel(lesson.getVideoPath());
-                centerPanel.add(videoPlayer, BorderLayout.CENTER);
-            } catch (Exception e) {
-                JLabel errorLabel = new JLabel("Error loading video: " + e.getMessage(), SwingConstants.CENTER);
-                errorLabel.setForeground(Color.RED);
-                centerPanel.add(errorLabel, BorderLayout.CENTER);
+            if (videoPlayer == null) {
+                // Create video player for the first lesson
+                centerPanel.removeAll();
+                try {
+                    System.out.println("Creating video player for first lesson: " + lesson.getVideoPath());
+                    videoPlayer = new VideoPlayerPanel(lesson.getVideoPath());
+                    centerPanel.add(videoPlayer, BorderLayout.CENTER);
+                    centerPanel.revalidate();
+                    centerPanel.repaint();
+                    System.out.println("Video player created and added to panel");
+                } catch (Exception ex) {
+                    System.err.println("Error creating video player: " + ex.getMessage());
+                    ex.printStackTrace();
+                    JLabel errorLabel = new JLabel("Error loading video: " + ex.getMessage(), SwingConstants.CENTER);
+                    errorLabel.setForeground(Color.RED);
+                    centerPanel.add(errorLabel, BorderLayout.CENTER);
+                    centerPanel.revalidate();
+                    centerPanel.repaint();
+                }
+            } else {
+                // Reuse existing player and just change the video source
+                System.out.println("Reusing video player, loading new video: " + lesson.getVideoPath());
+                videoPlayer.loadVideo(lesson.getVideoPath());
             }
         } else {
+            // No video available for this lesson
+            System.out.println("No video path available for lesson: " + lesson.getTitle());
+            centerPanel.removeAll();
             JLabel noVideoLabel = new JLabel("No video available for this lesson", SwingConstants.CENTER);
             noVideoLabel.setForeground(new Color(150, 150, 150));
             centerPanel.add(noVideoLabel, BorderLayout.CENTER);
+            centerPanel.revalidate();
+            centerPanel.repaint();
         }
-
-        centerPanel.revalidate();
-        centerPanel.repaint();
 
         // Update mark complete button
         LessonProgress progress = progressMap.get(lesson.getId());
@@ -351,29 +370,29 @@ public class LessonViewerDialog extends JDialog {
 
                 // Check if course is 100% complete
                 int completedCount = (int) progressMap.values().stream()
-                    .filter(LessonProgress::isCompleted)
-                    .count();
+                        .filter(LessonProgress::isCompleted)
+                        .count();
 
                 if (completedCount == lessons.size()) {
                     JOptionPane.showMessageDialog(this,
-                        "Congratulations!\nYou've completed all lessons in this course!",
-                        "Course Completed",
-                        JOptionPane.INFORMATION_MESSAGE);
+                            "Congratulations!\nYou've completed all lessons in this course!",
+                            "Course Completed",
+                            JOptionPane.INFORMATION_MESSAGE);
                 } else {
                     JOptionPane.showMessageDialog(this,
-                        "Lesson marked as complete!",
-                        "Success",
-                        JOptionPane.INFORMATION_MESSAGE);
+                            "Lesson marked as complete!",
+                            "Success",
+                            JOptionPane.INFORMATION_MESSAGE);
                 }
             } else {
                 JOptionPane.showMessageDialog(this,
-                    "Failed to mark lesson as complete. Please try again.",
-                    "Error", JOptionPane.ERROR_MESSAGE);
+                        "Failed to mark lesson as complete. Please try again.",
+                        "Error", JOptionPane.ERROR_MESSAGE);
             }
         } catch (Exception e) {
             JOptionPane.showMessageDialog(this,
-                "Error: " + e.getMessage(),
-                "Error", JOptionPane.ERROR_MESSAGE);
+                    "Error: " + e.getMessage(),
+                    "Error", JOptionPane.ERROR_MESSAGE);
         }
     }
 
@@ -383,8 +402,8 @@ public class LessonViewerDialog extends JDialog {
         }
 
         int completedCount = (int) progressMap.values().stream()
-            .filter(LessonProgress::isCompleted)
-            .count();
+                .filter(LessonProgress::isCompleted)
+                .count();
 
         int totalLessons = lessons.size();
         double progressPercent = (double) completedCount / totalLessons * 100.0;
@@ -392,7 +411,7 @@ public class LessonViewerDialog extends JDialog {
 
         // Update progress label
         progressLabel.setText(String.format("Progress: %d%% (%d/%d lessons completed)",
-            progressInt, completedCount, totalLessons));
+                progressInt, completedCount, totalLessons));
 
         // Update progress bar
         courseProgressBar.setValue(progressInt);
@@ -402,17 +421,23 @@ public class LessonViewerDialog extends JDialog {
     private void disposeResources() {
         if (videoPlayer != null) {
             try {
+                System.out.println("Disposing video player for course: " + course.getTitle());
                 videoPlayer.dispose();
+                videoPlayer = null;
+                System.out.println("Video player disposed successfully");
             } catch (Exception e) {
-                // Ignore disposal errors
+                System.err.println("Error disposing video player: " + e.getMessage());
+                e.printStackTrace();
             }
         }
     }
 
     @Override
     public void dispose() {
+        System.out.println("LessonViewerDialog dispose called for course: " + course.getTitle());
         disposeResources();
         super.dispose();
+        System.out.println("LessonViewerDialog disposed completely");
     }
 
     /**
@@ -444,12 +469,12 @@ public class LessonViewerDialog extends JDialog {
 
                 // Format text
                 String text = String.format("<html><div style='padding:5px;'>" +
-                        "<span style='font-size:14px;'>%s</span> " +
-                        "<b>%d. %s</b><br>" +
-                        "<span style='font-size:11px; color:#666;'>%d minutes</span>" +
-                        "</div></html>",
-                    icon, index + 1, lesson.getTitle(),
-                    lesson.getDurationMinutes() != null ? lesson.getDurationMinutes() : 0);
+                                "<span style='font-size:14px;'>%s</span> " +
+                                "<b>%d. %s</b><br>" +
+                                "<span style='font-size:11px; color:#666;'>%d minutes</span>" +
+                                "</div></html>",
+                        icon, index + 1, lesson.getTitle(),
+                        lesson.getDurationMinutes() != null ? lesson.getDurationMinutes() : 0);
 
                 label.setText(text);
                 label.setForeground(textColor);
