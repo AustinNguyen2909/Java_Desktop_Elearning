@@ -134,6 +134,8 @@ public class LessonDialog extends JDialog {
         previewCheckbox.setSelected(lesson.isPreview());
         if (lesson.getVideoPath() != null) {
             videoInfoLabel.setText(new File(lesson.getVideoPath()).getName());
+            // Store the existing video path so we don't require re-selection
+            selectedVideoPath = lesson.getVideoPath();
         }
     }
 
@@ -160,7 +162,7 @@ public class LessonDialog extends JDialog {
             }
 
             if (result) {
-                // If a new video was selected, upload it
+                // If a new video was selected, process it
                 if (selectedVideoPath != null) {
                     // Refresh lesson object to get generated ID if it was null (new lesson)
                     if (lesson == null) {
@@ -171,8 +173,20 @@ public class LessonDialog extends JDialog {
                                 .findFirst()
                                 .orElse(l);
                     }
-                    
-                    String uploadedPath = VideoUtil.uploadVideo(this, courseId, l.getId());
+
+                    // Check if this is a new video file or existing one
+                    boolean isNewVideo = (lesson == null || lesson.getVideoPath() == null ||
+                                         !selectedVideoPath.equals(lesson.getVideoPath()));
+
+                    String uploadedPath = null;
+                    if (isNewVideo) {
+                        // Copy the selected video file to the video storage directory
+                        uploadedPath = copyVideoToStorage(selectedVideoPath, courseId, l.getId());
+                    } else {
+                        // Use existing video path (no change needed)
+                        uploadedPath = selectedVideoPath;
+                    }
+
                     if (uploadedPath != null) {
                         l.setVideoPath(uploadedPath);
                         lessonService.updateLesson(l, currentUser.getId(), currentUser.getRole());
@@ -186,6 +200,66 @@ public class LessonDialog extends JDialog {
         } catch (Exception e) {
             JOptionPane.showMessageDialog(this, "Error: " + e.getMessage(), "Error", JOptionPane.ERROR_MESSAGE);
         }
+    }
+
+    /**
+     * Copy a video file to the storage directory without prompting
+     * @param sourcePath Absolute path to source video file
+     * @param courseId Course ID for organizing files
+     * @param lessonId Lesson ID for file naming
+     * @return Absolute path to stored video, or null if copy failed
+     */
+    private String copyVideoToStorage(String sourcePath, int courseId, int lessonId) {
+        try {
+            File sourceFile = new File(sourcePath);
+            if (!sourceFile.exists()) {
+                JOptionPane.showMessageDialog(this,
+                    "Selected video file not found: " + sourcePath,
+                    "File Error",
+                    JOptionPane.ERROR_MESSAGE);
+                return null;
+            }
+
+            // Create directory structure: videos/course_X/
+            String destDir = "videos/course_" + courseId + "/";
+            java.nio.file.Path dirPath = java.nio.file.Paths.get(destDir);
+            java.nio.file.Files.createDirectories(dirPath);
+
+            // Generate unique filename with timestamp
+            String timestamp = java.time.LocalDateTime.now()
+                .format(java.time.format.DateTimeFormatter.ofPattern("yyyyMMdd_HHmmss"));
+            String extension = getFileExtension(sourceFile.getName());
+            String filename = "lesson_" + lessonId + "_" + timestamp + extension;
+            java.nio.file.Path destination = java.nio.file.Paths.get(destDir + filename);
+
+            // Copy file to destination
+            java.nio.file.Files.copy(sourceFile.toPath(), destination,
+                java.nio.file.StandardCopyOption.REPLACE_EXISTING);
+
+            System.out.println("Video copied to: " + destination.toAbsolutePath());
+            return destination.toAbsolutePath().toString();
+
+        } catch (Exception e) {
+            JOptionPane.showMessageDialog(this,
+                "Failed to copy video: " + e.getMessage(),
+                "Upload Error",
+                JOptionPane.ERROR_MESSAGE);
+            e.printStackTrace();
+            return null;
+        }
+    }
+
+    /**
+     * Get file extension including the dot
+     * @param filename File name
+     * @return Extension (e.g., ".mp4"), or empty string if no extension
+     */
+    private String getFileExtension(String filename) {
+        int lastDot = filename.lastIndexOf('.');
+        if (lastDot > 0 && lastDot < filename.length() - 1) {
+            return filename.substring(lastDot);
+        }
+        return "";
     }
 
     public boolean isSuccess() { return success; }
