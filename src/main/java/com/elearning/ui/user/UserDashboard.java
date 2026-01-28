@@ -6,15 +6,11 @@ import com.elearning.model.Lesson;
 import com.elearning.model.User;
 import com.elearning.service.CourseService;
 import com.elearning.service.EnrollmentService;
-import com.elearning.service.LessonService;
-import com.elearning.ui.components.VideoPlayerPanel;
 import com.elearning.util.SessionManager;
-import com.elearning.util.VideoUtil;
 
 import javax.swing.*;
 import javax.swing.table.DefaultTableModel;
 import java.awt.*;
-import java.io.File;
 import java.util.List;
 
 /**
@@ -24,7 +20,6 @@ public class UserDashboard extends JFrame {
     private final User currentUser;
     private final CourseService courseService;
     private final EnrollmentService enrollmentService;
-    private final LessonService lessonService;
 
     private JPanel contentPanel;
     private JTable availableCoursesTable;
@@ -37,7 +32,6 @@ public class UserDashboard extends JFrame {
         this.currentUser = SessionManager.getInstance().getCurrentUser();
         this.courseService = new CourseService();
         this.enrollmentService = new EnrollmentService();
-        this.lessonService = new LessonService();
 
         initComponents();
         loadAvailableCourses();
@@ -502,160 +496,6 @@ public class UserDashboard extends JFrame {
         // Refresh course list when dialog closes to show updated progress
         loadMyCourses();
     }
-
-    private void showLessonContent(JDialog parentDialog, JPanel contentPanel, Lesson lesson, int courseId, Enrollment enrollment, JLabel progressLabel) {
-        contentPanel.removeAll();
-        contentPanel.setLayout(new BorderLayout(10, 10));
-
-        // Header with lesson info
-        JPanel headerPanel = new JPanel(new BorderLayout());
-        headerPanel.setBackground(new Color(240, 248, 255));
-        headerPanel.setBorder(BorderFactory.createEmptyBorder(15, 15, 15, 15));
-
-        JLabel titleLabel = new JLabel("Lesson " + lesson.getOrderIndex() + ": " + lesson.getTitle());
-        titleLabel.setFont(new Font("Segoe UI", Font.BOLD, 20));
-        titleLabel.setForeground(new Color(33, 33, 33));
-
-        JLabel durationLabel = new JLabel("Duration: " + (lesson.getDurationMinutes() != null ? lesson.getDurationMinutes() : 0) + " minutes");
-        durationLabel.setFont(new Font("Segoe UI", Font.PLAIN, 12));
-        durationLabel.setForeground(new Color(88, 88, 88));
-
-        JPanel headerTextPanel = new JPanel(new BorderLayout());
-        headerTextPanel.setBackground(new Color(240, 248, 255));
-        headerTextPanel.add(titleLabel, BorderLayout.NORTH);
-        headerTextPanel.add(durationLabel, BorderLayout.SOUTH);
-        headerPanel.add(headerTextPanel, BorderLayout.CENTER);
-
-        // Video panel
-        JPanel videoPanel = new JPanel(new BorderLayout());
-        videoPanel.setBackground(Color.BLACK);
-        videoPanel.setPreferredSize(new Dimension(0, 450));
-
-        if (lesson.getVideoPath() != null && !lesson.getVideoPath().isEmpty() &&
-                VideoUtil.videoExists(lesson.getVideoPath())) {
-            try {
-                // Create video player
-                VideoPlayerPanel playerPanel = new VideoPlayerPanel(lesson.getVideoPath());
-                videoPanel.add(playerPanel, BorderLayout.CENTER);
-
-                // Add disposal handler for when dialog closes
-                parentDialog.addWindowListener(new java.awt.event.WindowAdapter() {
-                    @Override
-                    public void windowClosing(java.awt.event.WindowEvent windowEvent) {
-                        playerPanel.dispose();
-                    }
-                });
-            } catch (Exception e) {
-                JLabel errorLabel = new JLabel(
-                        "<html><div style='text-align: center; color: white;'>" +
-                                "<h2>Video Player Error</h2>" +
-                                "<p>" + e.getMessage() + "</p>" +
-                                "</div></html>",
-                        SwingConstants.CENTER);
-                errorLabel.setForeground(Color.WHITE);
-                videoPanel.add(errorLabel, BorderLayout.CENTER);
-            }
-        } else {
-            JLabel noVideoLabel = new JLabel("No video available for this lesson", SwingConstants.CENTER);
-            noVideoLabel.setForeground(Color.WHITE);
-            videoPanel.add(noVideoLabel, BorderLayout.CENTER);
-        }
-
-        // Description panel
-        JPanel descriptionPanel = new JPanel(new BorderLayout());
-        descriptionPanel.setBackground(Color.WHITE);
-        descriptionPanel.setBorder(BorderFactory.createEmptyBorder(15, 15, 15, 15));
-
-        JLabel descLabel = new JLabel("Description:");
-        descLabel.setFont(new Font("Segoe UI", Font.BOLD, 14));
-        descLabel.setForeground(new Color(33, 33, 33));
-
-        JTextArea descriptionArea = new JTextArea(lesson.getDescription() != null ? lesson.getDescription() : "No description available");
-        descriptionArea.setEditable(false);
-        descriptionArea.setLineWrap(true);
-        descriptionArea.setWrapStyleWord(true);
-        descriptionArea.setFont(new Font("Segoe UI", Font.PLAIN, 13));
-        descriptionArea.setBackground(Color.WHITE);
-        descriptionArea.setForeground(new Color(33, 33, 33));
-        descriptionArea.setCaretColor(new Color(33, 33, 33));
-        JScrollPane descScrollPane = new JScrollPane(descriptionArea);
-        descScrollPane.setBackground(Color.WHITE);
-        descScrollPane.getViewport().setBackground(Color.WHITE);
-        descScrollPane.setPreferredSize(new Dimension(0, 120));
-
-        JPanel descContainerPanel = new JPanel(new BorderLayout(5, 5));
-        descContainerPanel.setBackground(Color.WHITE);
-        descContainerPanel.add(descLabel, BorderLayout.NORTH);
-        descContainerPanel.add(descScrollPane, BorderLayout.CENTER);
-        descriptionPanel.add(descContainerPanel, BorderLayout.CENTER);
-
-        // Action buttons
-        JPanel actionPanel = new JPanel(new FlowLayout(FlowLayout.CENTER, 10, 10));
-        actionPanel.setBackground(Color.WHITE);
-
-        JButton completeButton = new JButton("Mark as Complete");
-        completeButton.setBackground(new Color(46, 204, 113));
-        completeButton.setForeground(Color.WHITE);
-        completeButton.setFocusPainted(false);
-        completeButton.setBorderPainted(false);
-        completeButton.setFont(new Font("Segoe UI", Font.BOLD, 12));
-        completeButton.setFont(new Font("Segoe UI", Font.BOLD, 14));
-        completeButton.setPreferredSize(new Dimension(200, 40));
-        completeButton.addActionListener(e -> {
-            try {
-                boolean success = enrollmentService.completeLesson(currentUser.getId(), lesson.getId());
-                if (success) {
-                    JOptionPane.showMessageDialog(parentDialog,
-                            "Lesson marked as complete!",
-                            "Success",
-                            JOptionPane.INFORMATION_MESSAGE);
-
-                    // Update progress label
-                    Enrollment updatedEnrollment = enrollmentService.getEnrollment(currentUser.getId(), courseId);
-                    if (updatedEnrollment != null) {
-                        progressLabel.setText(String.format("Progress: %.1f%%", updatedEnrollment.getProgressPercent()));
-                    }
-
-                    completeButton.setEnabled(false);
-                    completeButton.setText("Completed ✓");
-                } else {
-                    JOptionPane.showMessageDialog(parentDialog,
-                            "Failed to mark lesson as complete",
-                            "Error",
-                            JOptionPane.ERROR_MESSAGE);
-                }
-            } catch (Exception ex) {
-                JOptionPane.showMessageDialog(parentDialog,
-                        "Error: " + ex.getMessage(),
-                        "Error",
-                        JOptionPane.ERROR_MESSAGE);
-            }
-        });
-
-        // Check if lesson is already completed
-        try {
-            // This would need a method in enrollmentService to check if lesson is completed
-            // For now, we'll just enable the button
-        } catch (Exception e) {
-            // Ignore
-        }
-
-        actionPanel.add(completeButton);
-
-        // Assemble content panel
-        JPanel contentArea = new JPanel(new BorderLayout(10, 10));
-        contentArea.setBackground(Color.WHITE);
-        contentArea.add(videoPanel, BorderLayout.NORTH);
-        contentArea.add(descriptionPanel, BorderLayout.CENTER);
-        contentArea.add(actionPanel, BorderLayout.SOUTH);
-
-        contentPanel.add(headerPanel, BorderLayout.NORTH);
-        contentPanel.add(contentArea, BorderLayout.CENTER);
-
-        contentPanel.revalidate();
-        contentPanel.repaint();
-    }
-
     // Custom cell renderer for lesson list
     class LessonListCellRenderer extends DefaultListCellRenderer {
         @Override
