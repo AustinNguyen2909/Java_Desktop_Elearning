@@ -283,8 +283,25 @@ public class LessonViewerDialog extends JDialog {
 
         // Handle video
         if (lesson.getVideoPath() != null && !lesson.getVideoPath().isEmpty()) {
-            if (videoPlayer == null) {
-                // Create video player for the first lesson
+            // Validate video file exists first
+            java.io.File videoFile = new java.io.File(lesson.getVideoPath());
+            if (!videoFile.exists()) {
+                System.err.println("Video file not found: " + lesson.getVideoPath());
+                // Dispose broken video player if it exists
+                if (videoPlayer != null) {
+                    System.out.println("Disposing broken video player due to missing file");
+                    videoPlayer.dispose();
+                    videoPlayer = null;
+                }
+                // Show error message
+                centerPanel.removeAll();
+                JLabel errorLabel = new JLabel("Video file not found: " + videoFile.getName(), SwingConstants.CENTER);
+                errorLabel.setForeground(Color.RED);
+                centerPanel.add(errorLabel, BorderLayout.CENTER);
+                centerPanel.revalidate();
+                centerPanel.repaint();
+            } else if (videoPlayer == null) {
+                // Create video player for the first lesson with valid video
                 centerPanel.removeAll();
                 try {
                     System.out.println("Creating video player for first lesson: " + lesson.getVideoPath());
@@ -296,6 +313,30 @@ public class LessonViewerDialog extends JDialog {
                 } catch (Exception ex) {
                     System.err.println("Error creating video player: " + ex.getMessage());
                     ex.printStackTrace();
+                    videoPlayer = null; // Clear the reference on error
+                    JLabel errorLabel = new JLabel("Error loading video: " + ex.getMessage(), SwingConstants.CENTER);
+                    errorLabel.setForeground(Color.RED);
+                    centerPanel.add(errorLabel, BorderLayout.CENTER);
+                    centerPanel.revalidate();
+                    centerPanel.repaint();
+                }
+            } else if (!videoPlayer.isInitialized()) {
+                // Video player exists but failed to initialize - recreate it
+                System.out.println("Video player not initialized, disposing and recreating");
+                videoPlayer.dispose();
+                videoPlayer = null;
+                centerPanel.removeAll();
+                try {
+                    System.out.println("Recreating video player: " + lesson.getVideoPath());
+                    videoPlayer = new VideoPlayerPanel(lesson.getVideoPath());
+                    centerPanel.add(videoPlayer, BorderLayout.CENTER);
+                    centerPanel.revalidate();
+                    centerPanel.repaint();
+                    System.out.println("Video player recreated successfully");
+                } catch (Exception ex) {
+                    System.err.println("Error recreating video player: " + ex.getMessage());
+                    ex.printStackTrace();
+                    videoPlayer = null;
                     JLabel errorLabel = new JLabel("Error loading video: " + ex.getMessage(), SwingConstants.CENTER);
                     errorLabel.setForeground(Color.RED);
                     centerPanel.add(errorLabel, BorderLayout.CENTER);
@@ -304,12 +345,43 @@ public class LessonViewerDialog extends JDialog {
                 }
             } else {
                 // Reuse existing player and just change the video source
+                System.out.println("Disposing resources for video: " + videoPlayer.getName());
                 System.out.println("Reusing video player, loading new video: " + lesson.getVideoPath());
-                videoPlayer.loadVideo(lesson.getVideoPath());
+                boolean loadSuccess = videoPlayer.loadVideo(lesson.getVideoPath());
+                if (!loadSuccess) {
+                    System.err.println("Failed to load video, disposing and recreating player");
+                    videoPlayer.dispose();
+                    videoPlayer = null;
+                    centerPanel.removeAll();
+                    try {
+                        System.out.println("Recreating video player after load failure: " + lesson.getVideoPath());
+                        videoPlayer = new VideoPlayerPanel(lesson.getVideoPath());
+                        centerPanel.add(videoPlayer, BorderLayout.CENTER);
+                        centerPanel.revalidate();
+                        centerPanel.repaint();
+                    } catch (Exception ex) {
+                        System.err.println("Error recreating video player: " + ex.getMessage());
+                        ex.printStackTrace();
+                        videoPlayer = null;
+                        JLabel errorLabel = new JLabel("Error loading video: " + ex.getMessage(), SwingConstants.CENTER);
+                        errorLabel.setForeground(Color.RED);
+                        centerPanel.add(errorLabel, BorderLayout.CENTER);
+                        centerPanel.revalidate();
+                        centerPanel.repaint();
+                    }
+                }
             }
         } else {
             // No video available for this lesson
             System.out.println("No video path available for lesson: " + lesson.getTitle());
+
+            // Dispose video player if it exists since we don't need it
+            if (videoPlayer != null) {
+                System.out.println("Disposing video player - no video for this lesson");
+                videoPlayer.dispose();
+                videoPlayer = null;
+            }
+
             centerPanel.removeAll();
             JLabel noVideoLabel = new JLabel("No video available for this lesson", SwingConstants.CENTER);
             noVideoLabel.setForeground(new Color(150, 150, 150));
@@ -421,6 +493,7 @@ public class LessonViewerDialog extends JDialog {
     private void disposeResources() {
         if (videoPlayer != null) {
             try {
+                System.out.println("Disposing resources for video: " + videoPlayer.getName());
                 System.out.println("Disposing video player for course: " + course.getTitle());
                 videoPlayer.dispose();
                 videoPlayer = null;

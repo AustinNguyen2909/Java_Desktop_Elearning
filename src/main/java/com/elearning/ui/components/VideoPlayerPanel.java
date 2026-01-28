@@ -34,20 +34,93 @@ public class VideoPlayerPanel extends JPanel {
     private boolean isInitialized = false;
     private volatile boolean disposed = false;
 
+    // Static initializer to configure JavaFX Platform
+    static {
+        // Prevent JavaFX Platform from exiting when all windows are closed
+        // This is crucial for multiple JFXPanel instances
+        try {
+            Platform.setImplicitExit(false);
+            System.out.println("JavaFX Platform implicit exit disabled");
+        } catch (IllegalStateException e) {
+            // Platform might already be initialized
+            System.out.println("JavaFX Platform already initialized: " + e.getMessage());
+        }
+    }
+
     public VideoPlayerPanel(String videoPath) {
+        System.out.println("=== VideoPlayerPanel constructor called for: " + videoPath);
         this.videoPath = videoPath;
 
         setLayout(new BorderLayout());
         setBackground(Color.BLACK);
         setPreferredSize(new Dimension(800, 450));
 
+        System.out.println("Creating JFXPanel...");
         // Create and initialize JFXPanel
         // This implicitly initializes JavaFX toolkit if needed
         fxPanel = new JFXPanel();
         add(fxPanel, BorderLayout.CENTER);
+        System.out.println("JFXPanel created and added");
 
-        // Initialize JavaFX scene on the JavaFX Application Thread
-        Platform.runLater(this::initFX);
+        // Add a hierarchy listener to know when the component is actually displayed
+        addHierarchyListener(e -> {
+            if ((e.getChangeFlags() & java.awt.event.HierarchyEvent.SHOWING_CHANGED) != 0) {
+                if (isShowing() && !isInitialized && !disposed) {
+                    System.out.println("VideoPlayerPanel is now showing, triggering initialization");
+                    scheduleInitialization();
+                }
+            }
+        });
+
+        // Also try immediate initialization
+        System.out.println("Attempting immediate initialization...");
+        scheduleInitialization();
+    }
+
+    /**
+     * Schedule initialization on JavaFX thread with debug logging
+     */
+    private void scheduleInitialization() {
+        System.out.println("scheduleInitialization() called for: " + videoPath);
+
+        // Create a CountDownLatch to track initialization
+        final CountDownLatch initLatch = new CountDownLatch(1);
+
+        // Schedule initialization on JavaFX thread
+        try {
+            System.out.println("Calling Platform.runLater...");
+            Platform.runLater(() -> {
+                System.out.println("*** Platform.runLater EXECUTING for: " + videoPath + " ***");
+                try {
+                    if (!isInitialized && !disposed) {
+                        initFX();
+                    } else {
+                        System.out.println("Skipping initFX - already initialized or disposed");
+                    }
+                } finally {
+                    initLatch.countDown();
+                }
+            });
+            System.out.println("Platform.runLater CALLED successfully");
+        } catch (Exception e) {
+            System.err.println("!!! ERROR calling Platform.runLater: " + e.getMessage());
+            e.printStackTrace();
+            initLatch.countDown();
+        }
+
+        // Monitor initialization in background thread
+        new Thread(() -> {
+            try {
+                if (initLatch.await(5, TimeUnit.SECONDS)) {
+                    System.out.println("initFX completed for: " + videoPath);
+                } else {
+                    System.err.println("!!! WARNING: initFX did NOT execute within 5 seconds for: " + videoPath);
+                    System.err.println("!!! Platform.runLater may not be working. isInitialized=" + isInitialized + ", disposed=" + disposed);
+                }
+            } catch (InterruptedException e) {
+                System.err.println("Wait interrupted");
+            }
+        }, "InitMonitor-" + videoPath).start();
     }
 
     /**
@@ -55,6 +128,15 @@ public class VideoPlayerPanel extends JPanel {
      * Must be called on JavaFX Application Thread
      */
     private void initFX() {
+        System.out.println("initFX for VideoPlayerPanel: " + videoPath);
+
+        // Check if we're on the JavaFX Application Thread
+        if (!Platform.isFxApplicationThread()) {
+            System.err.println("WARNING: initFX called from non-FX thread, rescheduling...");
+            Platform.runLater(this::initFX);
+            return;
+        }
+
         // Check if already disposed
         if (disposed) {
             System.out.println("VideoPlayerPanel already disposed, skipping initFX for: " + videoPath);
@@ -278,13 +360,14 @@ public class VideoPlayerPanel extends JPanel {
     /**
      * Load a new video source without recreating the entire player
      * This reuses the existing MediaView and just swaps the MediaPlayer
+     * @return true if video loaded successfully, false otherwise
      */
-    public void loadVideo(String newVideoPath) {
+    public boolean loadVideo(String newVideoPath) {
         System.out.println("VideoPlayerPanel.loadVideo() called for: " + newVideoPath);
 
         if (disposed) {
             System.err.println("Cannot load video - panel is disposed");
-            return;
+            return false;
         }
 
         // Wait for initialization to complete (max 5 seconds)
@@ -295,17 +378,18 @@ public class VideoPlayerPanel extends JPanel {
                 attempts++;
             } catch (InterruptedException e) {
                 System.err.println("Wait for initialization interrupted");
-                return;
+                return false;
             }
         }
 
         if (!isInitialized) {
             System.err.println("Cannot load video - panel initialization timed out");
-            return;
+            return false;
         }
 
         this.videoPath = newVideoPath;
 
+        final boolean[] success = {false};
         CountDownLatch latch = new CountDownLatch(1);
 
         Platform.runLater(() -> {
@@ -343,11 +427,13 @@ public class VideoPlayerPanel extends JPanel {
                 });
 
                 System.out.println("Video loaded successfully");
+                success[0] = true;
 
             } catch (Exception e) {
                 System.err.println("Failed to load video: " + e.getMessage());
                 e.printStackTrace();
                 showError("Failed to load video: " + e.getMessage());
+                success[0] = false;
             } finally {
                 latch.countDown();
             }
@@ -358,7 +444,10 @@ public class VideoPlayerPanel extends JPanel {
             latch.await(2000, TimeUnit.MILLISECONDS);
         } catch (InterruptedException e) {
             System.err.println("Video loading wait interrupted");
+            return false;
         }
+
+        return success[0];
     }
 
     /**
@@ -374,6 +463,7 @@ public class VideoPlayerPanel extends JPanel {
 
         if (mediaPlayer != null) {
             final MediaPlayer playerToDispose = mediaPlayer;
+            final JFXPanel panelToClean = fxPanel;
             mediaPlayer = null;
 
             CountDownLatch latch = new CountDownLatch(1);
@@ -384,15 +474,22 @@ public class VideoPlayerPanel extends JPanel {
                     playerToDispose.stop();
                     playerToDispose.dispose();
 
+                    // Clear MediaView reference
+                    if (mediaView != null) {
+                        mediaView.setMediaPlayer(null);
+                        mediaView = null;
+                    }
+
                     // Also clear the scene
-                    if (fxPanel != null) {
-                        fxPanel.setScene(null);
+                    if (panelToClean != null) {
+                        panelToClean.setScene(null);
                         System.out.println("JFXPanel scene cleared");
                     }
 
                     System.out.println("MediaPlayer disposed successfully");
                 } catch (Exception e) {
                     System.err.println("Error during MediaPlayer disposal: " + e.getMessage());
+                    e.printStackTrace();
                 } finally {
                     latch.countDown();
                 }
@@ -405,6 +502,16 @@ public class VideoPlayerPanel extends JPanel {
             } catch (InterruptedException e) {
                 System.err.println("Disposal wait interrupted");
             }
+        } else if (fxPanel != null) {
+            // Even if no media player, still clear the scene
+            Platform.runLater(() -> {
+                try {
+                    fxPanel.setScene(null);
+                    System.out.println("JFXPanel scene cleared (no media player)");
+                } catch (Exception e) {
+                    System.err.println("Error clearing scene: " + e.getMessage());
+                }
+            });
         }
     }
 
