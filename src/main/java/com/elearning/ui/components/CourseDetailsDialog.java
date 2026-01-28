@@ -100,7 +100,7 @@ public class CourseDetailsDialog extends JDialog {
 
         // Bottom panel with Close button
         JPanel bottomPanel = new JPanel(new FlowLayout(FlowLayout.RIGHT, 15, 10));
-        bottomPanel.setBackground(new Color(248, 249, 250));
+        bottomPanel.setBackground(new Color(243, 244, 246));
         JButton closeButton = new JButton("Close");
         closeButton.addActionListener(e -> dispose());
         bottomPanel.add(closeButton);
@@ -240,7 +240,7 @@ public class CourseDetailsDialog extends JDialog {
 
         if (canEdit) {
             JButton addLessonBtn = new JButton("Add New Lesson");
-            addLessonBtn.setBackground(new Color(46, 204, 113));
+            addLessonBtn.setBackground(new Color(34, 197, 94));
             addLessonBtn.setForeground(Color.WHITE);
             addLessonBtn.addActionListener(e -> showCreateLessonDialog());
             JPanel topPanel = new JPanel(new FlowLayout(FlowLayout.RIGHT));
@@ -278,7 +278,7 @@ public class CourseDetailsDialog extends JDialog {
                     lesson.getTitle(),
                     lesson.getDurationMinutes() + "m",
                     lesson.isPreview() ? "Yes" : "No",
-                    lesson.getVideoPath() != null ? "✓" : "✗",
+                    lesson.getVideoPath() != null ? "\u2713" : "\u2717",
                     "Actions"
                 });
             }

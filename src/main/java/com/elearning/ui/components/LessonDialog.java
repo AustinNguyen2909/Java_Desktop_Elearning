@@ -98,7 +98,7 @@ public class LessonDialog extends JDialog {
         add(panel, BorderLayout.CENTER);
 
         JPanel buttonPanel = new JPanel(new FlowLayout(FlowLayout.RIGHT, 15, 15));
-        buttonPanel.setBackground(new Color(248, 249, 250));
+        buttonPanel.setBackground(new Color(243, 244, 246));
         JButton saveBtn = new JButton("Save");
         saveBtn.addActionListener(e -> saveLesson());
         JButton cancelBtn = new JButton("Cancel");

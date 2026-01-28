@@ -6,10 +6,11 @@ import com.elearning.model.Lesson;
 import com.elearning.model.User;
 import com.elearning.service.CourseService;
 import com.elearning.service.EnrollmentService;
+import com.elearning.ui.components.StarRatingPanel;
+import com.elearning.util.CourseCardImageUtil;
 import com.elearning.util.SessionManager;
 
 import javax.swing.*;
-import javax.swing.table.DefaultTableModel;
 import java.awt.*;
 import java.util.List;
 
@@ -22,10 +23,8 @@ public class UserDashboard extends JFrame {
     private final EnrollmentService enrollmentService;
 
     private JPanel contentPanel;
-    private JTable availableCoursesTable;
-    private DefaultTableModel availableCoursesModel;
-    private JTable myCoursesTable;
-    private DefaultTableModel myCoursesModel;
+    private JPanel availableCoursesGrid;
+    private JPanel myCoursesGrid;
     private JTextField searchField;
 
     public UserDashboard() {
@@ -81,7 +80,7 @@ public class UserDashboard extends JFrame {
 
         JLabel titleLabel = new JLabel("  Student Dashboard - " + currentUser.getFullName());
         titleLabel.setFont(new Font("Segoe UI", Font.BOLD, 20));
-        titleLabel.setForeground(new Color(33, 33, 33));
+        titleLabel.setForeground(new Color(31, 41, 55));
 
         headerPanel.add(titleLabel, BorderLayout.WEST);
 
@@ -91,7 +90,7 @@ public class UserDashboard extends JFrame {
     private JPanel createSidebar() {
         JPanel sidebar = new JPanel();
         sidebar.setLayout(new BoxLayout(sidebar, BoxLayout.Y_AXIS));
-        sidebar.setBackground(new Color(248, 249, 250));
+        sidebar.setBackground(new Color(243, 244, 246));
         sidebar.setPreferredSize(new Dimension(250, 0));
         sidebar.setBorder(BorderFactory.createMatteBorder(0, 0, 0, 1, new Color(230, 230, 230)));
 
@@ -150,17 +149,17 @@ public class UserDashboard extends JFrame {
 
         JLabel titleLabel = new JLabel("Available Courses");
         titleLabel.setFont(new Font("Segoe UI", Font.BOLD, 18));
-        titleLabel.setForeground(new Color(33, 33, 33)); // Dark text
+        titleLabel.setForeground(new Color(31, 41, 55)); // Dark text
 
         JPanel searchPanel = new JPanel(new FlowLayout(FlowLayout.RIGHT));
         searchPanel.setBackground(Color.WHITE); // Light background
         JLabel searchLbl = new JLabel("Search:");
-        searchLbl.setForeground(new Color(33, 33, 33)); // Dark text
+        searchLbl.setForeground(new Color(31, 41, 55)); // Dark text
         searchPanel.add(searchLbl);
         searchField = new JTextField(20);
         searchField.setBackground(Color.WHITE);
-        searchField.setForeground(new Color(33, 33, 33));
-        searchField.setCaretColor(new Color(33, 33, 33));
+        searchField.setForeground(new Color(31, 41, 55));
+        searchField.setCaretColor(new Color(31, 41, 55));
         searchPanel.add(searchField);
 
         JButton searchButton = new JButton("Search");
@@ -184,39 +183,15 @@ public class UserDashboard extends JFrame {
         topPanel.add(titleLabel, BorderLayout.WEST);
         topPanel.add(searchPanel, BorderLayout.EAST);
 
-        // Courses table
-        String[] columnNames = {"ID", "Title", "Instructor", "Category", "Difficulty", "Hours", "Rating", "Students", "Actions"};
-        availableCoursesModel = new DefaultTableModel(columnNames, 0) {
-            @Override
-            public boolean isCellEditable(int row, int column) {
-                return column == 8; // Only Actions column
-            }
-        };
-        availableCoursesTable = new JTable(availableCoursesModel);
-        availableCoursesTable.setBackground(Color.WHITE);
-        availableCoursesTable.setForeground(new Color(33, 33, 33));
-        availableCoursesTable.setGridColor(new Color(230, 230, 230));
-        availableCoursesTable.setRowHeight(30);
-        availableCoursesTable.getColumn("Actions").setCellRenderer(new ButtonRenderer());
-        availableCoursesTable.getColumn("Actions").setCellEditor(new AvailableCourseButtonEditor(new JCheckBox()));
+        availableCoursesGrid = new com.elearning.ui.components.ScrollableWrapPanel(
+                new com.elearning.ui.components.WrapLayout(FlowLayout.LEFT, 16, 16));
+        availableCoursesGrid.setBackground(Color.WHITE);
+        availableCoursesGrid.setBorder(BorderFactory.createEmptyBorder(5, 5, 5, 5));
 
-        // Add double-click to view details
-        availableCoursesTable.addMouseListener(new java.awt.event.MouseAdapter() {
-            @Override
-            public void mouseClicked(java.awt.event.MouseEvent e) {
-                if (e.getClickCount() == 2 && e.getButton() == java.awt.event.MouseEvent.BUTTON1) {
-                    int row = availableCoursesTable.getSelectedRow();
-                    if (row >= 0 && availableCoursesTable.columnAtPoint(e.getPoint()) != 8) {
-                        int courseId = (Integer) availableCoursesModel.getValueAt(row, 0);
-                        viewCourseDetails(courseId);
-                    }
-                }
-            }
-        });
-
-        JScrollPane scrollPane = new JScrollPane(availableCoursesTable);
+        JScrollPane scrollPane = new JScrollPane(availableCoursesGrid);
         scrollPane.setBackground(Color.WHITE);
         scrollPane.getViewport().setBackground(Color.WHITE);
+        scrollPane.setHorizontalScrollBarPolicy(ScrollPaneConstants.HORIZONTAL_SCROLLBAR_NEVER);
 
         panel.add(topPanel, BorderLayout.NORTH);
         panel.add(scrollPane, BorderLayout.CENTER);
@@ -234,7 +209,7 @@ public class UserDashboard extends JFrame {
         topPanel.setBackground(Color.WHITE); // Light background
         JLabel titleLabel = new JLabel("My Enrolled Courses");
         titleLabel.setFont(new Font("Segoe UI", Font.BOLD, 18));
-        titleLabel.setForeground(new Color(33, 33, 33)); // Dark text
+        titleLabel.setForeground(new Color(31, 41, 55)); // Dark text
 
         JButton refreshButton = new JButton("Refresh");
         refreshButton.setBackground(new Color(30, 64, 175)); // Navy blue
@@ -247,25 +222,15 @@ public class UserDashboard extends JFrame {
         topPanel.add(titleLabel, BorderLayout.WEST);
         topPanel.add(refreshButton, BorderLayout.EAST);
 
-        // Courses table
-        String[] columnNames = {"ID", "Title", "Category", "Progress", "Enrolled Date", "Last Accessed", "Actions"};
-        myCoursesModel = new DefaultTableModel(columnNames, 0) {
-            @Override
-            public boolean isCellEditable(int row, int column) {
-                return column == 6; // Only Actions column
-            }
-        };
-        myCoursesTable = new JTable(myCoursesModel);
-        myCoursesTable.setBackground(Color.WHITE);
-        myCoursesTable.setForeground(new Color(33, 33, 33));
-        myCoursesTable.setGridColor(new Color(230, 230, 230));
-        myCoursesTable.setRowHeight(30);
-        myCoursesTable.getColumn("Actions").setCellRenderer(new ButtonRenderer());
-        myCoursesTable.getColumn("Actions").setCellEditor(new MyEnrollmentButtonEditor(new JCheckBox()));
+        myCoursesGrid = new com.elearning.ui.components.ScrollableWrapPanel(
+                new com.elearning.ui.components.WrapLayout(FlowLayout.LEFT, 16, 16));
+        myCoursesGrid.setBackground(Color.WHITE);
+        myCoursesGrid.setBorder(BorderFactory.createEmptyBorder(5, 5, 5, 5));
 
-        JScrollPane scrollPane = new JScrollPane(myCoursesTable);
+        JScrollPane scrollPane = new JScrollPane(myCoursesGrid);
         scrollPane.setBackground(Color.WHITE);
         scrollPane.getViewport().setBackground(Color.WHITE);
+        scrollPane.setHorizontalScrollBarPolicy(ScrollPaneConstants.HORIZONTAL_SCROLLBAR_NEVER);
 
         panel.add(topPanel, BorderLayout.NORTH);
         panel.add(scrollPane, BorderLayout.CENTER);
@@ -280,7 +245,7 @@ public class UserDashboard extends JFrame {
 
         JLabel titleLabel = new JLabel("My Profile");
         titleLabel.setFont(new Font("Segoe UI", Font.BOLD, 18));
-        titleLabel.setForeground(new Color(33, 33, 33)); // Dark text
+        titleLabel.setForeground(new Color(31, 41, 55)); // Dark text
 
         JPanel profilePanel = new JPanel(new GridBagLayout());
         profilePanel.setBackground(Color.WHITE); // Light background
@@ -294,66 +259,66 @@ public class UserDashboard extends JFrame {
         gbc.gridx = 0;
         gbc.gridy = row++;
         JLabel usernameLbl = new JLabel("Username:");
-        usernameLbl.setForeground(new Color(33, 33, 33)); // Dark text
+        usernameLbl.setForeground(new Color(31, 41, 55)); // Dark text
         profilePanel.add(usernameLbl, gbc);
         gbc.gridx = 1;
         JLabel usernameVal = new JLabel(currentUser.getUsername());
-        usernameVal.setForeground(new Color(33, 33, 33)); // Dark text
+        usernameVal.setForeground(new Color(31, 41, 55)); // Dark text
         profilePanel.add(usernameVal, gbc);
 
         // Full Name
         gbc.gridx = 0;
         gbc.gridy = row++;
         JLabel nameLbl = new JLabel("Full Name:");
-        nameLbl.setForeground(new Color(33, 33, 33)); // Dark text
+        nameLbl.setForeground(new Color(31, 41, 55)); // Dark text
         profilePanel.add(nameLbl, gbc);
         gbc.gridx = 1;
         JLabel nameVal = new JLabel(currentUser.getFullName());
-        nameVal.setForeground(new Color(33, 33, 33)); // Dark text
+        nameVal.setForeground(new Color(31, 41, 55)); // Dark text
         profilePanel.add(nameVal, gbc);
 
         // Email
         gbc.gridx = 0;
         gbc.gridy = row++;
         JLabel emailLbl = new JLabel("Email:");
-        emailLbl.setForeground(new Color(33, 33, 33)); // Dark text
+        emailLbl.setForeground(new Color(31, 41, 55)); // Dark text
         profilePanel.add(emailLbl, gbc);
         gbc.gridx = 1;
         JLabel emailVal = new JLabel(currentUser.getEmail());
-        emailVal.setForeground(new Color(33, 33, 33)); // Dark text
+        emailVal.setForeground(new Color(31, 41, 55)); // Dark text
         profilePanel.add(emailVal, gbc);
 
         // Phone
         gbc.gridx = 0;
         gbc.gridy = row++;
         JLabel phoneLbl = new JLabel("Phone:");
-        phoneLbl.setForeground(new Color(33, 33, 33)); // Dark text
+        phoneLbl.setForeground(new Color(31, 41, 55)); // Dark text
         profilePanel.add(phoneLbl, gbc);
         gbc.gridx = 1;
         JLabel phoneVal = new JLabel(currentUser.getPhone() != null ? currentUser.getPhone() : "N/A");
-        phoneVal.setForeground(new Color(33, 33, 33)); // Dark text
+        phoneVal.setForeground(new Color(31, 41, 55)); // Dark text
         profilePanel.add(phoneVal, gbc);
 
         // Role
         gbc.gridx = 0;
         gbc.gridy = row++;
         JLabel roleLbl = new JLabel("Role:");
-        roleLbl.setForeground(new Color(33, 33, 33)); // Dark text
+        roleLbl.setForeground(new Color(31, 41, 55)); // Dark text
         profilePanel.add(roleLbl, gbc);
         gbc.gridx = 1;
         JLabel roleVal = new JLabel(currentUser.getRole());
-        roleVal.setForeground(new Color(33, 33, 33)); // Dark text
+        roleVal.setForeground(new Color(31, 41, 55)); // Dark text
         profilePanel.add(roleVal, gbc);
 
         // Status
         gbc.gridx = 0;
         gbc.gridy = row++;
         JLabel statusLbl = new JLabel("Status:");
-        statusLbl.setForeground(new Color(33, 33, 33)); // Dark text
+        statusLbl.setForeground(new Color(31, 41, 55)); // Dark text
         profilePanel.add(statusLbl, gbc);
         gbc.gridx = 1;
         JLabel statusVal = new JLabel(currentUser.getStatus());
-        statusVal.setForeground(new Color(33, 33, 33)); // Dark text
+        statusVal.setForeground(new Color(31, 41, 55)); // Dark text
         profilePanel.add(statusVal, gbc);
 
         panel.add(titleLabel, BorderLayout.NORTH);
@@ -389,51 +354,213 @@ public class UserDashboard extends JFrame {
     }
 
     private void displayAvailableCourses(List<Course> courses) {
-        availableCoursesModel.setRowCount(0);
-
+        availableCoursesGrid.removeAll();
         for (Course course : courses) {
             // Check if already enrolled
             boolean enrolled = enrollmentService.isEnrolled(currentUser.getId(), course.getId());
+            String primaryText = enrolled ? "View Details" : "Enroll";
+            Runnable primaryAction = enrolled
+                    ? () -> viewCourseDetails(course.getId())
+                    : () -> enrollInCourse(course.getId());
 
-            Object[] row = {
-                    course.getId(),
+            String instructorName = course.getInstructorName() != null ? course.getInstructorName() : "Instructor";
+            JPanel card = createCourseCard(
                     course.getTitle(),
-                    course.getInstructorName(),
-                    course.getCategory(),
-                    course.getDifficultyLevel(),
-                    course.getEstimatedHours(),
-                    String.format("%.1f", course.getAverageRating()),
+                    instructorName,
+                    course.getThumbnailPath(),
+                    course.getAverageRating(),
                     course.getEnrollmentCount(),
-                    enrolled ? "Enrolled" : "Enroll"
-            };
-            availableCoursesModel.addRow(row);
+                    course.getCategory(),
+                    primaryText,
+                    primaryAction,
+                    null,
+                    null
+            );
+            availableCoursesGrid.add(card);
         }
+        availableCoursesGrid.revalidate();
+        availableCoursesGrid.repaint();
     }
 
     private void loadMyCourses() {
         try {
             List<Enrollment> enrollments = enrollmentService.getUserEnrollments(currentUser.getId());
 
-            myCoursesModel.setRowCount(0);
-
             for (Enrollment enrollment : enrollments) {
-                Object[] row = {
-                        enrollment.getCourseId(),
-                        enrollment.getCourseTitle(),
-                        enrollment.getCourseCategory() != null ? enrollment.getCourseCategory() : "N/A",
-                        String.format("%.1f%%", enrollment.getProgressPercent()),
-                        enrollment.getEnrolledAt(),
-                        enrollment.getLastAccessedAt() != null ? enrollment.getLastAccessedAt() : "Never",
-                        "Actions"
-                };
-                myCoursesModel.addRow(row);
+                Course course = courseService.getCourseById(enrollment.getCourseId());
+                String title = enrollment.getCourseTitle();
+                String subtitle = enrollment.getCourseCategory() != null ? enrollment.getCourseCategory() : "N/A";
+                String thumbnail = enrollment.getCourseThumbnail();
+                double rating = 0.0;
+                int learners = 0;
+                if (course != null) {
+                    title = course.getTitle();
+                    subtitle = course.getCategory() != null ? course.getCategory() : subtitle;
+                    thumbnail = course.getThumbnailPath();
+                    rating = course.getAverageRating();
+                    learners = course.getEnrollmentCount();
+                }
+
+                String progressText = String.format("Progress: %.1f%%", enrollment.getProgressPercent());
+
+                JPanel card = createCourseCard(
+                        title,
+                        subtitle,
+                        thumbnail,
+                        rating,
+                        learners,
+                        progressText,
+                        "Continue",
+                        () -> continueCourse(enrollment.getCourseId()),
+                        "More",
+                        () -> showMyCourseMenu(enrollment.getCourseId())
+                );
+                myCoursesGrid.add(card);
             }
+            myCoursesGrid.revalidate();
+            myCoursesGrid.repaint();
         } catch (Exception e) {
             JOptionPane.showMessageDialog(this,
                     "Error loading enrollments: " + e.getMessage(),
                     "Error",
                     JOptionPane.ERROR_MESSAGE);
         }
+    }
+
+    private JPanel createCourseCard(String title,
+                                    String subtitle,
+                                    String thumbnailPath,
+                                    double rating,
+                                    int learners,
+                                    String metaLine,
+                                    String primaryText,
+                                    Runnable primaryAction,
+                                    String secondaryText,
+                                    Runnable secondaryAction) {
+        JPanel card = new com.elearning.ui.components.CardPanel();
+        card.setLayout(new BorderLayout());
+        card.setBackground(Color.WHITE);
+        card.setPreferredSize(new Dimension(280, 330));
+        card.setMaximumSize(new Dimension(280, 330));
+
+        JPanel imagePanel = new JPanel(new BorderLayout());
+        imagePanel.setBackground(new Color(243, 244, 246));
+        imagePanel.setPreferredSize(new Dimension(280, 140));
+        JLabel imageLabel = new JLabel();
+        imageLabel.setHorizontalAlignment(SwingConstants.CENTER);
+        imageLabel.setVerticalAlignment(SwingConstants.CENTER);
+        ImageIcon icon = CourseCardImageUtil.loadCourseThumbnail(thumbnailPath, title, 280, 140);
+        imageLabel.setIcon(icon);
+        imagePanel.add(imageLabel, BorderLayout.CENTER);
+
+        JPanel body = new JPanel();
+        body.setOpaque(false);
+        body.setLayout(new BoxLayout(body, BoxLayout.Y_AXIS));
+        body.setBorder(BorderFactory.createEmptyBorder(10, 12, 10, 12));
+
+        JLabel titleLabel = new JLabel(title);
+        titleLabel.setFont(new Font("Segoe UI", Font.BOLD, 15));
+        titleLabel.setForeground(new Color(31, 41, 55));
+        titleLabel.setAlignmentX(Component.LEFT_ALIGNMENT);
+
+        JLabel subtitleLabel = new JLabel(subtitle != null ? subtitle : "");
+        subtitleLabel.setFont(new Font("Segoe UI", Font.PLAIN, 12));
+        subtitleLabel.setForeground(new Color(107, 114, 128));
+        subtitleLabel.setAlignmentX(Component.LEFT_ALIGNMENT);
+
+        StarRatingPanel ratingPanel = new StarRatingPanel(rating, 18, 4);
+
+        JLabel learnersLabel = new JLabel(learners + " learners");
+        learnersLabel.setFont(new Font("Segoe UI", Font.PLAIN, 12));
+        learnersLabel.setForeground(new Color(107, 114, 128));
+        learnersLabel.setAlignmentX(Component.LEFT_ALIGNMENT);
+
+        JLabel metaLabel = new JLabel(metaLine != null ? metaLine : "");
+        metaLabel.setFont(new Font("Segoe UI", Font.PLAIN, 12));
+        metaLabel.setForeground(new Color(75, 85, 99));
+        metaLabel.setAlignmentX(Component.LEFT_ALIGNMENT);
+
+        JPanel statsRow = new JPanel();
+        statsRow.setOpaque(false);
+        statsRow.setLayout(new BoxLayout(statsRow, BoxLayout.X_AXIS));
+        statsRow.setAlignmentX(Component.LEFT_ALIGNMENT);
+        statsRow.add(ratingPanel);
+        statsRow.add(Box.createHorizontalStrut(8));
+        statsRow.add(learnersLabel);
+        statsRow.setMaximumSize(new Dimension(260, 22));
+
+        JPanel actions = new JPanel();
+        actions.setOpaque(false);
+        actions.setLayout(new BoxLayout(actions, BoxLayout.Y_AXIS));
+        actions.setAlignmentX(Component.LEFT_ALIGNMENT);
+        actions.setMaximumSize(new Dimension(260, 44));
+
+        JButton primaryBtn = new JButton(primaryText);
+        primaryBtn.setBackground(new Color(47, 111, 235));
+        primaryBtn.setForeground(Color.WHITE);
+        primaryBtn.setFocusPainted(false);
+        primaryBtn.setBorderPainted(false);
+        primaryBtn.setFont(new Font("Segoe UI", Font.BOLD, 12));
+        primaryBtn.setPreferredSize(new Dimension(256, 36));
+        primaryBtn.setMaximumSize(new Dimension(256, 36));
+        primaryBtn.setAlignmentX(Component.LEFT_ALIGNMENT);
+        primaryBtn.setHorizontalAlignment(SwingConstants.CENTER);
+        primaryBtn.addActionListener(e -> primaryAction.run());
+        actions.add(primaryBtn);
+
+        if (secondaryText != null && secondaryAction != null) {
+            JButton secondaryBtn = new JButton(secondaryText);
+            secondaryBtn.setBackground(new Color(243, 244, 246));
+            secondaryBtn.setForeground(new Color(31, 41, 55));
+            secondaryBtn.setFocusPainted(false);
+            secondaryBtn.setBorderPainted(true);
+            secondaryBtn.setFont(new Font("Segoe UI", Font.PLAIN, 12));
+            secondaryBtn.setPreferredSize(new Dimension(256, 36));
+            secondaryBtn.setMaximumSize(new Dimension(256, 36));
+            secondaryBtn.setAlignmentX(Component.LEFT_ALIGNMENT);
+            secondaryBtn.setHorizontalAlignment(SwingConstants.CENTER);
+            secondaryBtn.addActionListener(e -> secondaryAction.run());
+            actions.add(Box.createVerticalStrut(6));
+            actions.add(secondaryBtn);
+        }
+
+        body.add(titleLabel);
+        body.add(Box.createRigidArea(new Dimension(0, 4)));
+        body.add(subtitleLabel);
+        body.add(Box.createRigidArea(new Dimension(0, 6)));
+        body.add(statsRow);
+        body.add(Box.createRigidArea(new Dimension(0, 6)));
+        body.add(metaLabel);
+        body.add(Box.createVerticalGlue());
+        body.add(actions);
+
+        card.add(imagePanel, BorderLayout.NORTH);
+        card.add(body, BorderLayout.CENTER);
+
+        return card;
+    }
+
+    
+
+    private void showMyCourseMenu(int courseId) {
+        JPopupMenu menu = new JPopupMenu();
+        JMenuItem continueItem = new JMenuItem("Continue Learning");
+        continueItem.addActionListener(e -> continueCourse(courseId));
+        menu.add(continueItem);
+
+        JMenuItem detailsItem = new JMenuItem("View Details");
+        detailsItem.addActionListener(e -> viewCourseDetails(courseId));
+        menu.add(detailsItem);
+
+        menu.addSeparator();
+
+        JMenuItem unenrollItem = new JMenuItem("Unenroll");
+        unenrollItem.addActionListener(e -> unenrollFromCourse(courseId));
+        menu.add(unenrollItem);
+
+        Point location = MouseInfo.getPointerInfo().getLocation();
+        SwingUtilities.convertPointFromScreen(location, this);
+        menu.show(this, location.x, location.y);
     }
 
     private void viewCourseDetails(int courseId) {
@@ -509,15 +636,15 @@ public class UserDashboard extends JFrame {
                         lesson.getOrderIndex(),
                         lesson.getTitle(),
                         lesson.getDurationMinutes() != null ? lesson.getDurationMinutes() : 0,
-                        lesson.isPreview() ? " • Preview" : ""));
+                        lesson.isPreview() ? " \u2022 Preview" : ""));
                 label.setBorder(BorderFactory.createEmptyBorder(8, 10, 8, 10));
             }
 
             if (!isSelected) {
                 label.setBackground(Color.WHITE);
-                label.setForeground(new Color(33, 33, 33));
+                label.setForeground(new Color(31, 41, 55));
             } else {
-                label.setBackground(new Color(52, 152, 219));
+                label.setBackground(new Color(47, 111, 235));
                 label.setForeground(Color.WHITE);
             }
 
@@ -566,122 +693,5 @@ public class UserDashboard extends JFrame {
         });
     }
 
-    // Button renderer
-    class ButtonRenderer extends JButton implements javax.swing.table.TableCellRenderer {
-        public ButtonRenderer() {
-            setOpaque(true);
-        }
-
-        @Override
-        public Component getTableCellRendererComponent(JTable table, Object value,
-                                                       boolean isSelected, boolean hasFocus, int row, int column) {
-            setText((value == null) ? "Actions" : value.toString());
-            return this;
-        }
-    }
-
-    // Button editor for available courses
-    class AvailableCourseButtonEditor extends DefaultCellEditor {
-        private JButton button;
-        private String label;
-        private int currentRow;
-
-        public AvailableCourseButtonEditor(JCheckBox checkBox) {
-            super(checkBox);
-            button = new JButton();
-            button.setOpaque(true);
-            button.addActionListener(e -> {
-                int row = currentRow;
-                fireEditingStopped();
-                handleAction(row);
-            });
-        }
-
-        @Override
-        public Component getTableCellEditorComponent(JTable table, Object value,
-                                                     boolean isSelected, int row, int column) {
-            label = (value == null) ? "Actions" : value.toString();
-            button.setText(label);
-            currentRow = row;
-            return button;
-        }
-
-        @Override
-        public Object getCellEditorValue() {
-            return label;
-        }
-
-        private void handleAction(int row) {
-            if (row >= 0) {
-                int courseId = (Integer) availableCoursesModel.getValueAt(row, 0);
-                String actionText = (String) availableCoursesModel.getValueAt(row, 8);
-
-                if ("Enroll".equals(actionText)) {
-                    enrollInCourse(courseId);
-                } else if ("Enrolled".equals(actionText)) {
-                    viewCourseDetails(courseId);
-                }
-            }
-        }
-    }
-
-    // Button editor for my courses
-    class MyEnrollmentButtonEditor extends DefaultCellEditor {
-        private JButton button;
-        private String label;
-        private int currentRow;
-        private JTable table;
-
-        public MyEnrollmentButtonEditor(JCheckBox checkBox) {
-            super(checkBox);
-            button = new JButton();
-            button.setOpaque(true);
-            button.addActionListener(e -> {
-                int row = currentRow;
-                fireEditingStopped();
-                SwingUtilities.invokeLater(() -> showActionsMenu(row));
-            });
-        }
-
-        @Override
-        public Component getTableCellEditorComponent(JTable table, Object value,
-                                                     boolean isSelected, int row, int column) {
-            this.table = table;
-            label = (value == null) ? "Actions" : value.toString();
-            button.setText(label);
-            currentRow = row;
-            return button;
-        }
-
-        @Override
-        public Object getCellEditorValue() {
-            return label;
-        }
-
-        private void showActionsMenu(int row) {
-            if (row >= 0 && table != null) {
-                int courseId = (Integer) myCoursesModel.getValueAt(row, 0);
-
-                JPopupMenu menu = new JPopupMenu();
-
-                JMenuItem continueItem = new JMenuItem("Continue Learning");
-                continueItem.addActionListener(e -> continueCourse(courseId));
-                menu.add(continueItem);
-
-                JMenuItem detailsItem = new JMenuItem("View Details");
-                detailsItem.addActionListener(e -> viewCourseDetails(courseId));
-                menu.add(detailsItem);
-
-                menu.addSeparator();
-
-                JMenuItem unenrollItem = new JMenuItem("Unenroll");
-                unenrollItem.addActionListener(e -> unenrollFromCourse(courseId));
-                menu.add(unenrollItem);
-
-                // Show popup relative to the table cell location
-                Rectangle cellRect = table.getCellRect(row, table.getColumnCount() - 1, true);
-                menu.show(table, cellRect.x, cellRect.y + cellRect.height);
-            }
-        }
-    }
+    // no-op
 }

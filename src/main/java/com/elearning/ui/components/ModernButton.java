@@ -24,7 +24,7 @@ public class ModernButton extends JButton {
 
     private void init() {
         if (normalColor == null) {
-            normalColor = new Color(52, 152, 219); // Blue
+            normalColor = new Color(47, 111, 235); // Blue
         }
         hoverColor = brighten(normalColor, 0.2f);
         pressedColor = darken(normalColor, 0.2f);

@@ -222,25 +222,25 @@ public class VideoPlayerPanel extends JPanel {
         controls.setStyle("-fx-background-color: #2c3e50; -fx-padding: 10;");
 
         // Play/Pause button
-        Button playPauseBtn = new Button("▶");
+        Button playPauseBtn = new Button("\u25B6");
         playPauseBtn.setStyle("-fx-font-size: 16px; -fx-background-color: #3498db; -fx-text-fill: white;");
         playPauseBtn.setOnAction(e -> {
             if (mediaPlayer != null && mediaPlayer.getStatus() == MediaPlayer.Status.PLAYING) {
                 mediaPlayer.pause();
-                playPauseBtn.setText("▶");
+                playPauseBtn.setText("\u23F8");
             } else if (mediaPlayer != null) {
                 mediaPlayer.play();
-                playPauseBtn.setText("⏸");
+                playPauseBtn.setText("\u23F8");
             }
         });
 
         // Stop button
-        Button stopBtn = new Button("⏹");
+        Button stopBtn = new Button("\u23F9");
         stopBtn.setStyle("-fx-font-size: 16px; -fx-background-color: #e74c3c; -fx-text-fill: white;");
         stopBtn.setOnAction(e -> {
             if (mediaPlayer != null) {
                 mediaPlayer.stop();
-                playPauseBtn.setText("▶");
+                playPauseBtn.setText("\u25B6");
             }
         });
 
@@ -281,7 +281,7 @@ public class VideoPlayerPanel extends JPanel {
         Slider volumeSlider = new Slider(0, 100, 50);
         volumeSlider.setPrefWidth(100);
         volumeSlider.setStyle("-fx-background-color: transparent;");
-        Label volumeLabel = new Label("🔊");
+        Label volumeLabel = new Label("\uD83D\uDD0A");
         volumeLabel.setStyle("-fx-text-fill: white; -fx-font-size: 14px;");
 
         mediaPlayer.volumeProperty().bind(volumeSlider.valueProperty().divide(100));

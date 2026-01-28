@@ -45,15 +45,15 @@ public class LoginFrame extends JFrame {
         passwordField = new ModernPasswordField("Password");
         
         loginButton = new ModernButton("Login");
-        loginButton.setBackground(new Color(52, 152, 219));
+        loginButton.setBackground(new Color(47, 111, 235));
         loginButton.setPreferredSize(new Dimension(300, 45));
         
         registerButton = new ModernButton("Register");
-        registerButton.setBackground(new Color(46, 204, 113));
+        registerButton.setBackground(new Color(34, 197, 94));
         registerButton.setPreferredSize(new Dimension(300, 45));
 
         errorLabel = new JLabel(" ");
-        errorLabel.setForeground(new Color(231, 76, 60));
+        errorLabel.setForeground(new Color(225, 29, 72));
         errorLabel.setFont(new Font("Segoe UI", Font.PLAIN, 12));
         errorLabel.setAlignmentX(Component.CENTER_ALIGNMENT);
     }
@@ -69,8 +69,8 @@ public class LoginFrame extends JFrame {
                 
                 // Create gradient background
                 GradientPaint gp = new GradientPaint(
-                        0, 0, new Color(240, 248, 255), // Light alice blue
-                        0, getHeight(), new Color(224, 242, 254) // Light blue
+                        0, 0, new Color(243, 248, 255), // Light alice blue
+                        0, getHeight(), new Color(231, 241, 255) // Light blue
                 );
                 g2d.setPaint(gp);
                 g2d.fillRect(0, 0, getWidth(), getHeight());
@@ -105,22 +105,22 @@ public class LoginFrame extends JFrame {
         panel.setLayout(new BoxLayout(panel, BoxLayout.Y_AXIS));
         
         // App Icon/Logo
-        JLabel iconLabel = new JLabel("📚");
+        JLabel iconLabel = new JLabel("\uD83D\uDCDA");
         iconLabel.setFont(new Font("Segoe UI Emoji", Font.PLAIN, 120));
         iconLabel.setAlignmentX(Component.CENTER_ALIGNMENT);
-        iconLabel.setForeground(new Color(33, 150, 243)); // Material blue for light background
+        iconLabel.setForeground(new Color(47, 111, 235)); // Material blue for light background
 
         // App Title
         JLabel titleLabel = new JLabel("E-Learning Platform");
         titleLabel.setFont(new Font("Segoe UI", Font.BOLD, 36));
         titleLabel.setAlignmentX(Component.CENTER_ALIGNMENT);
-        titleLabel.setForeground(new Color(33, 33, 33)); // Dark text
+        titleLabel.setForeground(new Color(31, 41, 55)); // Dark text
 
         // Subtitle
         JLabel subtitleLabel = new JLabel("Learn Anytime, Anywhere");
         subtitleLabel.setFont(new Font("Segoe UI", Font.PLAIN, 18));
         subtitleLabel.setAlignmentX(Component.CENTER_ALIGNMENT);
-        subtitleLabel.setForeground(new Color(66, 66, 66)); // Dark gray for light background
+        subtitleLabel.setForeground(new Color(75, 85, 99)); // Dark gray for light background
 
         // Features list
         JPanel featuresPanel = new JPanel();
@@ -129,16 +129,16 @@ public class LoginFrame extends JFrame {
         featuresPanel.setBorder(new EmptyBorder(40, 0, 0, 0));
 
         String[] features = {
-                "✓ Interactive video lessons",
-                "✓ Track your progress",
-                "✓ Expert instructors",
-                "✓ Certificate of completion"
+                "\u2713 Interactive video lessons",
+                "\u2713 Track your progress",
+                "\u2713 Expert instructors",
+                "\u2713 Certificate of completion"
         };
 
         for (String feature : features) {
             JLabel featureLabel = new JLabel(feature);
             featureLabel.setFont(new Font("Segoe UI", Font.PLAIN, 16));
-            featureLabel.setForeground(new Color(88, 88, 88)); // Medium gray for light background
+            featureLabel.setForeground(new Color(107, 114, 128)); // Medium gray for light background
             featureLabel.setAlignmentX(Component.CENTER_ALIGNMENT);
             featureLabel.setBorder(new EmptyBorder(8, 0, 8, 0));
             featuresPanel.add(featureLabel);
@@ -164,37 +164,37 @@ public class LoginFrame extends JFrame {
         // Title
         JLabel formTitle = new JLabel("Welcome Back!");
         formTitle.setFont(new Font("Segoe UI", Font.BOLD, 28));
-        formTitle.setForeground(new Color(33, 33, 33)); // Dark text
+        formTitle.setForeground(new Color(31, 41, 55)); // Dark text
         formTitle.setAlignmentX(Component.CENTER_ALIGNMENT);
 
         JLabel formSubtitle = new JLabel("Sign in to continue");
         formSubtitle.setFont(new Font("Segoe UI", Font.PLAIN, 14));
-        formSubtitle.setForeground(new Color(80, 80, 80)); // Darker gray for better contrast
+        formSubtitle.setForeground(new Color(75, 85, 99)); // Darker gray for better contrast
         formSubtitle.setAlignmentX(Component.CENTER_ALIGNMENT);
 
         // Username label
         JLabel usernameLabel = new JLabel("Username");
         usernameLabel.setFont(new Font("Segoe UI", Font.BOLD, 13));
-        usernameLabel.setForeground(new Color(33, 33, 33)); // Dark text
+        usernameLabel.setForeground(new Color(31, 41, 55)); // Dark text
         usernameLabel.setAlignmentX(Component.CENTER_ALIGNMENT);
 
         // Password label
         JLabel passwordLabel = new JLabel("Password");
         passwordLabel.setFont(new Font("Segoe UI", Font.BOLD, 13));
-        passwordLabel.setForeground(new Color(33, 33, 33)); // Dark text
+        passwordLabel.setForeground(new Color(31, 41, 55)); // Dark text
         passwordLabel.setAlignmentX(Component.CENTER_ALIGNMENT);
 
         // Forgot password link
         JLabel forgotPasswordLabel = new JLabel("<html><u>Forgot password?</u></html>");
         forgotPasswordLabel.setFont(new Font("Segoe UI", Font.PLAIN, 12));
-        forgotPasswordLabel.setForeground(new Color(52, 152, 219));
+        forgotPasswordLabel.setForeground(new Color(47, 111, 235));
         forgotPasswordLabel.setCursor(new Cursor(Cursor.HAND_CURSOR));
         forgotPasswordLabel.setAlignmentX(Component.CENTER_ALIGNMENT);
 
         // Divider
         JLabel dividerLabel = new JLabel("Don't have an account?");
         dividerLabel.setFont(new Font("Segoe UI", Font.PLAIN, 13));
-        dividerLabel.setForeground(new Color(80, 80, 80)); // Darker gray for better contrast
+        dividerLabel.setForeground(new Color(75, 85, 99)); // Darker gray for better contrast
         dividerLabel.setAlignmentX(Component.CENTER_ALIGNMENT);
 
         // Layout

@@ -30,14 +30,14 @@ public class CommentsPanel extends JPanel {
         setLayout(new BorderLayout(10, 10));
         setBackground(Color.WHITE);
         setBorder(BorderFactory.createCompoundBorder(
-            BorderFactory.createLineBorder(new Color(220, 220, 220), 1),
+            BorderFactory.createLineBorder(new Color(226, 232, 240), 1),
             BorderFactory.createEmptyBorder(15, 15, 15, 15)
         ));
 
         // Title
         JLabel titleLabel = new JLabel("Comments & Discussion");
         titleLabel.setFont(new Font("Segoe UI", Font.BOLD, 16));
-        titleLabel.setForeground(new Color(33, 33, 33));
+        titleLabel.setForeground(new Color(31, 41, 55));
 
         // Post comment panel
         JPanel postPanel = new JPanel(new BorderLayout(5, 5));
@@ -47,13 +47,13 @@ public class CommentsPanel extends JPanel {
         commentTextArea.setLineWrap(true);
         commentTextArea.setWrapStyleWord(true);
         commentTextArea.setBorder(BorderFactory.createCompoundBorder(
-            BorderFactory.createLineBorder(new Color(200, 200, 200), 1),
+            BorderFactory.createLineBorder(new Color(215, 222, 232), 1),
             BorderFactory.createEmptyBorder(5, 5, 5, 5)
         ));
         JScrollPane commentScrollPane = new JScrollPane(commentTextArea);
 
         JButton postButton = new JButton("Post Comment");
-        postButton.setBackground(new Color(52, 152, 219));
+        postButton.setBackground(new Color(47, 111, 235));
         postButton.setForeground(Color.WHITE);
         postButton.setFont(new Font("Segoe UI", Font.BOLD, 12));
         postButton.addActionListener(e -> {
@@ -124,7 +124,7 @@ public class CommentsPanel extends JPanel {
 
             if (comments.isEmpty()) {
                 JLabel noCommentsLabel = new JLabel("No comments yet. Be the first to comment!");
-                noCommentsLabel.setForeground(new Color(150, 150, 150));
+                noCommentsLabel.setForeground(new Color(154, 164, 178));
                 noCommentsLabel.setBorder(BorderFactory.createEmptyBorder(20, 10, 20, 10));
                 commentsListPanel.add(noCommentsLabel);
             } else {
@@ -157,24 +157,24 @@ public class CommentsPanel extends JPanel {
 
     private JPanel createCommentCard(Comment comment) {
         JPanel card = new JPanel(new BorderLayout(5, 5));
-        card.setBackground(new Color(248, 249, 250));
+        card.setBackground(new Color(243, 244, 246));
         card.setBorder(BorderFactory.createCompoundBorder(
-            BorderFactory.createLineBorder(new Color(220, 220, 220), 1),
+            BorderFactory.createLineBorder(new Color(226, 232, 240), 1),
             BorderFactory.createEmptyBorder(10, 10, 10, 10)
         ));
 
         // User info
         JLabel userLabel = new JLabel(comment.getUserName() != null ? comment.getUserName() : "Anonymous");
         userLabel.setFont(new Font("Segoe UI", Font.BOLD, 12));
-        userLabel.setForeground(new Color(52, 152, 219));
+        userLabel.setForeground(new Color(47, 111, 235));
 
         String timeText = comment.getCreatedAt() != null ? comment.getCreatedAt().toString() : "";
         JLabel timeLabel = new JLabel(timeText);
         timeLabel.setFont(new Font("Segoe UI", Font.PLAIN, 10));
-        timeLabel.setForeground(new Color(150, 150, 150));
+        timeLabel.setForeground(new Color(154, 164, 178));
 
         JPanel headerPanel = new JPanel(new BorderLayout());
-        headerPanel.setBackground(new Color(248, 249, 250));
+        headerPanel.setBackground(new Color(243, 244, 246));
         headerPanel.add(userLabel, BorderLayout.WEST);
         headerPanel.add(timeLabel, BorderLayout.EAST);
 
@@ -183,7 +183,7 @@ public class CommentsPanel extends JPanel {
         contentArea.setEditable(false);
         contentArea.setLineWrap(true);
         contentArea.setWrapStyleWord(true);
-        contentArea.setBackground(new Color(248, 249, 250));
+        contentArea.setBackground(new Color(243, 244, 246));
         contentArea.setFont(new Font("Segoe UI", Font.PLAIN, 12));
         contentArea.setBorder(BorderFactory.createEmptyBorder(5, 0, 0, 0));
 

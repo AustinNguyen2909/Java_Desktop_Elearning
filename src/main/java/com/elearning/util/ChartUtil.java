@@ -27,7 +27,7 @@ public class ChartUtil {
 
         for (int i = 0; i < ratingDistribution.length; i++) {
             int stars = i + 1;
-            dataset.addValue(ratingDistribution[i], "Reviews", stars + " ★");
+            dataset.addValue(ratingDistribution[i], "Reviews", stars + " \u2605");
         }
 
         JFreeChart chart = ChartFactory.createBarChart(
@@ -72,9 +72,9 @@ public class ChartUtil {
 
         // Customize colors
         PiePlot plot = (PiePlot) chart.getPlot();
-        plot.setSectionPaint("Approved", new Color(46, 204, 113));
+        plot.setSectionPaint("Approved", new Color(34, 197, 94));
         plot.setSectionPaint("Pending", new Color(241, 196, 15));
-        plot.setSectionPaint("Rejected", new Color(231, 76, 60));
+        plot.setSectionPaint("Rejected", new Color(225, 29, 72));
         plot.setBackgroundPaint(Color.WHITE);
         chart.setBackgroundPaint(Color.WHITE);
 
@@ -102,8 +102,8 @@ public class ChartUtil {
 
         // Customize colors
         PiePlot plot = (PiePlot) chart.getPlot();
-        plot.setSectionPaint("In Progress", new Color(52, 152, 219));
-        plot.setSectionPaint("Completed", new Color(46, 204, 113));
+        plot.setSectionPaint("In Progress", new Color(47, 111, 235));
+        plot.setSectionPaint("Completed", new Color(34, 197, 94));
         plot.setBackgroundPaint(Color.WHITE);
         chart.setBackgroundPaint(Color.WHITE);
 
@@ -132,9 +132,9 @@ public class ChartUtil {
 
         // Customize colors
         PiePlot plot = (PiePlot) chart.getPlot();
-        plot.setSectionPaint("Students", new Color(52, 152, 219));
+        plot.setSectionPaint("Students", new Color(47, 111, 235));
         plot.setSectionPaint("Instructors", new Color(155, 89, 182));
-        plot.setSectionPaint("Admins", new Color(231, 76, 60));
+        plot.setSectionPaint("Admins", new Color(225, 29, 72));
         plot.setBackgroundPaint(Color.WHITE);
         chart.setBackgroundPaint(Color.WHITE);
 

@@ -41,9 +41,9 @@ public class Main {
         // Test database connection
         System.out.println("Testing database connection...");
         if (DBConnection.getInstance().testConnection()) {
-            System.out.println("✓ Database connection successful!");
+            System.out.println("\u2713 Database connection successful!");
         } else {
-            System.err.println("✗ Database connection failed. Please check your configuration.");
+            System.err.println("\u2717 Database connection failed. Please check your configuration.");
             JOptionPane.showMessageDialog(null,
                     "Failed to connect to database.\nPlease check your database configuration.",
                     "Database Error",

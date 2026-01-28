@@ -89,7 +89,7 @@ public class LessonViewerDialog extends JDialog {
         // Course title
         JLabel titleLabel = new JLabel(course.getTitle());
         titleLabel.setFont(new Font("Segoe UI", Font.BOLD, 20));
-        titleLabel.setForeground(new Color(33, 33, 33));
+        titleLabel.setForeground(new Color(31, 41, 55));
 
         // Progress info
         JPanel progressInfoPanel = new JPanel(new BorderLayout(5, 5));
@@ -97,12 +97,12 @@ public class LessonViewerDialog extends JDialog {
 
         progressLabel = new JLabel("Progress: 0% (0/0 lessons completed)");
         progressLabel.setFont(new Font("Segoe UI", Font.PLAIN, 14));
-        progressLabel.setForeground(new Color(88, 88, 88));
+        progressLabel.setForeground(new Color(107, 114, 128));
 
         courseProgressBar = new JProgressBar(0, 100);
         courseProgressBar.setPreferredSize(new Dimension(400, 25));
         courseProgressBar.setStringPainted(true);
-        courseProgressBar.setForeground(new Color(46, 204, 113)); // Green
+        courseProgressBar.setForeground(new Color(34, 197, 94)); // Green
         courseProgressBar.setValue(0);
 
         progressInfoPanel.add(progressLabel, BorderLayout.NORTH);
@@ -123,7 +123,7 @@ public class LessonViewerDialog extends JDialog {
         // Title
         JLabel titleLabel = new JLabel("Lessons");
         titleLabel.setFont(new Font("Segoe UI", Font.BOLD, 16));
-        titleLabel.setForeground(new Color(33, 33, 33));
+        titleLabel.setForeground(new Color(31, 41, 55));
         panel.add(titleLabel, BorderLayout.NORTH);
 
         // Lesson list
@@ -157,7 +157,7 @@ public class LessonViewerDialog extends JDialog {
         // Top: Lesson title
         lessonTitleLabel = new JLabel("Select a lesson to begin");
         lessonTitleLabel.setFont(new Font("Segoe UI", Font.BOLD, 18));
-        lessonTitleLabel.setForeground(new Color(33, 33, 33));
+        lessonTitleLabel.setForeground(new Color(31, 41, 55));
         lessonTitleLabel.setBorder(new EmptyBorder(5, 5, 10, 5));
         panel.add(lessonTitleLabel, BorderLayout.NORTH);
 
@@ -179,7 +179,7 @@ public class LessonViewerDialog extends JDialog {
         // Description
         JLabel descLabel = new JLabel("Description:");
         descLabel.setFont(new Font("Segoe UI", Font.BOLD, 14));
-        descLabel.setForeground(new Color(33, 33, 33));
+        descLabel.setForeground(new Color(31, 41, 55));
 
         lessonDescriptionArea = new JTextArea(4, 40);
         lessonDescriptionArea.setEditable(false);
@@ -187,7 +187,7 @@ public class LessonViewerDialog extends JDialog {
         lessonDescriptionArea.setWrapStyleWord(true);
         lessonDescriptionArea.setFont(new Font("Segoe UI", Font.PLAIN, 13));
         lessonDescriptionArea.setBackground(new Color(245, 245, 245));
-        lessonDescriptionArea.setForeground(new Color(88, 88, 88));
+        lessonDescriptionArea.setForeground(new Color(107, 114, 128));
         lessonDescriptionArea.setBorder(new EmptyBorder(10, 10, 10, 10));
         lessonDescriptionArea.setText("Select a lesson to view description");
 
@@ -197,7 +197,7 @@ public class LessonViewerDialog extends JDialog {
         // Mark complete button
         markCompleteBtn = new JButton("Mark as Complete");
         markCompleteBtn.setFont(new Font("Segoe UI", Font.BOLD, 14));
-        markCompleteBtn.setBackground(new Color(46, 204, 113)); // Green
+        markCompleteBtn.setBackground(new Color(34, 197, 94)); // Green
         markCompleteBtn.setForeground(Color.WHITE);
         markCompleteBtn.setFocusPainted(false);
         markCompleteBtn.setBorderPainted(false);
@@ -384,7 +384,7 @@ public class LessonViewerDialog extends JDialog {
 
             centerPanel.removeAll();
             JLabel noVideoLabel = new JLabel("No video available for this lesson", SwingConstants.CENTER);
-            noVideoLabel.setForeground(new Color(150, 150, 150));
+            noVideoLabel.setForeground(new Color(154, 164, 178));
             centerPanel.add(noVideoLabel, BorderLayout.CENTER);
             centerPanel.revalidate();
             centerPanel.repaint();
@@ -393,13 +393,13 @@ public class LessonViewerDialog extends JDialog {
         // Update mark complete button
         LessonProgress progress = progressMap.get(lesson.getId());
         if (progress != null && progress.isCompleted()) {
-            markCompleteBtn.setText("✓ Completed");
+            markCompleteBtn.setText("\u2713 Completed");
             markCompleteBtn.setEnabled(false);
-            markCompleteBtn.setBackground(new Color(149, 165, 166)); // Gray
+            markCompleteBtn.setBackground(new Color(148, 163, 184)); // Gray
         } else {
             markCompleteBtn.setText("Mark as Complete");
             markCompleteBtn.setEnabled(true);
-            markCompleteBtn.setBackground(new Color(46, 204, 113)); // Green
+            markCompleteBtn.setBackground(new Color(34, 197, 94)); // Green
         }
 
         // Mark lesson as opened
@@ -430,9 +430,9 @@ public class LessonViewerDialog extends JDialog {
                 progress.setCompleted(true);
 
                 // Update UI
-                markCompleteBtn.setText("✓ Completed");
+                markCompleteBtn.setText("\u2713 Completed");
                 markCompleteBtn.setEnabled(false);
-                markCompleteBtn.setBackground(new Color(149, 165, 166)); // Gray
+                markCompleteBtn.setBackground(new Color(148, 163, 184)); // Gray
 
                 // Repaint lesson list to show checkmark
                 lessonList.repaint();
@@ -530,14 +530,14 @@ public class LessonViewerDialog extends JDialog {
                 String icon;
                 Color textColor;
                 if (progress != null && progress.isCompleted()) {
-                    icon = "✓";
-                    textColor = new Color(46, 204, 113); // Green
+                    icon = "\u2713";
+                    textColor = new Color(34, 197, 94); // Green
                 } else if (lesson.isPreview()) {
-                    icon = "🔓";
-                    textColor = new Color(33, 33, 33);
+                    icon = "\u26D4";
+                    textColor = new Color(31, 41, 55);
                 } else {
-                    icon = "▶";
-                    textColor = new Color(33, 33, 33);
+                    icon = "\u25B6";
+                    textColor = new Color(31, 41, 55);
                 }
 
                 // Format text

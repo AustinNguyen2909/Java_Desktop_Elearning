@@ -9,7 +9,7 @@ import java.awt.*;
  */
 public class ModernPasswordField extends JPasswordField {
     private String placeholder;
-    private Color placeholderColor = new Color(150, 150, 150);
+    private Color placeholderColor = new Color(154, 164, 178);
 
     public ModernPasswordField(String placeholder) {
         this.placeholder = placeholder;
@@ -25,11 +25,11 @@ public class ModernPasswordField extends JPasswordField {
     private void init() {
         setFont(new Font("Segoe UI", Font.PLAIN, 14));
         setBackground(Color.WHITE); // Light background
-        setForeground(new Color(33, 33, 33)); // Dark text
-        setCaretColor(new Color(33, 33, 33)); // Dark caret
-        setEchoChar('•'); // Modern bullet character
+        setForeground(new Color(31, 41, 55)); // Dark text
+        setCaretColor(new Color(31, 41, 55)); // Dark caret
+        setEchoChar("\u2022".charAt(0)); // Modern bullet character
         setBorder(BorderFactory.createCompoundBorder(
-                BorderFactory.createLineBorder(new Color(200, 200, 200), 1, true),
+                BorderFactory.createLineBorder(new Color(215, 222, 232), 1, true),
                 new EmptyBorder(8, 12, 8, 12)
         ));
         setPreferredSize(new Dimension(300, 45));

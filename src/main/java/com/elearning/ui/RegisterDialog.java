@@ -49,17 +49,17 @@ public class RegisterDialog extends JDialog {
         roleComboBox = new JComboBox<>(roles);
         roleComboBox.setFont(new Font("Segoe UI", Font.PLAIN, 14));
         roleComboBox.setBackground(Color.WHITE);
-        roleComboBox.setForeground(new Color(33, 33, 33));
+        roleComboBox.setForeground(new Color(31, 41, 55));
         roleComboBox.setPreferredSize(new Dimension(300, 45));
 
         registerButton = new ModernButton("Register");
-        registerButton.setBackground(new Color(46, 204, 113));
+        registerButton.setBackground(new Color(34, 197, 94));
 
         cancelButton = new ModernButton("Cancel");
-        cancelButton.setBackground(new Color(149, 165, 166));
+        cancelButton.setBackground(new Color(148, 163, 184));
 
         errorLabel = new JLabel(" ");
-        errorLabel.setForeground(new Color(231, 76, 60));
+        errorLabel.setForeground(new Color(225, 29, 72));
         errorLabel.setFont(new Font("Segoe UI", Font.PLAIN, 12));
         errorLabel.setAlignmentX(Component.CENTER_ALIGNMENT);
     }
@@ -73,31 +73,31 @@ public class RegisterDialog extends JDialog {
 
         // Adjust password field padding
         field.setBorder(BorderFactory.createCompoundBorder(
-            BorderFactory.createLineBorder(new Color(200, 200, 200), 1, true),
+            BorderFactory.createLineBorder(new Color(215, 222, 232), 1, true),
             BorderFactory.createEmptyBorder(8, 12, 8, 45)
         ));
 
         // Toggle button with eye icon
-        JButton toggleButton = new JButton("👁");
-        toggleButton.setFont(new Font("Segoe UI Emoji", Font.PLAIN, 16));
-        toggleButton.setPreferredSize(new Dimension(40, 45));
+        JButton toggleButton = new JButton("Show");
+        toggleButton.setFont(new Font("Segoe UI", Font.PLAIN, 12));
+        toggleButton.setPreferredSize(new Dimension(60, 45));
         toggleButton.setFocusPainted(false);
         toggleButton.setBorderPainted(false);
         toggleButton.setContentAreaFilled(false);
         toggleButton.setCursor(new Cursor(Cursor.HAND_CURSOR));
-        toggleButton.setForeground(new Color(100, 100, 100));
+        toggleButton.setForeground(new Color(107, 114, 128));
 
         toggleButton.addActionListener(e -> {
             if (field.getEchoChar() == '\u0000') {
                 // Hide password
-                field.setEchoChar('•');
-                toggleButton.setText("👁");
-                toggleButton.setForeground(new Color(100, 100, 100));
+                field.setEchoChar("\u2022".charAt(0));
+                toggleButton.setText("Hide");
+                toggleButton.setForeground(new Color(107, 114, 128));
             } else {
                 // Show password
-                field.setEchoChar('\u0000');
-                toggleButton.setText("👁‍🗨");
-                toggleButton.setForeground(new Color(52, 152, 219));
+                field.setEchoChar("\u2022".charAt(0));
+                toggleButton.setText("Hide");
+                toggleButton.setForeground(new Color(47, 111, 235));
             }
         });
 
@@ -116,12 +116,12 @@ public class RegisterDialog extends JDialog {
         // Title
         JLabel titleLabel = new JLabel("Create Account");
         titleLabel.setFont(new Font("Segoe UI", Font.BOLD, 24));
-        titleLabel.setForeground(new Color(33, 33, 33)); // Dark text
+        titleLabel.setForeground(new Color(31, 41, 55)); // Dark text
         titleLabel.setAlignmentX(Component.CENTER_ALIGNMENT);
 
         JLabel subtitleLabel = new JLabel("Join our learning community");
         subtitleLabel.setFont(new Font("Segoe UI", Font.PLAIN, 14));
-        subtitleLabel.setForeground(new Color(80, 80, 80)); // Darker gray for better contrast
+        subtitleLabel.setForeground(new Color(75, 85, 99)); // Darker gray for better contrast
         subtitleLabel.setAlignmentX(Component.CENTER_ALIGNMENT);
 
         // Form fields
@@ -176,7 +176,7 @@ public class RegisterDialog extends JDialog {
     private JLabel createFieldLabel(String text) {
         JLabel label = new JLabel(text);
         label.setFont(new Font("Segoe UI", Font.BOLD, 13));
-        label.setForeground(new Color(33, 33, 33)); // Dark text
+        label.setForeground(new Color(31, 41, 55)); // Dark text
         label.setAlignmentX(Component.CENTER_ALIGNMENT);
         return label;
     }

@@ -18,6 +18,7 @@ public class ReviewsPanel extends JPanel {
     private JPanel reviewsListPanel;
     private JLabel averageRatingLabel;
     private JLabel totalReviewsLabel;
+    private StarRatingPanel averageStarsPanel;
 
     public ReviewsPanel(User currentUser, int courseId) {
         this.reviewService = new ReviewService();
@@ -32,7 +33,7 @@ public class ReviewsPanel extends JPanel {
         setLayout(new BorderLayout(10, 10));
         setBackground(Color.WHITE);
         setBorder(BorderFactory.createCompoundBorder(
-            BorderFactory.createLineBorder(new Color(220, 220, 220), 1),
+            BorderFactory.createLineBorder(new Color(226, 232, 240), 1),
             BorderFactory.createEmptyBorder(15, 15, 15, 15)
         ));
 
@@ -42,20 +43,24 @@ public class ReviewsPanel extends JPanel {
 
         JLabel titleLabel = new JLabel("Course Reviews");
         titleLabel.setFont(new Font("Segoe UI", Font.BOLD, 16));
-        titleLabel.setForeground(new Color(33, 33, 33));
+        titleLabel.setForeground(new Color(31, 41, 55));
 
         // Rating stats
         JPanel statsPanel = new JPanel(new FlowLayout(FlowLayout.RIGHT, 10, 0));
         statsPanel.setBackground(Color.WHITE);
 
-        averageRatingLabel = new JLabel("★ 0.0");
-        averageRatingLabel.setFont(new Font("Segoe UI", Font.BOLD, 16));
-        averageRatingLabel.setForeground(new Color(241, 196, 15));
+        averageStarsPanel = new StarRatingPanel(0.0, 18, 4);
+        averageStarsPanel.setOpaque(false);
+
+        averageRatingLabel = new JLabel("0.0");
+        averageRatingLabel.setFont(new Font("Segoe UI", Font.BOLD, 14));
+        averageRatingLabel.setForeground(new Color(55, 65, 81));
 
         totalReviewsLabel = new JLabel("(0 reviews)");
         totalReviewsLabel.setFont(new Font("Segoe UI", Font.PLAIN, 12));
-        totalReviewsLabel.setForeground(new Color(100, 100, 100));
+        totalReviewsLabel.setForeground(new Color(107, 114, 128));
 
+        statsPanel.add(averageStarsPanel);
         statsPanel.add(averageRatingLabel);
         statsPanel.add(totalReviewsLabel);
 
@@ -64,9 +69,9 @@ public class ReviewsPanel extends JPanel {
 
         // Post review panel
         JPanel postPanel = new JPanel(new BorderLayout(10, 10));
-        postPanel.setBackground(new Color(248, 249, 250));
+        postPanel.setBackground(new Color(243, 244, 246));
         postPanel.setBorder(BorderFactory.createCompoundBorder(
-            BorderFactory.createLineBorder(new Color(220, 220, 220), 1),
+            BorderFactory.createLineBorder(new Color(226, 232, 240), 1),
             BorderFactory.createEmptyBorder(10, 10, 10, 10)
         ));
 
@@ -75,7 +80,7 @@ public class ReviewsPanel extends JPanel {
 
         // Rating selector
         JPanel ratingPanel = new JPanel(new FlowLayout(FlowLayout.LEFT));
-        ratingPanel.setBackground(new Color(248, 249, 250));
+        ratingPanel.setBackground(new Color(243, 244, 246));
 
         JLabel ratingLabel = new JLabel("Rating:");
         ratingLabel.setFont(new Font("Segoe UI", Font.PLAIN, 12));
@@ -92,7 +97,7 @@ public class ReviewsPanel extends JPanel {
         reviewTextArea.setLineWrap(true);
         reviewTextArea.setWrapStyleWord(true);
         reviewTextArea.setBorder(BorderFactory.createCompoundBorder(
-            BorderFactory.createLineBorder(new Color(200, 200, 200), 1),
+            BorderFactory.createLineBorder(new Color(215, 222, 232), 1),
             BorderFactory.createEmptyBorder(5, 5, 5, 5)
         ));
         JScrollPane reviewScrollPane = new JScrollPane(reviewTextArea);
@@ -144,12 +149,12 @@ public class ReviewsPanel extends JPanel {
         });
 
         JPanel postContentPanel = new JPanel(new BorderLayout(5, 5));
-        postContentPanel.setBackground(new Color(248, 249, 250));
+        postContentPanel.setBackground(new Color(243, 244, 246));
         postContentPanel.add(postLabel, BorderLayout.NORTH);
         postContentPanel.add(ratingPanel, BorderLayout.CENTER);
 
         JPanel reviewInputPanel = new JPanel(new BorderLayout(5, 5));
-        reviewInputPanel.setBackground(new Color(248, 249, 250));
+        reviewInputPanel.setBackground(new Color(243, 244, 246));
         reviewInputPanel.add(reviewScrollPane, BorderLayout.CENTER);
         reviewInputPanel.add(submitButton, BorderLayout.EAST);
 
@@ -183,12 +188,14 @@ public class ReviewsPanel extends JPanel {
             ReviewService.ReviewStatistics stats = reviewService.getReviewStatistics(courseId);
 
             // Update stats
-            averageRatingLabel.setText(String.format("★ %.1f", stats.getAverageRating()));
+            double avg = stats.getAverageRating();
+            averageStarsPanel.setRating(avg);
+            averageRatingLabel.setText(String.format("%.1f", avg));
             totalReviewsLabel.setText(String.format("(%d reviews)", stats.getTotalReviews()));
 
             if (reviews.isEmpty()) {
                 JLabel noReviewsLabel = new JLabel("No reviews yet. Be the first to review this course!");
-                noReviewsLabel.setForeground(new Color(150, 150, 150));
+                noReviewsLabel.setForeground(new Color(154, 164, 178));
                 noReviewsLabel.setBorder(BorderFactory.createEmptyBorder(20, 10, 20, 10));
                 reviewsListPanel.add(noReviewsLabel);
             } else {
@@ -209,33 +216,32 @@ public class ReviewsPanel extends JPanel {
 
     private JPanel createReviewCard(Review review) {
         JPanel card = new JPanel(new BorderLayout(5, 5));
-        card.setBackground(new Color(248, 249, 250));
+        card.setBackground(new Color(243, 244, 246));
         card.setBorder(BorderFactory.createCompoundBorder(
-            BorderFactory.createLineBorder(new Color(220, 220, 220), 1),
+            BorderFactory.createLineBorder(new Color(226, 232, 240), 1),
             BorderFactory.createEmptyBorder(10, 10, 10, 10)
         ));
 
         // Header with user and rating
         JPanel headerPanel = new JPanel(new BorderLayout());
-        headerPanel.setBackground(new Color(248, 249, 250));
+        headerPanel.setBackground(new Color(243, 244, 246));
 
         JLabel userLabel = new JLabel(review.getUserName() != null ? review.getUserName() : "Anonymous");
         userLabel.setFont(new Font("Segoe UI", Font.BOLD, 12));
-        userLabel.setForeground(new Color(52, 152, 219));
+        userLabel.setForeground(new Color(47, 111, 235));
 
-        JLabel ratingLabel = new JLabel(getStars(review.getRating()));
-        ratingLabel.setFont(new Font("Segoe UI", Font.PLAIN, 14));
-        ratingLabel.setForeground(new Color(241, 196, 15));
+        StarRatingPanel ratingPanel = new StarRatingPanel(review.getRating(), 16, 3);
+        ratingPanel.setOpaque(false);
 
         headerPanel.add(userLabel, BorderLayout.WEST);
-        headerPanel.add(ratingLabel, BorderLayout.EAST);
+        headerPanel.add(ratingPanel, BorderLayout.EAST);
 
         // Review content
         JTextArea contentArea = new JTextArea(review.getComment());
         contentArea.setEditable(false);
         contentArea.setLineWrap(true);
         contentArea.setWrapStyleWord(true);
-        contentArea.setBackground(new Color(248, 249, 250));
+        contentArea.setBackground(new Color(243, 244, 246));
         contentArea.setFont(new Font("Segoe UI", Font.PLAIN, 12));
         contentArea.setBorder(BorderFactory.createEmptyBorder(5, 0, 0, 0));
 
@@ -243,25 +249,13 @@ public class ReviewsPanel extends JPanel {
         String timeText = review.getCreatedAt() != null ? review.getCreatedAt().toString() : "";
         JLabel timeLabel = new JLabel(timeText);
         timeLabel.setFont(new Font("Segoe UI", Font.PLAIN, 10));
-        timeLabel.setForeground(new Color(150, 150, 150));
+        timeLabel.setForeground(new Color(154, 164, 178));
 
         card.add(headerPanel, BorderLayout.NORTH);
         card.add(contentArea, BorderLayout.CENTER);
         card.add(timeLabel, BorderLayout.SOUTH);
 
         return card;
-    }
-
-    private String getStars(int rating) {
-        StringBuilder stars = new StringBuilder();
-        for (int i = 0; i < 5; i++) {
-            if (i < rating) {
-                stars.append("★");
-            } else {
-                stars.append("☆");
-            }
-        }
-        return stars.toString();
     }
 
     public void refresh() {

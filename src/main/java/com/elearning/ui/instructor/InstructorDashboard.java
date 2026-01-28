@@ -10,8 +10,10 @@ import com.elearning.service.LessonService;
 import com.elearning.ui.components.ModernButton;
 import com.elearning.ui.components.ModernTextField;
 import com.elearning.util.ChartUtil;
-import com.elearning.util.SessionManager;
+import com.elearning.ui.components.StarRatingPanel;
+import com.elearning.util.CourseCardImageUtil;
 import com.elearning.util.FileUtil;
+import com.elearning.util.SessionManager;
 import com.elearning.util.VideoUtil;
 import org.jfree.chart.ChartPanel;
 
@@ -32,8 +34,7 @@ public class InstructorDashboard extends JFrame {
     private final AnalyticsService analyticsService;
 
     private JPanel contentPanel;
-    private JTable coursesTable;
-    private DefaultTableModel coursesTableModel;
+    private JPanel coursesGrid;
 
     public InstructorDashboard() {
         this.currentUser = SessionManager.getInstance().getCurrentUser();
@@ -89,7 +90,7 @@ public class InstructorDashboard extends JFrame {
 
         JLabel titleLabel = new JLabel("  Instructor Dashboard - " + currentUser.getFullName());
         titleLabel.setFont(new Font("Segoe UI", Font.BOLD, 20));
-        titleLabel.setForeground(new Color(33, 33, 33));
+        titleLabel.setForeground(new Color(31, 41, 55));
 
         headerPanel.add(titleLabel, BorderLayout.WEST);
 
@@ -99,7 +100,7 @@ public class InstructorDashboard extends JFrame {
     private JPanel createSidebar() {
         JPanel sidebar = new JPanel();
         sidebar.setLayout(new BoxLayout(sidebar, BoxLayout.Y_AXIS));
-        sidebar.setBackground(new Color(248, 249, 250));
+        sidebar.setBackground(new Color(243, 244, 246));
         sidebar.setPreferredSize(new Dimension(250, 0));
         sidebar.setBorder(BorderFactory.createMatteBorder(0, 0, 0, 1, new Color(230, 230, 230)));
 
@@ -157,7 +158,7 @@ public class InstructorDashboard extends JFrame {
         topPanel.setBackground(Color.WHITE); // Light background
         JLabel titleLabel = new JLabel("My Courses");
         titleLabel.setFont(new Font("Segoe UI", Font.BOLD, 18));
-        titleLabel.setForeground(new Color(33, 33, 33)); // Dark text
+        titleLabel.setForeground(new Color(31, 41, 55)); // Dark text
 
         JButton refreshButton = new JButton("Refresh");
         refreshButton.setBackground(new Color(30, 64, 175)); // Navy blue
@@ -170,25 +171,15 @@ public class InstructorDashboard extends JFrame {
         topPanel.add(titleLabel, BorderLayout.WEST);
         topPanel.add(refreshButton, BorderLayout.EAST);
 
-        // Courses table
-        String[] columnNames = {"ID", "Title", "Category", "Status", "Published", "Enrollments", "Rating", "Actions"};
-        coursesTableModel = new DefaultTableModel(columnNames, 0) {
-            @Override
-            public boolean isCellEditable(int row, int column) {
-                return column == 7; // Only Actions column is editable
-            }
-        };
-        coursesTable = new JTable(coursesTableModel);
-        coursesTable.setBackground(Color.WHITE);
-        coursesTable.setForeground(new Color(33, 33, 33));
-        coursesTable.setGridColor(new Color(230, 230, 230));
-        coursesTable.setRowHeight(30);
-        coursesTable.getColumn("Actions").setCellRenderer(new ButtonRenderer());
-        coursesTable.getColumn("Actions").setCellEditor(new ButtonEditor(new JCheckBox()));
+        coursesGrid = new com.elearning.ui.components.ScrollableWrapPanel(
+                new com.elearning.ui.components.WrapLayout(FlowLayout.LEFT, 16, 16));
+        coursesGrid.setBackground(Color.WHITE);
+        coursesGrid.setBorder(BorderFactory.createEmptyBorder(5, 5, 5, 5));
 
-        JScrollPane scrollPane = new JScrollPane(coursesTable);
+        JScrollPane scrollPane = new JScrollPane(coursesGrid);
         scrollPane.setBackground(Color.WHITE);
         scrollPane.getViewport().setBackground(Color.WHITE);
+        scrollPane.setHorizontalScrollBarPolicy(ScrollPaneConstants.HORIZONTAL_SCROLLBAR_NEVER);
 
         panel.add(topPanel, BorderLayout.NORTH);
         panel.add(scrollPane, BorderLayout.CENTER);
@@ -203,7 +194,7 @@ public class InstructorDashboard extends JFrame {
 
         JLabel titleLabel = new JLabel("Create New Course");
         titleLabel.setFont(new Font("Segoe UI", Font.BOLD, 18));
-        titleLabel.setForeground(new Color(33, 33, 33)); // Dark text
+        titleLabel.setForeground(new Color(31, 41, 55)); // Dark text
 
         // Form panel
         JPanel formPanel = new JPanel(new GridBagLayout());
@@ -217,15 +208,15 @@ public class InstructorDashboard extends JFrame {
         gbc.gridx = 0;
         gbc.gridy = 0;
         JLabel titleLbl = new JLabel("Title:");
-        titleLbl.setForeground(new Color(33, 33, 33)); // Dark text
+        titleLbl.setForeground(new Color(31, 41, 55)); // Dark text
         formPanel.add(titleLbl, gbc);
 
         gbc.gridx = 1;
         gbc.weightx = 1.0;
         JTextField titleField = new JTextField(30);
         titleField.setBackground(Color.WHITE);
-        titleField.setForeground(new Color(33, 33, 33));
-        titleField.setCaretColor(new Color(33, 33, 33));
+        titleField.setForeground(new Color(31, 41, 55));
+        titleField.setCaretColor(new Color(31, 41, 55));
         formPanel.add(titleField, gbc);
 
         // Description
@@ -233,15 +224,15 @@ public class InstructorDashboard extends JFrame {
         gbc.gridy = 1;
         gbc.weightx = 0;
         JLabel descLbl = new JLabel("Description:");
-        descLbl.setForeground(new Color(33, 33, 33)); // Dark text
+        descLbl.setForeground(new Color(31, 41, 55)); // Dark text
         formPanel.add(descLbl, gbc);
 
         gbc.gridx = 1;
         gbc.weightx = 1.0;
         JTextArea descriptionArea = new JTextArea(5, 30);
         descriptionArea.setBackground(Color.WHITE);
-        descriptionArea.setForeground(new Color(33, 33, 33));
-        descriptionArea.setCaretColor(new Color(33, 33, 33));
+        descriptionArea.setForeground(new Color(31, 41, 55));
+        descriptionArea.setCaretColor(new Color(31, 41, 55));
         descriptionArea.setLineWrap(true);
         descriptionArea.setWrapStyleWord(true);
         JScrollPane descScroll = new JScrollPane(descriptionArea);
@@ -254,7 +245,7 @@ public class InstructorDashboard extends JFrame {
         gbc.gridy = 2;
         gbc.weightx = 0;
         JLabel catLbl = new JLabel("Category:");
-        catLbl.setForeground(new Color(33, 33, 33)); // Dark text
+        catLbl.setForeground(new Color(31, 41, 55)); // Dark text
         formPanel.add(catLbl, gbc);
 
         gbc.gridx = 1;
@@ -262,28 +253,28 @@ public class InstructorDashboard extends JFrame {
                 "Data Science", "DevOps", "Security", "Other"};
         JComboBox<String> categoryCombo = new JComboBox<>(categories);
         categoryCombo.setBackground(Color.WHITE);
-        categoryCombo.setForeground(new Color(33, 33, 33));
+        categoryCombo.setForeground(new Color(31, 41, 55));
         formPanel.add(categoryCombo, gbc);
 
         // Difficulty Level
         gbc.gridx = 0;
         gbc.gridy = 3;
         JLabel diffLbl = new JLabel("Difficulty:");
-        diffLbl.setForeground(new Color(33, 33, 33)); // Dark text
+        diffLbl.setForeground(new Color(31, 41, 55)); // Dark text
         formPanel.add(diffLbl, gbc);
 
         gbc.gridx = 1;
         String[] difficulties = {"BEGINNER", "INTERMEDIATE", "ADVANCED"};
         JComboBox<String> difficultyCombo = new JComboBox<>(difficulties);
         difficultyCombo.setBackground(Color.WHITE);
-        difficultyCombo.setForeground(new Color(33, 33, 33));
+        difficultyCombo.setForeground(new Color(31, 41, 55));
         formPanel.add(difficultyCombo, gbc);
 
         // Estimated Hours
         gbc.gridx = 0;
         gbc.gridy = 4;
         JLabel hoursLbl = new JLabel("Estimated Hours:");
-        hoursLbl.setForeground(new Color(33, 33, 33)); // Dark text
+        hoursLbl.setForeground(new Color(31, 41, 55)); // Dark text
         formPanel.add(hoursLbl, gbc);
 
         gbc.gridx = 1;
@@ -294,7 +285,7 @@ public class InstructorDashboard extends JFrame {
         gbc.gridx = 0;
         gbc.gridy = 5;
         JLabel thumbLbl = new JLabel("Hero Image:");
-        thumbLbl.setForeground(new Color(33, 33, 33)); // Dark text
+        thumbLbl.setForeground(new Color(31, 41, 55)); // Dark text
         formPanel.add(thumbLbl, gbc);
 
         gbc.gridx = 1;
@@ -302,7 +293,7 @@ public class InstructorDashboard extends JFrame {
         thumbnailPanel.setBackground(Color.WHITE);
 
         JLabel thumbnailInfoLabel = new JLabel("No image selected");
-        thumbnailInfoLabel.setForeground(new Color(100, 100, 100));
+        thumbnailInfoLabel.setForeground(new Color(107, 114, 128));
 
         JButton uploadThumbnailBtn = new JButton("Upload Image");
         uploadThumbnailBtn.setBackground(new Color(30, 64, 175));
@@ -417,23 +408,14 @@ public class InstructorDashboard extends JFrame {
                     currentUser.getId()
             );
 
-            // Clear existing rows
-            coursesTableModel.setRowCount(0);
+            coursesGrid.removeAll();
 
-            // Add courses to table
             for (Course course : courses) {
-                Object[] row = {
-                        course.getId(),
-                        course.getTitle(),
-                        course.getCategory(),
-                        course.getStatus(),
-                        course.isPublished() ? "Yes" : "No",
-                        course.getEnrollmentCount(),
-                        String.format("%.1f", course.getAverageRating()),
-                        "Actions"
-                };
-                coursesTableModel.addRow(row);
+                JPanel card = createCourseCard(course);
+                coursesGrid.add(card);
             }
+            coursesGrid.revalidate();
+            coursesGrid.repaint();
         } catch (Exception e) {
             JOptionPane.showMessageDialog(this,
                     "Error loading courses: " + e.getMessage(),
@@ -441,6 +423,119 @@ public class InstructorDashboard extends JFrame {
                     JOptionPane.ERROR_MESSAGE);
         }
     }
+
+    private JPanel createCourseCard(Course course) {
+        JPanel card = new com.elearning.ui.components.CardPanel();
+        card.setLayout(new BorderLayout());
+        card.setBackground(Color.WHITE);
+        card.setPreferredSize(new Dimension(280, 330));
+        card.setMaximumSize(new Dimension(280, 330));
+
+        JPanel imagePanel = new JPanel(new BorderLayout());
+        imagePanel.setBackground(new Color(243, 244, 246));
+        imagePanel.setPreferredSize(new Dimension(280, 140));
+        JLabel imageLabel = new JLabel();
+        imageLabel.setHorizontalAlignment(SwingConstants.CENTER);
+        imageLabel.setVerticalAlignment(SwingConstants.CENTER);
+        ImageIcon icon = CourseCardImageUtil.loadCourseThumbnail(course.getThumbnailPath(), course.getTitle(), 280, 140);
+        imageLabel.setIcon(icon);
+        imagePanel.add(imageLabel, BorderLayout.CENTER);
+
+        JPanel body = new JPanel();
+        body.setOpaque(false);
+        body.setLayout(new BoxLayout(body, BoxLayout.Y_AXIS));
+        body.setBorder(BorderFactory.createEmptyBorder(10, 12, 10, 12));
+
+        JLabel titleLabel = new JLabel(course.getTitle());
+        titleLabel.setFont(new Font("Segoe UI", Font.BOLD, 15));
+        titleLabel.setForeground(new Color(31, 41, 55));
+        titleLabel.setAlignmentX(Component.LEFT_ALIGNMENT);
+
+        String statusText = course.getStatus() + (course.isPublished() ? " \u2022 Published" : " \u2022 Draft");
+        JLabel statusLabel = new JLabel(statusText);
+        statusLabel.setFont(new Font("Segoe UI", Font.PLAIN, 12));
+        statusLabel.setForeground(new Color(107, 114, 128));
+        statusLabel.setAlignmentX(Component.LEFT_ALIGNMENT);
+
+        StarRatingPanel ratingPanel = new StarRatingPanel(course.getAverageRating(), 18, 4);
+
+        JLabel learnersLabel = new JLabel(course.getEnrollmentCount() + " learners");
+        learnersLabel.setFont(new Font("Segoe UI", Font.PLAIN, 12));
+        learnersLabel.setForeground(new Color(107, 114, 128));
+        learnersLabel.setAlignmentX(Component.LEFT_ALIGNMENT);
+
+        JPanel statsRow = new JPanel();
+        statsRow.setOpaque(false);
+        statsRow.setLayout(new BoxLayout(statsRow, BoxLayout.X_AXIS));
+        statsRow.setAlignmentX(Component.LEFT_ALIGNMENT);
+        statsRow.add(ratingPanel);
+        statsRow.add(Box.createHorizontalStrut(8));
+        statsRow.add(learnersLabel);
+        statsRow.setMaximumSize(new Dimension(260, 22));
+
+        JPanel actions = new JPanel();
+        actions.setOpaque(false);
+        actions.setLayout(new BoxLayout(actions, BoxLayout.Y_AXIS));
+        actions.setAlignmentX(Component.LEFT_ALIGNMENT);
+        actions.setMaximumSize(new Dimension(260, 44));
+        JButton manageBtn = new JButton("Manage");
+        manageBtn.setBackground(new Color(47, 111, 235));
+        manageBtn.setForeground(Color.WHITE);
+        manageBtn.setFocusPainted(false);
+        manageBtn.setBorderPainted(false);
+        manageBtn.setFont(new Font("Segoe UI", Font.BOLD, 12));
+        manageBtn.setPreferredSize(new Dimension(256, 36));
+        manageBtn.setMaximumSize(new Dimension(256, 36));
+        manageBtn.setAlignmentX(Component.LEFT_ALIGNMENT);
+        manageBtn.setHorizontalAlignment(SwingConstants.CENTER);
+        manageBtn.addActionListener(e -> showCourseActionsMenu(manageBtn, course));
+        actions.add(manageBtn);
+
+        body.add(titleLabel);
+        body.add(Box.createRigidArea(new Dimension(0, 4)));
+        body.add(statusLabel);
+        body.add(Box.createRigidArea(new Dimension(0, 6)));
+        body.add(statsRow);
+        body.add(Box.createVerticalGlue());
+        body.add(actions);
+
+        card.add(imagePanel, BorderLayout.NORTH);
+        card.add(body, BorderLayout.CENTER);
+
+        return card;
+    }
+
+    private void showCourseActionsMenu(Component invoker, Course course) {
+        JPopupMenu menu = new JPopupMenu();
+
+        JMenuItem viewItem = new JMenuItem("View Details");
+        viewItem.addActionListener(e -> viewCourse(course.getId()));
+        menu.add(viewItem);
+
+        JMenuItem lessonsItem = new JMenuItem("Manage Lessons");
+        lessonsItem.addActionListener(e -> manageLessons(course.getId()));
+        menu.add(lessonsItem);
+
+        if ("APPROVED".equals(course.getStatus())) {
+            JMenuItem publishItem = new JMenuItem(course.isPublished() ? "Unpublish" : "Publish");
+            publishItem.addActionListener(e -> togglePublish(course.getId(), !course.isPublished()));
+            menu.add(publishItem);
+        }
+
+        if (!"APPROVED".equals(course.getStatus()) || !course.isPublished()) {
+            JMenuItem editItem = new JMenuItem("Edit");
+            editItem.addActionListener(e -> editCourse(course.getId()));
+            menu.add(editItem);
+
+            JMenuItem deleteItem = new JMenuItem("Delete");
+            deleteItem.addActionListener(e -> deleteCourse(course.getId()));
+            menu.add(deleteItem);
+        }
+
+        menu.show(invoker, 0, invoker.getHeight());
+    }
+
+    
 
     private JPanel createStatisticsPanel() {
         JPanel panel = new JPanel(new BorderLayout(10, 10));
@@ -453,7 +548,7 @@ public class InstructorDashboard extends JFrame {
 
         JLabel titleLabel = new JLabel("Instructor Statistics");
         titleLabel.setFont(new Font("Segoe UI", Font.BOLD, 20));
-        titleLabel.setForeground(new Color(33, 33, 33));
+        titleLabel.setForeground(new Color(31, 41, 55));
 
         JButton refreshButton = new JButton("Refresh Statistics");
         refreshButton.setBackground(new Color(30, 64, 175)); // Navy blue
@@ -484,13 +579,13 @@ public class InstructorDashboard extends JFrame {
 
             // Create stat cards
             statsCardsPanel.add(createStatCard("Total Courses", String.valueOf(stats.totalCourses),
-                    new Color(52, 152, 219))); // Blue
+                    new Color(47, 111, 235))); // Blue
             statsCardsPanel.add(createStatCard("Approved Courses", String.valueOf(stats.approvedCourses),
-                    new Color(46, 204, 113))); // Green
+                    new Color(34, 197, 94))); // Green
             statsCardsPanel.add(createStatCard("Published Courses", String.valueOf(stats.publishedCourses),
                     new Color(155, 89, 182))); // Purple
             statsCardsPanel.add(createStatCard("Total Students", String.valueOf(stats.totalStudents),
-                    new Color(52, 152, 219))); // Blue
+                    new Color(47, 111, 235))); // Blue
             statsCardsPanel.add(createStatCard("Total Reviews", String.valueOf(stats.totalReviews),
                     new Color(241, 196, 15))); // Yellow
             statsCardsPanel.add(createStatCard("Average Rating", String.format("%.1f / 5.0", stats.averageRating),
@@ -498,7 +593,7 @@ public class InstructorDashboard extends JFrame {
             statsCardsPanel.add(createStatCard("Avg Enrollments/Course", String.format("%.1f", stats.averageEnrollmentsPerCourse),
                     new Color(26, 188, 156))); // Teal
             statsCardsPanel.add(createStatCard("Completion Rate", String.format("%.1f%%", stats.completionRate),
-                    new Color(46, 204, 113))); // Green
+                    new Color(34, 197, 94))); // Green
 
             contentPanel.add(statsCardsPanel);
 
@@ -539,13 +634,13 @@ public class InstructorDashboard extends JFrame {
         JPanel card = new JPanel(new BorderLayout(5, 5));
         card.setBackground(Color.WHITE);
         card.setBorder(BorderFactory.createCompoundBorder(
-                BorderFactory.createLineBorder(new Color(220, 220, 220), 1),
+                BorderFactory.createLineBorder(new Color(226, 232, 240), 1),
                 BorderFactory.createEmptyBorder(15, 15, 15, 15)
         ));
 
         JLabel titleLabel = new JLabel(title);
         titleLabel.setFont(new Font("Segoe UI", Font.PLAIN, 12));
-        titleLabel.setForeground(new Color(100, 100, 100));
+        titleLabel.setForeground(new Color(107, 114, 128));
 
         JLabel valueLabel = new JLabel(value);
         valueLabel.setFont(new Font("Segoe UI", Font.BOLD, 32));
@@ -596,88 +691,7 @@ public class InstructorDashboard extends JFrame {
         }
     }
 
-    // Button editor for Actions column
-    class ButtonEditor extends DefaultCellEditor {
-        private JButton button;
-        private String label;
-        private int currentRow;
-        private JTable table;
-
-        public ButtonEditor(JCheckBox checkBox) {
-            super(checkBox);
-            button = new JButton();
-            button.setOpaque(true);
-            button.addActionListener(e -> {
-                int row = currentRow;
-                fireEditingStopped();
-                SwingUtilities.invokeLater(() -> showActionsMenu(row));
-            });
-        }
-
-        @Override
-        public Component getTableCellEditorComponent(JTable table, Object value,
-                                                     boolean isSelected, int row, int column) {
-            this.table = table;
-            label = (value == null) ? "Actions" : value.toString();
-            button.setText(label);
-            currentRow = row;
-            return button;
-        }
-
-        @Override
-        public Object getCellEditorValue() {
-            return label;
-        }
-
-        private void showActionsMenu(int row) {
-            if (row >= 0 && table != null) {
-                int courseId = (Integer) coursesTableModel.getValueAt(row, 0);
-                String status = (String) coursesTableModel.getValueAt(row, 3);
-                boolean published = coursesTableModel.getValueAt(row, 4).equals("Yes");
-
-                JPopupMenu menu = new JPopupMenu();
-
-                JMenuItem viewItem = new JMenuItem("View Details");
-                viewItem.addActionListener(e -> {
-                    com.elearning.ui.components.CourseDetailsDialog dialog =
-                            new com.elearning.ui.components.CourseDetailsDialog(InstructorDashboard.this, courseId);
-                    dialog.setVisible(true);
-                    loadCourses(); // Refresh list after dialog closes
-                });
-                menu.add(viewItem);
-
-                JMenuItem lessonsItem = new JMenuItem("Manage Lessons");
-                lessonsItem.addActionListener(e -> {
-                    com.elearning.ui.components.CourseDetailsDialog dialog =
-                            new com.elearning.ui.components.CourseDetailsDialog(InstructorDashboard.this, courseId);
-                    dialog.setVisible(true);
-                    loadCourses();
-                });
-                menu.add(lessonsItem);
-
-                if ("APPROVED".equals(status)) {
-                    JMenuItem publishItem = new JMenuItem(published ? "Unpublish" : "Publish");
-                    publishItem.addActionListener(e -> togglePublish(courseId, !published));
-                    menu.add(publishItem);
-                }
-
-                if (!"APPROVED".equals(status) || !published) {
-                    JMenuItem editItem = new JMenuItem("Edit");
-                    editItem.addActionListener(e -> editCourse(courseId));
-                    menu.add(editItem);
-
-                    JMenuItem deleteItem = new JMenuItem("Delete");
-                    deleteItem.addActionListener(e -> deleteCourse(courseId));
-                    menu.add(deleteItem);
-                }
-
-                // Show popup relative to the table cell location
-                Rectangle cellRect = table.getCellRect(row, table.getColumnCount() - 1, true);
-                menu.show(table, cellRect.x, cellRect.y + cellRect.height);
-            }
-        }
-    }
-
+    // no-op
     private void viewCourse(int courseId) {
         com.elearning.ui.components.CourseDetailsDialog dialog =
                 new com.elearning.ui.components.CourseDetailsDialog(this, courseId);
@@ -751,10 +765,10 @@ public class InstructorDashboard extends JFrame {
         topPanel.setBackground(Color.WHITE);
         JLabel titleLabel = new JLabel("Lessons for: " + course.getTitle());
         titleLabel.setFont(new Font("Segoe UI", Font.BOLD, 16));
-        titleLabel.setForeground(new Color(33, 33, 33));
+        titleLabel.setForeground(new Color(31, 41, 55));
 
         JButton createLessonButton = new JButton("Create New Lesson");
-        createLessonButton.setBackground(new Color(46, 204, 113));
+        createLessonButton.setBackground(new Color(34, 197, 94));
         createLessonButton.setForeground(Color.WHITE);
         createLessonButton.setFocusPainted(false);
         createLessonButton.setBorderPainted(false);
@@ -791,7 +805,7 @@ public class InstructorDashboard extends JFrame {
 
         JTable lessonsTable = new JTable(lessonsModel);
         lessonsTable.setBackground(Color.WHITE);
-        lessonsTable.setForeground(new Color(33, 33, 33));
+        lessonsTable.setForeground(new Color(31, 41, 55));
         lessonsTable.setGridColor(new Color(230, 230, 230));
         lessonsTable.setRowHeight(35);
         lessonsTable.getColumn("Actions").setCellRenderer(new ButtonRenderer());
@@ -807,7 +821,7 @@ public class InstructorDashboard extends JFrame {
                         lesson.getTitle(),
                         lesson.getDurationMinutes() != null ? lesson.getDurationMinutes() : 0,
                         lesson.isPreview() ? "Yes" : "No",
-                        lesson.getVideoPath() != null ? "✓" : "✗",
+                        lesson.getVideoPath() != null ? "\u2713" : "\u2717",
                         "Actions"
                 };
                 lessonsModel.addRow(row);
@@ -831,7 +845,7 @@ public class InstructorDashboard extends JFrame {
             JLabel statsLabel = new JLabel(String.format("Total Lessons: %d | Total Duration: %.1f hours",
                     stats.getLessonCount(), stats.getTotalDurationHours()));
             statsLabel.setFont(new Font("Segoe UI", Font.PLAIN, 12));
-            statsLabel.setForeground(new Color(88, 88, 88));
+            statsLabel.setForeground(new Color(107, 114, 128));
             bottomPanel.add(statsLabel);
         } catch (Exception e) {
             // Ignore statistics error
@@ -858,12 +872,12 @@ public class InstructorDashboard extends JFrame {
         ModernTextField titleField = new ModernTextField("Lesson Title");
         JTextArea descriptionArea = new JTextArea(5, 30);
         descriptionArea.setBackground(Color.WHITE);
-        descriptionArea.setForeground(new Color(33, 33, 33));
-        descriptionArea.setCaretColor(new Color(33, 33, 33));
+        descriptionArea.setForeground(new Color(31, 41, 55));
+        descriptionArea.setCaretColor(new Color(31, 41, 55));
         descriptionArea.setLineWrap(true);
         descriptionArea.setWrapStyleWord(true);
         descriptionArea.setBorder(BorderFactory.createCompoundBorder(
-                BorderFactory.createLineBorder(new Color(200, 200, 200)),
+                BorderFactory.createLineBorder(new Color(215, 222, 232)),
                 BorderFactory.createEmptyBorder(10, 10, 10, 10)
         ));
         JScrollPane descScrollPane = new JScrollPane(descriptionArea);
@@ -878,7 +892,7 @@ public class InstructorDashboard extends JFrame {
         previewCheckbox.setBackground(Color.WHITE);
 
         JLabel videoLabel = new JLabel("No video selected");
-        videoLabel.setForeground(new Color(88, 88, 88));
+        videoLabel.setForeground(new Color(107, 114, 128));
         final String[] selectedVideoPath = {null};
 
         JButton chooseVideoButton = new JButton("Choose & Upload Video File");
@@ -928,9 +942,9 @@ public class InstructorDashboard extends JFrame {
         });
 
         ModernButton createButton = new ModernButton("Create Lesson");
-        createButton.setBackground(new Color(46, 204, 113));
+        createButton.setBackground(new Color(34, 197, 94));
         ModernButton cancelButton = new ModernButton("Cancel");
-        cancelButton.setBackground(new Color(149, 165, 166));
+        cancelButton.setBackground(new Color(148, 163, 184));
 
         panel.add(createLabel("Lesson Title:"));
         panel.add(Box.createRigidArea(new Dimension(0, 5)));
@@ -1060,13 +1074,13 @@ public class InstructorDashboard extends JFrame {
 
         JTextArea descriptionArea = new JTextArea(5, 30);
         descriptionArea.setBackground(Color.WHITE);
-        descriptionArea.setForeground(new Color(33, 33, 33));
-        descriptionArea.setCaretColor(new Color(33, 33, 33));
+        descriptionArea.setForeground(new Color(31, 41, 55));
+        descriptionArea.setCaretColor(new Color(31, 41, 55));
         descriptionArea.setText(lesson.getDescription() != null ? lesson.getDescription() : "");
         descriptionArea.setLineWrap(true);
         descriptionArea.setWrapStyleWord(true);
         descriptionArea.setBorder(BorderFactory.createCompoundBorder(
-                BorderFactory.createLineBorder(new Color(200, 200, 200)),
+                BorderFactory.createLineBorder(new Color(215, 222, 232)),
                 BorderFactory.createEmptyBorder(10, 10, 10, 10)
         ));
         JScrollPane descScrollPane = new JScrollPane(descriptionArea);
@@ -1084,7 +1098,7 @@ public class InstructorDashboard extends JFrame {
 
         JLabel videoLabel = new JLabel(lesson.getVideoPath() != null ?
                 "Current: " + new File(lesson.getVideoPath()).getName() : "No video selected");
-        videoLabel.setForeground(new Color(88, 88, 88));
+        videoLabel.setForeground(new Color(107, 114, 128));
         final String[] selectedVideoPath = {lesson.getVideoPath()};
 
         JButton chooseVideoButton = new JButton("Change Video File");
@@ -1103,9 +1117,9 @@ public class InstructorDashboard extends JFrame {
         });
 
         ModernButton saveButton = new ModernButton("Save Changes");
-        saveButton.setBackground(new Color(52, 152, 219));
+        saveButton.setBackground(new Color(47, 111, 235));
         ModernButton cancelButton = new ModernButton("Cancel");
-        cancelButton.setBackground(new Color(149, 165, 166));
+        cancelButton.setBackground(new Color(148, 163, 184));
 
         panel.add(createLabel("Lesson Title:"));
         panel.add(Box.createRigidArea(new Dimension(0, 5)));
@@ -1213,7 +1227,7 @@ public class InstructorDashboard extends JFrame {
     private JLabel createLabel(String text) {
         JLabel label = new JLabel(text);
         label.setFont(new Font("Segoe UI", Font.BOLD, 13));
-        label.setForeground(new Color(33, 33, 33));
+        label.setForeground(new Color(31, 41, 55));
         label.setAlignmentX(Component.CENTER_ALIGNMENT);
         return label;
     }
@@ -1268,7 +1282,7 @@ public class InstructorDashboard extends JFrame {
                 menu.add(editItem);
 
                 JMenuItem deleteItem = new JMenuItem("Delete");
-                deleteItem.setForeground(new Color(231, 76, 60));
+                deleteItem.setForeground(new Color(225, 29, 72));
                 deleteItem.addActionListener(e -> deleteLesson(parentDialog, lessonId, courseId));
                 menu.add(deleteItem);
 
