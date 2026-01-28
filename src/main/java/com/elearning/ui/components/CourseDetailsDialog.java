@@ -80,15 +80,20 @@ public class CourseDetailsDialog extends JDialog {
 
         tabbedPane = new JTabbedPane();
         tabbedPane.setFont(new Font("Segoe UI", Font.BOLD, 14));
+        tabbedPane.setBackground(Color.WHITE);
 
         createDetailsTab();
         createLessonsTab();
-        createStudentsTab();
+        if (!currentUser.getRole().equals("USER")) {
+            createStudentsTab();
+        }
         createReviewsTab();
 
         tabbedPane.addTab("Details", detailsPanel);
         tabbedPane.addTab("Lessons", lessonsPanel);
-        tabbedPane.addTab("Enrolled Students", studentsPanel);
+        if (!currentUser.getRole().equals("USER")) {
+            tabbedPane.addTab("Enrolled Students", studentsPanel);
+        }
         tabbedPane.addTab("Reviews", reviewsPanel);
 
         add(tabbedPane, BorderLayout.CENTER);
@@ -195,7 +200,7 @@ public class CourseDetailsDialog extends JDialog {
 
         if (canEdit) {
             JButton saveButton = new JButton("Update Course");
-            saveButton.setBackground(new Color(30, 64, 175));
+            saveButton.setBackground(new Color(47, 111, 235));
             saveButton.setForeground(Color.WHITE);
             saveButton.setFont(new Font("Segoe UI", Font.BOLD, 14));
             saveButton.setPreferredSize(new Dimension(0, 45));
@@ -257,6 +262,7 @@ public class CourseDetailsDialog extends JDialog {
             }
         };
         lessonsTable = new JTable(lessonsTableModel);
+        lessonsTable.setBackground(Color.WHITE);
         lessonsTable.setRowHeight(35);
 
         // Actions column renderer and editor
@@ -298,6 +304,7 @@ public class CourseDetailsDialog extends JDialog {
             public boolean isCellEditable(int row, int column) { return false; }
         };
         studentsTable = new JTable(studentsTableModel);
+        studentsTable.setBackground(Color.WHITE);
         studentsTable.setRowHeight(30);
         studentsPanel.add(new JScrollPane(studentsTable), BorderLayout.CENTER);
         loadStudents();

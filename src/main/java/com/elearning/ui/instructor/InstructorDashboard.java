@@ -105,11 +105,8 @@ public class InstructorDashboard extends JFrame {
         sidebar.setBorder(BorderFactory.createMatteBorder(0, 0, 0, 1, new Color(230, 230, 230)));
 
         // Add menu items
-        sidebar.add(Box.createRigidArea(new Dimension(0, 20)));
         sidebar.add(createMenuItem("My Courses", "My Courses"));
-        sidebar.add(Box.createRigidArea(new Dimension(0, 5)));
         sidebar.add(createMenuItem("Create Course", "Create Course"));
-        sidebar.add(Box.createRigidArea(new Dimension(0, 5)));
         sidebar.add(createMenuItem("Statistics", "Statistics"));
 
         // Push logout button to bottom
@@ -134,13 +131,14 @@ public class InstructorDashboard extends JFrame {
 
     private JButton createMenuItem(String text, String panelName) {
         JButton menuItem = new JButton(text);
-        menuItem.setBackground(new Color(30, 64, 175));
+        menuItem.setBackground(new Color(47, 111, 235));
         menuItem.setForeground(Color.WHITE);
         menuItem.setFocusPainted(false);
         menuItem.setBorderPainted(false);
+        menuItem.setBorder(BorderFactory.createEmptyBorder(10, 0, 10, 0));
         menuItem.setFont(new Font("Segoe UI", Font.BOLD, 14));
         menuItem.setAlignmentX(Component.CENTER_ALIGNMENT);
-        menuItem.setMaximumSize(new Dimension(220, 45));
+        menuItem.setMaximumSize(new Dimension(250, 80));
         menuItem.addActionListener(e -> {
             CardLayout cl = (CardLayout) contentPanel.getLayout();
             cl.show(contentPanel, panelName);
@@ -161,7 +159,7 @@ public class InstructorDashboard extends JFrame {
         titleLabel.setForeground(new Color(31, 41, 55)); // Dark text
 
         JButton refreshButton = new JButton("Refresh");
-        refreshButton.setBackground(new Color(30, 64, 175)); // Navy blue
+        refreshButton.setBackground(new Color(47, 111, 235)); // Navy blue
         refreshButton.setForeground(Color.WHITE);
         refreshButton.setFocusPainted(false);
         refreshButton.setBorderPainted(false);
@@ -296,7 +294,7 @@ public class InstructorDashboard extends JFrame {
         thumbnailInfoLabel.setForeground(new Color(107, 114, 128));
 
         JButton uploadThumbnailBtn = new JButton("Upload Image");
-        uploadThumbnailBtn.setBackground(new Color(30, 64, 175));
+        uploadThumbnailBtn.setBackground(new Color(47, 111, 235));
         uploadThumbnailBtn.setForeground(Color.WHITE);
         uploadThumbnailBtn.setFocusPainted(false);
         uploadThumbnailBtn.setBorderPainted(false);
@@ -322,7 +320,7 @@ public class InstructorDashboard extends JFrame {
         gbc.gridy = 6;
         gbc.anchor = GridBagConstraints.EAST;
         JButton createButton = new JButton("Create Course");
-        createButton.setBackground(new Color(30, 64, 175)); // Navy blue
+        createButton.setBackground(new Color(47, 111, 235)); // Navy blue
         createButton.setForeground(Color.WHITE);
         createButton.setFocusPainted(false);
         createButton.setBorderPainted(false);
@@ -551,7 +549,7 @@ public class InstructorDashboard extends JFrame {
         titleLabel.setForeground(new Color(31, 41, 55));
 
         JButton refreshButton = new JButton("Refresh Statistics");
-        refreshButton.setBackground(new Color(30, 64, 175)); // Navy blue
+        refreshButton.setBackground(new Color(47, 111, 235)); // Navy blue
         refreshButton.setForeground(Color.WHITE);
         refreshButton.setFocusPainted(false);
         refreshButton.setBorderPainted(false);
@@ -776,7 +774,7 @@ public class InstructorDashboard extends JFrame {
         createLessonButton.addActionListener(e -> showCreateLessonDialog(dialog, courseId));
 
         JButton refreshButton = new JButton("Refresh");
-        refreshButton.setBackground(new Color(30, 64, 175)); // Navy blue
+        refreshButton.setBackground(new Color(47, 111, 235)); // Navy blue
         refreshButton.setForeground(Color.WHITE);
         refreshButton.setFocusPainted(false);
         refreshButton.setBorderPainted(false);
@@ -896,7 +894,7 @@ public class InstructorDashboard extends JFrame {
         final String[] selectedVideoPath = {null};
 
         JButton chooseVideoButton = new JButton("Choose & Upload Video File");
-        chooseVideoButton.setBackground(new Color(30, 64, 175)); // Navy blue
+        chooseVideoButton.setBackground(new Color(47, 111, 235)); // Navy blue
         chooseVideoButton.setForeground(Color.WHITE);
         chooseVideoButton.setFocusPainted(false);
         chooseVideoButton.setBorderPainted(false);
@@ -1102,7 +1100,7 @@ public class InstructorDashboard extends JFrame {
         final String[] selectedVideoPath = {lesson.getVideoPath()};
 
         JButton chooseVideoButton = new JButton("Change Video File");
-        chooseVideoButton.setBackground(new Color(30, 64, 175)); // Navy blue
+        chooseVideoButton.setBackground(new Color(47, 111, 235)); // Navy blue
         chooseVideoButton.setForeground(Color.WHITE);
         chooseVideoButton.setFocusPainted(false);
         chooseVideoButton.setBorderPainted(false);

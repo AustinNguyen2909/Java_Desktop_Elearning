@@ -95,11 +95,8 @@ public class UserDashboard extends JFrame {
         sidebar.setBorder(BorderFactory.createMatteBorder(0, 0, 0, 1, new Color(230, 230, 230)));
 
         // Add menu items
-        sidebar.add(Box.createRigidArea(new Dimension(0, 20)));
         sidebar.add(createMenuItem("Browse Courses", "Browse Courses"));
-        sidebar.add(Box.createRigidArea(new Dimension(0, 5)));
         sidebar.add(createMenuItem("My Courses", "My Courses"));
-        sidebar.add(Box.createRigidArea(new Dimension(0, 5)));
         sidebar.add(createMenuItem("My Profile", "My Profile"));
 
         // Push logout button to bottom
@@ -124,13 +121,14 @@ public class UserDashboard extends JFrame {
 
     private JButton createMenuItem(String text, String panelName) {
         JButton menuItem = new JButton(text);
-        menuItem.setBackground(new Color(30, 64, 175));
+        menuItem.setBackground(new Color(47, 111, 235));
         menuItem.setForeground(Color.WHITE);
         menuItem.setFocusPainted(false);
         menuItem.setBorderPainted(false);
+        menuItem.setBorder(BorderFactory.createEmptyBorder(10, 0, 10, 0));
         menuItem.setFont(new Font("Segoe UI", Font.BOLD, 14));
         menuItem.setAlignmentX(Component.CENTER_ALIGNMENT);
-        menuItem.setMaximumSize(new Dimension(220, 45));
+        menuItem.setMaximumSize(new Dimension(250, 80));
         menuItem.addActionListener(e -> {
             CardLayout cl = (CardLayout) contentPanel.getLayout();
             cl.show(contentPanel, panelName);
@@ -163,7 +161,7 @@ public class UserDashboard extends JFrame {
         searchPanel.add(searchField);
 
         JButton searchButton = new JButton("Search");
-        searchButton.setBackground(new Color(30, 64, 175)); // Navy blue
+        searchButton.setBackground(new Color(47, 111, 235)); // Navy blue
         searchButton.setForeground(Color.WHITE);
         searchButton.setFocusPainted(false);
         searchButton.setBorderPainted(false);
@@ -172,7 +170,7 @@ public class UserDashboard extends JFrame {
         searchPanel.add(searchButton);
 
         JButton refreshButton = new JButton("Refresh");
-        refreshButton.setBackground(new Color(30, 64, 175)); // Navy blue
+        refreshButton.setBackground(new Color(47, 111, 235)); // Navy blue
         refreshButton.setForeground(Color.WHITE);
         refreshButton.setFocusPainted(false);
         refreshButton.setBorderPainted(false);
@@ -212,7 +210,7 @@ public class UserDashboard extends JFrame {
         titleLabel.setForeground(new Color(31, 41, 55)); // Dark text
 
         JButton refreshButton = new JButton("Refresh");
-        refreshButton.setBackground(new Color(30, 64, 175)); // Navy blue
+        refreshButton.setBackground(new Color(47, 111, 235)); // Navy blue
         refreshButton.setForeground(Color.WHITE);
         refreshButton.setFocusPainted(false);
         refreshButton.setBorderPainted(false);
@@ -384,6 +382,7 @@ public class UserDashboard extends JFrame {
 
     private void loadMyCourses() {
         try {
+            myCoursesGrid.removeAll(); // Clear existing cards to prevent duplication
             List<Enrollment> enrollments = enrollmentService.getUserEnrollments(currentUser.getId());
 
             for (Enrollment enrollment : enrollments) {
@@ -440,8 +439,8 @@ public class UserDashboard extends JFrame {
         JPanel card = new com.elearning.ui.components.CardPanel();
         card.setLayout(new BorderLayout());
         card.setBackground(Color.WHITE);
-        card.setPreferredSize(new Dimension(280, 330));
-        card.setMaximumSize(new Dimension(280, 330));
+        card.setPreferredSize(new Dimension(280, 380));
+        card.setMaximumSize(new Dimension(280, 380));
 
         JPanel imagePanel = new JPanel(new BorderLayout());
         imagePanel.setBackground(new Color(243, 244, 246));
@@ -500,12 +499,14 @@ public class UserDashboard extends JFrame {
         primaryBtn.setForeground(Color.WHITE);
         primaryBtn.setFocusPainted(false);
         primaryBtn.setBorderPainted(false);
+        primaryBtn.setBorder(BorderFactory.createEmptyBorder(10, 0, 10, 0));
         primaryBtn.setFont(new Font("Segoe UI", Font.BOLD, 12));
         primaryBtn.setPreferredSize(new Dimension(256, 36));
         primaryBtn.setMaximumSize(new Dimension(256, 36));
         primaryBtn.setAlignmentX(Component.LEFT_ALIGNMENT);
         primaryBtn.setHorizontalAlignment(SwingConstants.CENTER);
         primaryBtn.addActionListener(e -> primaryAction.run());
+        actions.add(Box.createVerticalStrut(6));
         actions.add(primaryBtn);
 
         if (secondaryText != null && secondaryAction != null) {
@@ -514,6 +515,7 @@ public class UserDashboard extends JFrame {
             secondaryBtn.setForeground(new Color(31, 41, 55));
             secondaryBtn.setFocusPainted(false);
             secondaryBtn.setBorderPainted(true);
+            secondaryBtn.setBorder(BorderFactory.createEmptyBorder(10, 0, 10, 0));
             secondaryBtn.setFont(new Font("Segoe UI", Font.PLAIN, 12));
             secondaryBtn.setPreferredSize(new Dimension(256, 36));
             secondaryBtn.setMaximumSize(new Dimension(256, 36));

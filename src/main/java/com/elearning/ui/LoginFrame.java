@@ -42,15 +42,26 @@ public class LoginFrame extends JFrame {
 
         // Create components
         usernameField = new ModernTextField("Username");
+        usernameField.setPreferredSize(new Dimension(350, 45));
+        usernameField.setMaximumSize(new Dimension(Integer.MAX_VALUE, 45));
+        usernameField.setAlignmentX(Component.CENTER_ALIGNMENT);
+
         passwordField = new ModernPasswordField("Password");
-        
+        passwordField.setPreferredSize(new Dimension(350, 45));
+        passwordField.setMaximumSize(new Dimension(Integer.MAX_VALUE, 45));
+        passwordField.setAlignmentX(Component.CENTER_ALIGNMENT);
+
         loginButton = new ModernButton("Login");
         loginButton.setBackground(new Color(47, 111, 235));
-        loginButton.setPreferredSize(new Dimension(300, 45));
-        
+        loginButton.setPreferredSize(new Dimension(350, 45));
+        loginButton.setMaximumSize(new Dimension(Integer.MAX_VALUE, 45));
+        loginButton.setAlignmentX(Component.CENTER_ALIGNMENT);
+
         registerButton = new ModernButton("Register");
         registerButton.setBackground(new Color(34, 197, 94));
-        registerButton.setPreferredSize(new Dimension(300, 45));
+        registerButton.setPreferredSize(new Dimension(350, 45));
+        registerButton.setMaximumSize(new Dimension(Integer.MAX_VALUE, 45));
+        registerButton.setAlignmentX(Component.CENTER_ALIGNMENT);
 
         errorLabel = new JLabel(" ");
         errorLabel.setForeground(new Color(225, 29, 72));

@@ -111,13 +111,9 @@ public class AdminDashboard extends JFrame {
         sidebar.setBorder(BorderFactory.createMatteBorder(0, 0, 0, 1, new Color(230, 230, 230)));
 
         // Add menu items
-        sidebar.add(Box.createRigidArea(new Dimension(0, 20)));
         sidebar.add(createMenuItem("Pending Courses", "Pending Courses"));
-        sidebar.add(Box.createRigidArea(new Dimension(0, 5)));
         sidebar.add(createMenuItem("All Courses", "All Courses"));
-        sidebar.add(Box.createRigidArea(new Dimension(0, 5)));
         sidebar.add(createMenuItem("User Management", "User Management"));
-        sidebar.add(Box.createRigidArea(new Dimension(0, 5)));
         sidebar.add(createMenuItem("Statistics", "Statistics"));
 
         // Push logout button to bottom
@@ -142,13 +138,14 @@ public class AdminDashboard extends JFrame {
 
     private JButton createMenuItem(String text, String panelName) {
         JButton menuItem = new JButton(text);
-        menuItem.setBackground(new Color(30, 64, 175));
+        menuItem.setBackground(new Color(47, 111, 235));
         menuItem.setForeground(Color.WHITE);
         menuItem.setFocusPainted(false);
         menuItem.setBorderPainted(false);
+        menuItem.setBorder(BorderFactory.createEmptyBorder(10, 0, 10, 0));
         menuItem.setFont(new Font("Segoe UI", Font.BOLD, 14));
         menuItem.setAlignmentX(Component.CENTER_ALIGNMENT);
-        menuItem.setMaximumSize(new Dimension(220, 45));
+        menuItem.setMaximumSize(new Dimension(250, 80));
         menuItem.addActionListener(e -> {
             CardLayout cl = (CardLayout) contentPanel.getLayout();
             cl.show(contentPanel, panelName);
@@ -169,7 +166,7 @@ public class AdminDashboard extends JFrame {
         titleLabel.setForeground(new Color(31, 41, 55)); // Dark text
 
         JButton refreshButton = new JButton("Refresh");
-        refreshButton.setBackground(new Color(30, 64, 175)); // Navy blue
+        refreshButton.setBackground(new Color(47, 111, 235)); // Navy blue
         refreshButton.setForeground(Color.WHITE);
         refreshButton.setFocusPainted(false);
         refreshButton.setBorderPainted(false);
@@ -218,7 +215,7 @@ public class AdminDashboard extends JFrame {
         titleLabel.setForeground(new Color(31, 41, 55)); // Dark text
 
         JButton refreshButton = new JButton("Refresh");
-        refreshButton.setBackground(new Color(30, 64, 175)); // Navy blue
+        refreshButton.setBackground(new Color(47, 111, 235)); // Navy blue
         refreshButton.setForeground(Color.WHITE);
         refreshButton.setFocusPainted(false);
         refreshButton.setBorderPainted(false);
@@ -271,7 +268,7 @@ public class AdminDashboard extends JFrame {
         searchPanel.add(userSearchField);
 
         JButton searchButton = new JButton("Search");
-        searchButton.setBackground(new Color(30, 64, 175)); // Navy blue
+        searchButton.setBackground(new Color(47, 111, 235)); // Navy blue
         searchButton.setForeground(Color.WHITE);
         searchButton.setFocusPainted(false);
         searchButton.setBorderPainted(false);
@@ -300,7 +297,7 @@ public class AdminDashboard extends JFrame {
         searchPanel.add(createUserButton);
 
         JButton refreshButton = new JButton("Refresh");
-        refreshButton.setBackground(new Color(30, 64, 175)); // Navy blue
+        refreshButton.setBackground(new Color(47, 111, 235)); // Navy blue
         refreshButton.setForeground(Color.WHITE);
         refreshButton.setFocusPainted(false);
         refreshButton.setBorderPainted(false);
@@ -350,7 +347,7 @@ public class AdminDashboard extends JFrame {
         titleLabel.setForeground(new Color(31, 41, 55));
 
         JButton refreshButton = new JButton("Refresh Statistics");
-        refreshButton.setBackground(new Color(30, 64, 175)); // Navy blue
+        refreshButton.setBackground(new Color(47, 111, 235)); // Navy blue
         refreshButton.setForeground(Color.WHITE);
         refreshButton.setFocusPainted(false);
         refreshButton.setBorderPainted(false);
@@ -680,9 +677,12 @@ public class AdminDashboard extends JFrame {
             rejectBtn.setMaximumSize(new Dimension(124, 34));
             rejectBtn.addActionListener(e -> rejectCourse(course.getId()));
 
+            
             pendingRow.add(approveBtn);
             pendingRow.add(Box.createHorizontalStrut(8));
             pendingRow.add(rejectBtn);
+            
+            actions.add(Box.createVerticalStrut(6));
             actions.add(pendingRow);
             actions.add(Box.createVerticalStrut(6));
         }
