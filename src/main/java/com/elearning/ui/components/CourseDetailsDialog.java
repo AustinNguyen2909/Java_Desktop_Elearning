@@ -258,10 +258,10 @@ public class CourseDetailsDialog extends JDialog {
         };
         lessonsTable = new JTable(lessonsTableModel);
         lessonsTable.setRowHeight(35);
-        
+
         // Actions column renderer and editor
         lessonsTable.getColumn("Actions").setCellRenderer(new ButtonRenderer());
-        lessonsTable.getColumn("Actions").setCellEditor(new LessonActionEditor(new JCheckBox(), canEdit));
+        lessonsTable.getColumn("Actions").setCellEditor(new LessonActionEditor(new JCheckBox(), lessonsTable, canEdit));
 
         lessonsPanel.add(new JScrollPane(lessonsTable), BorderLayout.CENTER);
         loadLessons();
@@ -421,16 +421,24 @@ public class CourseDetailsDialog extends JDialog {
 
     class LessonActionEditor extends DefaultCellEditor {
         private JButton button;
+        private JTable table;
         private int currentRow;
         private boolean canEdit;
 
-        public LessonActionEditor(JCheckBox checkBox, boolean canEdit) {
+        public LessonActionEditor(JCheckBox checkBox, JTable table, boolean canEdit) {
             super(checkBox);
+            this.table = table;
             this.canEdit = canEdit;
             button = new JButton("Actions");
             button.addActionListener(e -> {
+                // Store button position before it's removed
+                Point buttonLocation = button.getLocationOnScreen();
+                int buttonHeight = button.getHeight();
+
                 fireEditingStopped();
-                showActionsMenu();
+
+                // Show menu using invokeLater to ensure UI is updated
+                SwingUtilities.invokeLater(() -> showActionsMenu(buttonLocation, buttonHeight));
             });
         }
 
@@ -440,10 +448,10 @@ public class CourseDetailsDialog extends JDialog {
             return button;
         }
 
-        private void showActionsMenu() {
+        private void showActionsMenu(Point buttonLocation, int buttonHeight) {
             int lessonId = (Integer) lessonsTableModel.getValueAt(currentRow, 1);
             JPopupMenu menu = new JPopupMenu();
-            
+
             JMenuItem viewItem = new JMenuItem("View Details");
             viewItem.addActionListener(e -> showLessonDetails(lessonId));
             menu.add(viewItem);
@@ -459,7 +467,17 @@ public class CourseDetailsDialog extends JDialog {
                 menu.add(deleteItem);
             }
 
-            menu.show(button, 0, button.getHeight());
+            // Show menu relative to the table at the button's previous location
+            try {
+                Point tableLocation = table.getLocationOnScreen();
+                int x = buttonLocation.x - tableLocation.x;
+                int y = buttonLocation.y - tableLocation.y + buttonHeight;
+                menu.show(table, x, y);
+            } catch (IllegalComponentStateException ex) {
+                // Fallback: show at the row location if button location can't be determined
+                Rectangle cellRect = table.getCellRect(currentRow, table.getColumnCount() - 1, true);
+                menu.show(table, cellRect.x, cellRect.y + cellRect.height);
+            }
         }
     }
 
