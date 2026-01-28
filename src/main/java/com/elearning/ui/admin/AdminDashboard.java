@@ -8,6 +8,9 @@ import com.elearning.service.UserService;
 import com.elearning.ui.components.ModernButton;
 import com.elearning.ui.components.ModernPasswordField;
 import com.elearning.ui.components.ModernTextField;
+import com.elearning.ui.components.ScrollableWrapPanel;
+import com.elearning.ui.components.StarRatingPanel;
+import com.elearning.util.CourseCardImageUtil;
 import com.elearning.util.ChartUtil;
 import com.elearning.util.SessionManager;
 import com.elearning.util.ValidationUtil;
@@ -31,8 +34,7 @@ public class AdminDashboard extends JFrame {
     private JPanel contentPanel;
     private JTable pendingCoursesTable;
     private DefaultTableModel pendingCoursesModel;
-    private JTable allCoursesTable;
-    private DefaultTableModel allCoursesModel;
+    private JPanel allCoursesGrid;
     private JTable usersTable;
     private DefaultTableModel usersModel;
     private JTextField userSearchField;
@@ -226,37 +228,14 @@ public class AdminDashboard extends JFrame {
         topPanel.add(titleLabel, BorderLayout.WEST);
         topPanel.add(refreshButton, BorderLayout.EAST);
 
-        // Table
-        String[] columnNames = {"ID", "Title", "Instructor", "Category", "Status", "Published", "Enrollments", "Rating"};
-        allCoursesModel = new DefaultTableModel(columnNames, 0) {
-            @Override
-            public boolean isCellEditable(int row, int column) {
-                return false;
-            }
-        };
-        allCoursesTable = new JTable(allCoursesModel);
-        allCoursesTable.setBackground(Color.WHITE);
-        allCoursesTable.setForeground(new Color(31, 41, 55));
-        allCoursesTable.setGridColor(new Color(230, 230, 230));
-        allCoursesTable.setRowHeight(25);
+        allCoursesGrid = new ScrollableWrapPanel(new com.elearning.ui.components.WrapLayout(FlowLayout.LEFT, 16, 16));
+        allCoursesGrid.setBackground(Color.WHITE);
+        allCoursesGrid.setBorder(BorderFactory.createEmptyBorder(5, 5, 5, 5));
 
-        // Add double-click to view details
-        allCoursesTable.addMouseListener(new java.awt.event.MouseAdapter() {
-            @Override
-            public void mouseClicked(java.awt.event.MouseEvent e) {
-                if (e.getClickCount() == 2) {
-                    int row = allCoursesTable.getSelectedRow();
-                    if (row >= 0) {
-                        int courseId = (Integer) allCoursesModel.getValueAt(row, 0);
-                        viewCourseDetails(courseId);
-                    }
-                }
-            }
-        });
-
-        JScrollPane scrollPane = new JScrollPane(allCoursesTable);
+        JScrollPane scrollPane = new JScrollPane(allCoursesGrid);
         scrollPane.setBackground(Color.WHITE);
         scrollPane.getViewport().setBackground(Color.WHITE);
+        scrollPane.setHorizontalScrollBarPolicy(ScrollPaneConstants.HORIZONTAL_SCROLLBAR_NEVER);
 
         panel.add(topPanel, BorderLayout.NORTH);
         panel.add(scrollPane, BorderLayout.CENTER);
@@ -594,21 +573,12 @@ public class AdminDashboard extends JFrame {
         try {
             List<Course> courses = courseService.getAllCourses(currentUser.getRole());
 
-            allCoursesModel.setRowCount(0);
-
+            allCoursesGrid.removeAll();
             for (Course course : courses) {
-                Object[] row = {
-                        course.getId(),
-                        course.getTitle(),
-                        course.getInstructorName(),
-                        course.getCategory(),
-                        course.getStatus(),
-                        course.isPublished() ? "Yes" : "No",
-                        course.getEnrollmentCount() != 0 ? course.getEnrollmentCount() : 0,
-                        course.getAverageRating() != 0 ? String.format("%.1f", course.getAverageRating()) : "N/A"
-                };
-                allCoursesModel.addRow(row);
+                allCoursesGrid.add(createAdminCourseCard(course));
             }
+            allCoursesGrid.revalidate();
+            allCoursesGrid.repaint();
         } catch (Exception e) {
             JOptionPane.showMessageDialog(this,
                     "Error loading courses: " + e.getMessage(),
@@ -616,6 +586,136 @@ public class AdminDashboard extends JFrame {
                     JOptionPane.ERROR_MESSAGE);
         }
     }
+
+    private JPanel createAdminCourseCard(Course course) {
+        JPanel card = new com.elearning.ui.components.CardPanel();
+        card.setLayout(new BorderLayout());
+        card.setBackground(Color.WHITE);
+        card.setPreferredSize(new Dimension(280, 350));
+        card.setMaximumSize(new Dimension(280, 350));
+
+        JPanel imagePanel = new JPanel(new BorderLayout());
+        imagePanel.setBackground(new Color(243, 244, 246));
+        imagePanel.setPreferredSize(new Dimension(280, 140));
+        JLabel imageLabel = new JLabel();
+        imageLabel.setHorizontalAlignment(SwingConstants.CENTER);
+        imageLabel.setVerticalAlignment(SwingConstants.CENTER);
+        ImageIcon icon = CourseCardImageUtil.loadCourseThumbnail(
+                course.getThumbnailPath(),
+                course.getTitle(),
+                280,
+                140
+        );
+        imageLabel.setIcon(icon);
+        imagePanel.add(imageLabel, BorderLayout.CENTER);
+
+        JPanel body = new JPanel();
+        body.setOpaque(false);
+        body.setLayout(new BoxLayout(body, BoxLayout.Y_AXIS));
+        body.setBorder(BorderFactory.createEmptyBorder(10, 12, 10, 12));
+
+        JLabel titleLabel = new JLabel(course.getTitle());
+        titleLabel.setFont(new Font("Segoe UI", Font.BOLD, 15));
+        titleLabel.setForeground(new Color(31, 41, 55));
+        titleLabel.setAlignmentX(Component.LEFT_ALIGNMENT);
+
+        String instructor = course.getInstructorName() != null ? course.getInstructorName() : "Instructor";
+        JLabel instructorLabel = new JLabel(instructor);
+        instructorLabel.setFont(new Font("Segoe UI", Font.PLAIN, 12));
+        instructorLabel.setForeground(new Color(107, 114, 128));
+        instructorLabel.setAlignmentX(Component.LEFT_ALIGNMENT);
+
+        StarRatingPanel ratingPanel = new StarRatingPanel(course.getAverageRating(), 18, 4);
+        JLabel learnersLabel = new JLabel(course.getEnrollmentCount() + " learners");
+        learnersLabel.setFont(new Font("Segoe UI", Font.PLAIN, 12));
+        learnersLabel.setForeground(new Color(107, 114, 128));
+        learnersLabel.setAlignmentX(Component.LEFT_ALIGNMENT);
+
+        JPanel statsRow = new JPanel();
+        statsRow.setOpaque(false);
+        statsRow.setLayout(new BoxLayout(statsRow, BoxLayout.X_AXIS));
+        statsRow.setAlignmentX(Component.LEFT_ALIGNMENT);
+        statsRow.add(ratingPanel);
+        statsRow.add(Box.createHorizontalStrut(8));
+        statsRow.add(learnersLabel);
+        statsRow.setMaximumSize(new Dimension(260, 22));
+
+        String category = course.getCategory() != null ? course.getCategory() : "General";
+        String status = course.getStatus() != null ? course.getStatus() : "UNKNOWN";
+        String published = course.isPublished() ? "Published" : "Draft";
+        JLabel metaLabel = new JLabel(category + " \u2022 " + status + " \u2022 " + published);
+        metaLabel.setFont(new Font("Segoe UI", Font.PLAIN, 12));
+        metaLabel.setForeground(new Color(75, 85, 99));
+        metaLabel.setAlignmentX(Component.LEFT_ALIGNMENT);
+
+        JPanel actions = new JPanel();
+        actions.setOpaque(false);
+        actions.setLayout(new BoxLayout(actions, BoxLayout.Y_AXIS));
+        actions.setAlignmentX(Component.LEFT_ALIGNMENT);
+        actions.setMaximumSize(new Dimension(260, 80));
+
+        if ("PENDING".equals(course.getStatus())) {
+            JPanel pendingRow = new JPanel();
+            pendingRow.setOpaque(false);
+            pendingRow.setLayout(new BoxLayout(pendingRow, BoxLayout.X_AXIS));
+            pendingRow.setAlignmentX(Component.LEFT_ALIGNMENT);
+
+            JButton approveBtn = new JButton("Approve");
+            approveBtn.setBackground(new Color(34, 197, 94));
+            approveBtn.setForeground(Color.WHITE);
+            approveBtn.setFocusPainted(false);
+            approveBtn.setBorderPainted(false);
+            approveBtn.setFont(new Font("Segoe UI", Font.BOLD, 12));
+            approveBtn.setPreferredSize(new Dimension(124, 34));
+            approveBtn.setMaximumSize(new Dimension(124, 34));
+            approveBtn.addActionListener(e -> approveCourse(course.getId()));
+
+            JButton rejectBtn = new JButton("Reject");
+            rejectBtn.setBackground(new Color(225, 29, 72));
+            rejectBtn.setForeground(Color.WHITE);
+            rejectBtn.setFocusPainted(false);
+            rejectBtn.setBorderPainted(false);
+            rejectBtn.setFont(new Font("Segoe UI", Font.BOLD, 12));
+            rejectBtn.setPreferredSize(new Dimension(124, 34));
+            rejectBtn.setMaximumSize(new Dimension(124, 34));
+            rejectBtn.addActionListener(e -> rejectCourse(course.getId()));
+
+            pendingRow.add(approveBtn);
+            pendingRow.add(Box.createHorizontalStrut(8));
+            pendingRow.add(rejectBtn);
+            actions.add(pendingRow);
+            actions.add(Box.createVerticalStrut(6));
+        }
+
+        JButton detailsButton = new JButton("View Details");
+        detailsButton.setBackground(new Color(47, 111, 235));
+        detailsButton.setForeground(Color.WHITE);
+        detailsButton.setFocusPainted(false);
+        detailsButton.setBorderPainted(false);
+        detailsButton.setFont(new Font("Segoe UI", Font.BOLD, 12));
+        detailsButton.setPreferredSize(new Dimension(256, 36));
+        detailsButton.setMaximumSize(new Dimension(256, 36));
+        detailsButton.setAlignmentX(Component.LEFT_ALIGNMENT);
+        detailsButton.addActionListener(e -> viewCourseDetails(course.getId()));
+        actions.add(detailsButton);
+
+        body.add(titleLabel);
+        body.add(Box.createRigidArea(new Dimension(0, 4)));
+        body.add(instructorLabel);
+        body.add(Box.createRigidArea(new Dimension(0, 6)));
+        body.add(statsRow);
+        body.add(Box.createRigidArea(new Dimension(0, 6)));
+        body.add(metaLabel);
+        body.add(Box.createVerticalGlue());
+        body.add(actions);
+
+        card.add(imagePanel, BorderLayout.NORTH);
+        card.add(body, BorderLayout.CENTER);
+
+        return card;
+    }
+
+    // no-op
 
     private void viewCourseDetails(int courseId) {
         try {

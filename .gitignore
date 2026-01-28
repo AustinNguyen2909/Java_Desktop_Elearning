@@ -1,0 +1,21 @@
+# Build output
+/target/
+
+# Local config (keep a sample file tracked if needed)
+/src/main/resources/config.properties
+
+# IDE
+.idea/
+*.iml
+*.ipr
+*.iws
+.classpath
+.project
+.settings/
+
+# OS
+.DS_Store
+Thumbs.db
+
+# Logs
+*.log
