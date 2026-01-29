@@ -5,6 +5,7 @@ import com.elearning.service.AuthService;
 import com.elearning.ui.components.ModernButton;
 import com.elearning.ui.components.ModernPasswordField;
 import com.elearning.ui.components.ModernTextField;
+import com.elearning.ui.components.UITheme;
 import com.elearning.util.ValidationUtil;
 
 import javax.swing.*;
@@ -47,57 +48,57 @@ public class RegisterDialog extends JDialog {
 
         String[] roles = {"USER", "INSTRUCTOR"};
         roleComboBox = new JComboBox<>(roles);
-        roleComboBox.setFont(new Font("Segoe UI", Font.PLAIN, 14));
-        roleComboBox.setBackground(Color.WHITE);
-        roleComboBox.setForeground(new Color(31, 41, 55));
+        roleComboBox.setFont(new Font("Fira Sans", Font.PLAIN, 13));
+        roleComboBox.setBackground(UITheme.SURFACE);
+        roleComboBox.setForeground(UITheme.TEXT);
         roleComboBox.setPreferredSize(new Dimension(300, 45));
 
         registerButton = new ModernButton("Register");
-        registerButton.setBackground(new Color(34, 197, 94));
+        registerButton.setBackground(UITheme.ACCENT);
 
         cancelButton = new ModernButton("Cancel");
         cancelButton.setBackground(new Color(148, 163, 184));
 
         errorLabel = new JLabel(" ");
-        errorLabel.setForeground(new Color(225, 29, 72));
-        errorLabel.setFont(new Font("Segoe UI", Font.PLAIN, 12));
+        errorLabel.setForeground(UITheme.DANGER);
+        errorLabel.setFont(new Font("Fira Sans", Font.PLAIN, 12));
         errorLabel.setAlignmentX(Component.CENTER_ALIGNMENT);
     }
 
     private JPanel createPasswordFieldWithToggle(ModernPasswordField field) {
         JPanel passwordPanel = new JPanel();
         passwordPanel.setLayout(new BorderLayout());
-        passwordPanel.setBackground(Color.WHITE);
+        passwordPanel.setBackground(UITheme.SURFACE);
         passwordPanel.setMaximumSize(new Dimension(300, 45));
         passwordPanel.setAlignmentX(Component.CENTER_ALIGNMENT);
 
         // Adjust password field padding
         field.setBorder(BorderFactory.createCompoundBorder(
-            BorderFactory.createLineBorder(new Color(215, 222, 232), 1, true),
+            BorderFactory.createLineBorder(UITheme.BORDER, 1, true),
             BorderFactory.createEmptyBorder(8, 12, 8, 45)
         ));
 
         // Toggle button with eye icon
         JButton toggleButton = new JButton("Show");
-        toggleButton.setFont(new Font("Segoe UI", Font.PLAIN, 12));
+        toggleButton.setFont(new Font("Fira Sans", Font.PLAIN, 11));
         toggleButton.setPreferredSize(new Dimension(60, 45));
         toggleButton.setFocusPainted(false);
         toggleButton.setBorderPainted(false);
         toggleButton.setContentAreaFilled(false);
         toggleButton.setCursor(new Cursor(Cursor.HAND_CURSOR));
-        toggleButton.setForeground(new Color(107, 114, 128));
+        toggleButton.setForeground(UITheme.MUTED_TEXT);
 
         toggleButton.addActionListener(e -> {
             if (field.getEchoChar() == '\u0000') {
                 // Hide password
                 field.setEchoChar("\u2022".charAt(0));
                 toggleButton.setText("Hide");
-                toggleButton.setForeground(new Color(107, 114, 128));
+                toggleButton.setForeground(UITheme.MUTED_TEXT);
             } else {
                 // Show password
                 field.setEchoChar("\u2022".charAt(0));
                 toggleButton.setText("Hide");
-                toggleButton.setForeground(new Color(47, 111, 235));
+                toggleButton.setForeground(UITheme.PRIMARY);
             }
         });
 
@@ -110,18 +111,18 @@ public class RegisterDialog extends JDialog {
     private void setupLayout() {
         JPanel mainPanel = new JPanel();
         mainPanel.setLayout(new BoxLayout(mainPanel, BoxLayout.Y_AXIS));
-        mainPanel.setBackground(Color.WHITE);
+        mainPanel.setBackground(UITheme.BACKGROUND);
         mainPanel.setBorder(new EmptyBorder(30, 40, 30, 40));
 
         // Title
         JLabel titleLabel = new JLabel("Create Account");
-        titleLabel.setFont(new Font("Segoe UI", Font.BOLD, 24));
-        titleLabel.setForeground(new Color(31, 41, 55)); // Dark text
+        titleLabel.setFont(new Font("Fira Sans", Font.BOLD, 22));
+        titleLabel.setForeground(UITheme.TEXT);
         titleLabel.setAlignmentX(Component.CENTER_ALIGNMENT);
 
         JLabel subtitleLabel = new JLabel("Join our learning community");
-        subtitleLabel.setFont(new Font("Segoe UI", Font.PLAIN, 14));
-        subtitleLabel.setForeground(new Color(75, 85, 99)); // Darker gray for better contrast
+        subtitleLabel.setFont(new Font("Fira Sans", Font.PLAIN, 13));
+        subtitleLabel.setForeground(UITheme.MUTED_TEXT);
         subtitleLabel.setAlignmentX(Component.CENTER_ALIGNMENT);
 
         // Form fields
@@ -165,7 +166,7 @@ public class RegisterDialog extends JDialog {
 
         // Buttons
         JPanel buttonPanel = new JPanel(new FlowLayout(FlowLayout.CENTER, 10, 0));
-        buttonPanel.setBackground(Color.WHITE);
+        buttonPanel.setBackground(UITheme.BACKGROUND);
         buttonPanel.add(registerButton);
         buttonPanel.add(cancelButton);
         mainPanel.add(buttonPanel);
@@ -175,8 +176,8 @@ public class RegisterDialog extends JDialog {
 
     private JLabel createFieldLabel(String text) {
         JLabel label = new JLabel(text);
-        label.setFont(new Font("Segoe UI", Font.BOLD, 13));
-        label.setForeground(new Color(31, 41, 55)); // Dark text
+        label.setFont(new Font("Fira Sans", Font.BOLD, 12));
+        label.setForeground(UITheme.TEXT);
         label.setAlignmentX(Component.CENTER_ALIGNMENT);
         return label;
     }
@@ -267,3 +268,4 @@ public class RegisterDialog extends JDialog {
         errorLabel.setText(message);
     }
 }
+

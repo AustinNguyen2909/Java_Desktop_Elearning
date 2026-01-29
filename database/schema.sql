@@ -19,6 +19,10 @@ CREATE DATABASE IF NOT EXISTS elearning_db;
 USE elearning_db;
 
 -- Drop tables if they exist (for clean setup)
+DROP TABLE IF EXISTS review_likes;
+DROP TABLE IF EXISTS review_comments;
+DROP TABLE IF EXISTS reviews;
+DROP TABLE IF EXISTS comments;
 DROP TABLE IF EXISTS user_activity;
 DROP TABLE IF EXISTS certificates;
 DROP TABLE IF EXISTS course_review_likes;
@@ -44,6 +48,10 @@ CREATE TABLE users (
     full_name VARCHAR(100),
     avatar_path VARCHAR(255),
     status ENUM('PENDING', 'ACTIVE', 'SUSPENDED') NOT NULL DEFAULT 'PENDING',
+    date_of_birth DATE NULL,
+    school VARCHAR(150),
+    job_title VARCHAR(150),
+    experience TEXT,
     created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
     updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
 

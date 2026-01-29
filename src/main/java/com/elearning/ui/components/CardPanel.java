@@ -32,13 +32,18 @@ public class CardPanel extends JPanel {
         Graphics2D g2 = (Graphics2D) g.create();
         g2.setRenderingHint(RenderingHints.KEY_ANTIALIASING, RenderingHints.VALUE_ANTIALIAS_ON);
 
-        // Draw shadow
-        g2.setColor(new Color(0, 0, 0, 30));
-        g2.fillRoundRect(4, 4, getWidth() - 8, getHeight() - 8, cornerRadius, cornerRadius);
+        int shadowSize = 6;
+        int width = getWidth();
+        int height = getHeight();
+
+        // Draw soft shadow
+        g2.setColor(new Color(0, 0, 0, 24));
+        g2.fillRoundRect(shadowSize, shadowSize, width - shadowSize * 2, height - shadowSize * 2,
+                cornerRadius, cornerRadius);
 
         // Draw card background
         g2.setColor(backgroundColor);
-        g2.fillRoundRect(0, 0, getWidth() - 8, getHeight() - 8, cornerRadius, cornerRadius);
+        g2.fillRoundRect(0, 0, width - shadowSize * 2, height - shadowSize * 2, cornerRadius, cornerRadius);
 
         g2.dispose();
         super.paintComponent(g);

@@ -1,6 +1,7 @@
 package com.elearning;
 
 import com.elearning.ui.LoginFrame;
+import com.elearning.ui.components.UITheme;
 import com.elearning.util.DBConnection;
 import com.formdev.flatlaf.FlatDarkLaf;
 import com.formdev.flatlaf.FlatLightLaf;
@@ -31,7 +32,8 @@ public class Main {
             UIManager.put("ScrollBar.thumbArc", 999);
             UIManager.put("ScrollBar.trackInsets", new Insets(2, 4, 2, 4));
             UIManager.put("ScrollBar.thumbInsets", new Insets(2, 2, 2, 2));
-            UIManager.put("TabbedPane.selectedBackground", Color.decode("#2E3440"));
+            UITheme.applyDefaults();
+            UIManager.put("TabbedPane.selectedBackground", UITheme.SECONDARY);
             
         } catch (Exception e) {
             e.printStackTrace();
@@ -65,12 +67,12 @@ public class Main {
             Properties config = new Properties();
             if (input != null) {
                 config.load(input);
-                return config.getProperty("app.theme", "FlatLaf Dark");
+                return config.getProperty("app.theme", "FlatLaf Light");
             }
         } catch (Exception e) {
             e.printStackTrace();
         }
-        return "FlatLaf Dark";
+        return "FlatLaf Light";
     }
 
     /**
@@ -91,7 +93,7 @@ public class Main {
                 FlatOneDarkIJTheme.setup();
                 break;
             default:
-                FlatDarkLaf.setup();
+                FlatLightLaf.setup();
         }
     }
 }

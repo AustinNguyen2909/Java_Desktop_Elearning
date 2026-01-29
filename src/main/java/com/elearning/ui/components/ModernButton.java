@@ -24,19 +24,19 @@ public class ModernButton extends JButton {
 
     private void init() {
         if (normalColor == null) {
-            normalColor = new Color(47, 111, 235); // Blue
+            normalColor = UITheme.PRIMARY;
         }
         hoverColor = brighten(normalColor, 0.2f);
         pressedColor = darken(normalColor, 0.2f);
 
-        setFont(new Font("Segoe UI", Font.BOLD, 14));
+        setFont(new Font("Fira Sans", Font.BOLD, 14));
         setForeground(Color.WHITE);
         setBackground(normalColor);
         setFocusPainted(false);
         setBorderPainted(false);
         setContentAreaFilled(true);
         setCursor(new Cursor(Cursor.HAND_CURSOR));
-        setPreferredSize(new Dimension(120, 40));
+        setPreferredSize(new Dimension(130, 40));
 
         // Add hover effect
         addMouseListener(new java.awt.event.MouseAdapter() {

@@ -1,7 +1,9 @@
 package com.elearning.ui.components;
 
+import com.elearning.model.CourseReviewComment;
 import com.elearning.model.Review;
 import com.elearning.model.User;
+import com.elearning.service.CourseReviewCommentService;
 import com.elearning.service.ReviewService;
 
 import javax.swing.*;
@@ -13,6 +15,7 @@ import java.util.List;
  */
 public class ReviewsPanel extends JPanel {
     private final ReviewService reviewService;
+    private final CourseReviewCommentService reviewCommentService;
     private final User currentUser;
     private final int courseId;
     private JPanel reviewsListPanel;
@@ -22,6 +25,7 @@ public class ReviewsPanel extends JPanel {
 
     public ReviewsPanel(User currentUser, int courseId) {
         this.reviewService = ReviewService.getInstance();
+        this.reviewCommentService = CourseReviewCommentService.getInstance();
         this.currentUser = currentUser;
         this.courseId = courseId;
 
@@ -43,7 +47,7 @@ public class ReviewsPanel extends JPanel {
 
         JLabel titleLabel = new JLabel("Course Reviews");
         titleLabel.setFont(new Font("Segoe UI", Font.BOLD, 16));
-        titleLabel.setForeground(new Color(31, 41, 55));
+        titleLabel.setForeground(UITheme.TEXT);
 
         // Rating stats
         JPanel statsPanel = new JPanel(new FlowLayout(FlowLayout.RIGHT, 10, 0));
@@ -58,7 +62,7 @@ public class ReviewsPanel extends JPanel {
 
         totalReviewsLabel = new JLabel("(0 reviews)");
         totalReviewsLabel.setFont(new Font("Segoe UI", Font.PLAIN, 12));
-        totalReviewsLabel.setForeground(new Color(107, 114, 128));
+        totalReviewsLabel.setForeground(UITheme.MUTED_TEXT);
 
         statsPanel.add(averageStarsPanel);
         statsPanel.add(averageRatingLabel);
@@ -69,7 +73,7 @@ public class ReviewsPanel extends JPanel {
 
         // Post review panel
         JPanel postPanel = new JPanel(new BorderLayout(10, 10));
-        postPanel.setBackground(new Color(243, 244, 246));
+        postPanel.setBackground(UITheme.BACKGROUND);
         postPanel.setBorder(BorderFactory.createCompoundBorder(
             BorderFactory.createLineBorder(new Color(226, 232, 240), 1),
             BorderFactory.createEmptyBorder(10, 10, 10, 10)
@@ -80,7 +84,7 @@ public class ReviewsPanel extends JPanel {
 
         // Rating selector
         JPanel ratingPanel = new JPanel(new FlowLayout(FlowLayout.LEFT));
-        ratingPanel.setBackground(new Color(243, 244, 246));
+        ratingPanel.setBackground(UITheme.BACKGROUND);
 
         JLabel ratingLabel = new JLabel("Rating:");
         ratingLabel.setFont(new Font("Segoe UI", Font.PLAIN, 12));
@@ -97,7 +101,7 @@ public class ReviewsPanel extends JPanel {
         reviewTextArea.setLineWrap(true);
         reviewTextArea.setWrapStyleWord(true);
         reviewTextArea.setBorder(BorderFactory.createCompoundBorder(
-            BorderFactory.createLineBorder(new Color(215, 222, 232), 1),
+            BorderFactory.createLineBorder(UITheme.BORDER, 1),
             BorderFactory.createEmptyBorder(5, 5, 5, 5)
         ));
         JScrollPane reviewScrollPane = new JScrollPane(reviewTextArea);
@@ -149,12 +153,12 @@ public class ReviewsPanel extends JPanel {
         });
 
         JPanel postContentPanel = new JPanel(new BorderLayout(5, 5));
-        postContentPanel.setBackground(new Color(243, 244, 246));
+        postContentPanel.setBackground(UITheme.BACKGROUND);
         postContentPanel.add(postLabel, BorderLayout.NORTH);
         postContentPanel.add(ratingPanel, BorderLayout.CENTER);
 
         JPanel reviewInputPanel = new JPanel(new BorderLayout(5, 5));
-        reviewInputPanel.setBackground(new Color(243, 244, 246));
+        reviewInputPanel.setBackground(UITheme.BACKGROUND);
         reviewInputPanel.add(reviewScrollPane, BorderLayout.CENTER);
         reviewInputPanel.add(submitButton, BorderLayout.EAST);
 
@@ -216,7 +220,7 @@ public class ReviewsPanel extends JPanel {
 
     private JPanel createReviewCard(Review review) {
         JPanel card = new JPanel(new BorderLayout(5, 5));
-        card.setBackground(new Color(243, 244, 246));
+        card.setBackground(UITheme.BACKGROUND);
         card.setBorder(BorderFactory.createCompoundBorder(
             BorderFactory.createLineBorder(new Color(226, 232, 240), 1),
             BorderFactory.createEmptyBorder(10, 10, 10, 10)
@@ -224,11 +228,11 @@ public class ReviewsPanel extends JPanel {
 
         // Header with user and rating
         JPanel headerPanel = new JPanel(new BorderLayout());
-        headerPanel.setBackground(new Color(243, 244, 246));
+        headerPanel.setBackground(UITheme.BACKGROUND);
 
         JLabel userLabel = new JLabel(review.getUserName() != null ? review.getUserName() : "Anonymous");
         userLabel.setFont(new Font("Segoe UI", Font.BOLD, 12));
-        userLabel.setForeground(new Color(47, 111, 235));
+        userLabel.setForeground(UITheme.PRIMARY);
 
         StarRatingPanel ratingPanel = new StarRatingPanel(review.getRating(), 16, 3);
         ratingPanel.setOpaque(false);
@@ -241,24 +245,159 @@ public class ReviewsPanel extends JPanel {
         contentArea.setEditable(false);
         contentArea.setLineWrap(true);
         contentArea.setWrapStyleWord(true);
-        contentArea.setBackground(new Color(243, 244, 246));
+        contentArea.setBackground(UITheme.BACKGROUND);
         contentArea.setFont(new Font("Segoe UI", Font.PLAIN, 12));
         contentArea.setBorder(BorderFactory.createEmptyBorder(5, 0, 0, 0));
 
-        // Date
+        // Date + reply action
         String timeText = review.getCreatedAt() != null ? review.getCreatedAt().toString() : "";
         JLabel timeLabel = new JLabel(timeText);
         timeLabel.setFont(new Font("Segoe UI", Font.PLAIN, 10));
         timeLabel.setForeground(new Color(154, 164, 178));
 
+        JButton replyButton = new JButton("Reply");
+        replyButton.setBackground(new Color(8, 145, 178));
+        replyButton.setForeground(Color.WHITE);
+        replyButton.setFont(new Font("Segoe UI", Font.BOLD, 11));
+        replyButton.setFocusPainted(false);
+        replyButton.setBorderPainted(false);
+        replyButton.addActionListener(e -> showReviewReplyDialog(review, null));
+
+        JPanel footerPanel = new JPanel(new BorderLayout());
+        footerPanel.setBackground(UITheme.BACKGROUND);
+        footerPanel.add(timeLabel, BorderLayout.WEST);
+        footerPanel.add(replyButton, BorderLayout.EAST);
+
+        JPanel commentsPanel = createReviewCommentsPanel(review.getId());
+
+        JPanel bodyPanel = new JPanel();
+        bodyPanel.setLayout(new BoxLayout(bodyPanel, BoxLayout.Y_AXIS));
+        bodyPanel.setBackground(UITheme.BACKGROUND);
+        bodyPanel.add(contentArea);
+        if (commentsPanel.getComponentCount() > 0) {
+            bodyPanel.add(Box.createRigidArea(new Dimension(0, 6)));
+            bodyPanel.add(commentsPanel);
+        }
+        bodyPanel.add(Box.createRigidArea(new Dimension(0, 6)));
+        bodyPanel.add(footerPanel);
+
         card.add(headerPanel, BorderLayout.NORTH);
-        card.add(contentArea, BorderLayout.CENTER);
-        card.add(timeLabel, BorderLayout.SOUTH);
+        card.add(bodyPanel, BorderLayout.CENTER);
 
         return card;
+    }
+
+    private JPanel createReviewCommentsPanel(int reviewId) {
+        JPanel container = new JPanel();
+        container.setLayout(new BoxLayout(container, BoxLayout.Y_AXIS));
+        container.setBackground(UITheme.BACKGROUND);
+        container.setBorder(BorderFactory.createEmptyBorder(6, 8, 0, 0));
+
+        List<CourseReviewComment> comments = reviewCommentService.getTopLevelComments(reviewId);
+        for (CourseReviewComment comment : comments) {
+            container.add(createReviewCommentCard(comment, reviewId, 0));
+            List<CourseReviewComment> replies = reviewCommentService.getReplies(comment.getId());
+            for (CourseReviewComment reply : replies) {
+                container.add(createReviewCommentCard(reply, reviewId, 18));
+            }
+        }
+        return container;
+    }
+
+    private JPanel createReviewCommentCard(CourseReviewComment comment, int reviewId, int indent) {
+        JPanel card = new JPanel(new BorderLayout(4, 4));
+        card.setBackground(new Color(236, 254, 255));
+        card.setBorder(BorderFactory.createCompoundBorder(
+                BorderFactory.createEmptyBorder(0, indent, 6, 0),
+                BorderFactory.createLineBorder(new Color(226, 232, 240), 1)
+        ));
+
+        JLabel userLabel = new JLabel(comment.getUserName() != null ? comment.getUserName() : "Anonymous");
+        userLabel.setFont(new Font("Segoe UI", Font.BOLD, 11));
+        userLabel.setForeground(new Color(22, 78, 99));
+
+        String timeText = comment.getCreatedAt() != null ? comment.getCreatedAt().toString() : "";
+        JLabel timeLabel = new JLabel(timeText);
+        timeLabel.setFont(new Font("Segoe UI", Font.PLAIN, 10));
+        timeLabel.setForeground(new Color(154, 164, 178));
+
+        JPanel header = new JPanel(new BorderLayout());
+        header.setBackground(new Color(236, 254, 255));
+        header.add(userLabel, BorderLayout.WEST);
+        header.add(timeLabel, BorderLayout.EAST);
+
+        JTextArea content = new JTextArea(comment.getContent());
+        content.setEditable(false);
+        content.setLineWrap(true);
+        content.setWrapStyleWord(true);
+        content.setBackground(new Color(236, 254, 255));
+        content.setFont(new Font("Segoe UI", Font.PLAIN, 11));
+
+        JButton replyBtn = new JButton("Reply");
+        replyBtn.setBackground(new Color(8, 145, 178));
+        replyBtn.setForeground(Color.WHITE);
+        replyBtn.setFont(new Font("Segoe UI", Font.BOLD, 10));
+        replyBtn.setFocusPainted(false);
+        replyBtn.setBorderPainted(false);
+        replyBtn.addActionListener(e -> showReviewReplyDialog(null, comment));
+
+        JPanel actionRow = new JPanel(new FlowLayout(FlowLayout.LEFT, 0, 0));
+        actionRow.setBackground(new Color(236, 254, 255));
+        actionRow.add(replyBtn);
+
+        card.add(header, BorderLayout.NORTH);
+        card.add(content, BorderLayout.CENTER);
+        card.add(actionRow, BorderLayout.SOUTH);
+
+        return card;
+    }
+
+    private void showReviewReplyDialog(Review review, CourseReviewComment parentComment) {
+        JTextArea replyArea = new JTextArea(4, 30);
+        replyArea.setLineWrap(true);
+        replyArea.setWrapStyleWord(true);
+        JScrollPane scrollPane = new JScrollPane(replyArea);
+
+        int result = JOptionPane.showConfirmDialog(
+                this,
+                scrollPane,
+                "Reply",
+                JOptionPane.OK_CANCEL_OPTION,
+                JOptionPane.PLAIN_MESSAGE
+        );
+
+        if (result == JOptionPane.OK_OPTION) {
+            String content = replyArea.getText().trim();
+            if (content.isEmpty()) {
+                JOptionPane.showMessageDialog(this, "Please enter a reply", "Error", JOptionPane.ERROR_MESSAGE);
+                return;
+            }
+            try {
+                CourseReviewComment comment = new CourseReviewComment();
+                comment.setUserId(currentUser.getId());
+                if (parentComment != null) {
+                    comment.setReviewId(parentComment.getReviewId());
+                    comment.setParentId(parentComment.getId());
+                } else if (review != null) {
+                    comment.setReviewId(review.getId());
+                } else {
+                    return;
+                }
+                comment.setContent(content);
+                boolean success = reviewCommentService.postComment(comment, currentUser.getId());
+                if (success) {
+                    loadReviews();
+                } else {
+                    JOptionPane.showMessageDialog(this, "Failed to post reply", "Error", JOptionPane.ERROR_MESSAGE);
+                }
+            } catch (Exception ex) {
+                JOptionPane.showMessageDialog(this, "Error: " + ex.getMessage(), "Error", JOptionPane.ERROR_MESSAGE);
+            }
+        }
     }
 
     public void refresh() {
         loadReviews();
     }
 }
+

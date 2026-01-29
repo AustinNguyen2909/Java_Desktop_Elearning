@@ -105,7 +105,7 @@ public class CourseDetailsDialog extends JDialog {
 
         // Bottom panel with Close button
         JPanel bottomPanel = new JPanel(new FlowLayout(FlowLayout.RIGHT, 15, 10));
-        bottomPanel.setBackground(new Color(243, 244, 246));
+        bottomPanel.setBackground(UITheme.BACKGROUND);
         JButton closeButton = new JButton("Close");
         closeButton.addActionListener(e -> dispose());
         bottomPanel.add(closeButton);
@@ -200,7 +200,7 @@ public class CourseDetailsDialog extends JDialog {
 
         if (canEdit) {
             JButton saveButton = new JButton("Update Course");
-            saveButton.setBackground(new Color(47, 111, 235));
+            saveButton.setBackground(UITheme.PRIMARY);
             saveButton.setForeground(Color.WHITE);
             saveButton.setFont(new Font("Segoe UI", Font.BOLD, 14));
             saveButton.setPreferredSize(new Dimension(0, 45));
@@ -245,7 +245,7 @@ public class CourseDetailsDialog extends JDialog {
 
         if (canEdit) {
             JButton addLessonBtn = new JButton("Add New Lesson");
-            addLessonBtn.setBackground(new Color(34, 197, 94));
+            addLessonBtn.setBackground(UITheme.ACCENT);
             addLessonBtn.setForeground(Color.WHITE);
             addLessonBtn.addActionListener(e -> showCreateLessonDialog());
             JPanel topPanel = new JPanel(new FlowLayout(FlowLayout.RIGHT));
@@ -357,7 +357,7 @@ public class CourseDetailsDialog extends JDialog {
         approveBtn.addActionListener(e -> approveCourseAction());
 
         JButton rejectBtn = new JButton("Reject Course");
-        rejectBtn.setBackground(new Color(220, 53, 69));
+        rejectBtn.setBackground(UITheme.DANGER);
         rejectBtn.setForeground(Color.WHITE);
         rejectBtn.setFocusPainted(false);
         rejectBtn.addActionListener(e -> rejectCourseAction());
@@ -527,3 +527,4 @@ public class CourseDetailsDialog extends JDialog {
         }
     }
 }
+

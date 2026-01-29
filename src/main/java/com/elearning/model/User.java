@@ -1,5 +1,6 @@
 package com.elearning.model;
 
+import java.time.LocalDate;
 import java.time.LocalDateTime;
 
 /**
@@ -15,6 +16,10 @@ public class User {
     private String fullName;
     private String avatarPath;
     private String status; // PENDING, ACTIVE, SUSPENDED
+    private LocalDate dateOfBirth;
+    private String school;
+    private String jobTitle;
+    private String experience;
     private LocalDateTime createdAt;
     private LocalDateTime updatedAt;
 
@@ -106,6 +111,38 @@ public class User {
 
     public boolean isActive() {
         return "ACTIVE".equals(status);
+    }
+
+    public LocalDate getDateOfBirth() {
+        return dateOfBirth;
+    }
+
+    public void setDateOfBirth(LocalDate dateOfBirth) {
+        this.dateOfBirth = dateOfBirth;
+    }
+
+    public String getSchool() {
+        return school;
+    }
+
+    public void setSchool(String school) {
+        this.school = school;
+    }
+
+    public String getJobTitle() {
+        return jobTitle;
+    }
+
+    public void setJobTitle(String jobTitle) {
+        this.jobTitle = jobTitle;
+    }
+
+    public String getExperience() {
+        return experience;
+    }
+
+    public void setExperience(String experience) {
+        this.experience = experience;
     }
 
     public LocalDateTime getCreatedAt() {

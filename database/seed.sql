@@ -24,6 +24,14 @@ INSERT INTO users (username, password_hash, role, email, phone, full_name, statu
 ('student4', '$2a$12$kbVTJlaxqzxk1ppPjhfxa.88oVSfcAzDZJLU96YSwvYpof.hHltIW', 'USER', 'student4@elearning.com', '1000000008', 'Mia Harper', 'ACTIVE'),
 ('student5', '$2a$12$kbVTJlaxqzxk1ppPjhfxa.88oVSfcAzDZJLU96YSwvYpof.hHltIW', 'USER', 'student5@elearning.com', '1000000009', 'Liam Parker', 'ACTIVE');
 
+-- Profile info
+UPDATE users SET date_of_birth = '2002-04-12', school = 'VNU-HCM', job_title = 'Student', experience = 'Focused on Java fundamentals and database design.'
+WHERE username = 'student1';
+UPDATE users SET date_of_birth = '2001-09-03', school = 'HUST', job_title = 'Student', experience = 'Interested in backend engineering and APIs.'
+WHERE username = 'student2';
+UPDATE users SET date_of_birth = '1996-01-18', school = 'PTIT', job_title = 'Senior Instructor', experience = '8+ years teaching Java and Spring.'
+WHERE username = 'instructor1';
+
 -- Insert coursesS
 -- NOTE: thumbnail_path values are examples. In actual implementation, these would be absolute paths
 -- Example format: /path/to/project/thumbnails/course_1/course_1_1674567890.jpg

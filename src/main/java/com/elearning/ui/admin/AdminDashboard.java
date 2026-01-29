@@ -10,6 +10,7 @@ import com.elearning.ui.components.ModernPasswordField;
 import com.elearning.ui.components.ModernTextField;
 import com.elearning.ui.components.ScrollableWrapPanel;
 import com.elearning.ui.components.StarRatingPanel;
+import com.elearning.ui.components.UITheme;
 import com.elearning.util.CourseCardImageUtil;
 import com.elearning.util.ChartUtil;
 import com.elearning.util.SessionManager;
@@ -92,11 +93,11 @@ public class AdminDashboard extends JFrame {
         JPanel headerPanel = new JPanel(new BorderLayout());
         headerPanel.setBackground(Color.WHITE);
         headerPanel.setPreferredSize(new Dimension(0, 60));
-        headerPanel.setBorder(BorderFactory.createMatteBorder(0, 0, 2, 0, new Color(230, 230, 230)));
+        headerPanel.setBorder(BorderFactory.createMatteBorder(0, 0, 2, 0, UITheme.BORDER));
 
         JLabel titleLabel = new JLabel("  Admin Dashboard - " + currentUser.getFullName());
         titleLabel.setFont(new Font("Segoe UI", Font.BOLD, 20));
-        titleLabel.setForeground(new Color(31, 41, 55));
+        titleLabel.setForeground(UITheme.TEXT);
 
         headerPanel.add(titleLabel, BorderLayout.WEST);
 
@@ -106,9 +107,9 @@ public class AdminDashboard extends JFrame {
     private JPanel createSidebar() {
         JPanel sidebar = new JPanel();
         sidebar.setLayout(new BoxLayout(sidebar, BoxLayout.Y_AXIS));
-        sidebar.setBackground(new Color(243, 244, 246));
+        sidebar.setBackground(UITheme.BACKGROUND);
         sidebar.setPreferredSize(new Dimension(250, 0));
-        sidebar.setBorder(BorderFactory.createMatteBorder(0, 0, 0, 1, new Color(230, 230, 230)));
+        sidebar.setBorder(BorderFactory.createMatteBorder(0, 0, 0, 1, UITheme.BORDER));
 
         // Add menu items
         sidebar.add(createMenuItem("Pending Courses", "Pending Courses"));
@@ -121,7 +122,7 @@ public class AdminDashboard extends JFrame {
 
         // Logout button at bottom
         JButton logoutButton = new JButton("Logout");
-        logoutButton.setBackground(new Color(220, 53, 69));
+        logoutButton.setBackground(UITheme.DANGER);
         logoutButton.setForeground(Color.WHITE);
         logoutButton.setFocusPainted(false);
         logoutButton.setBorderPainted(false);
@@ -138,7 +139,7 @@ public class AdminDashboard extends JFrame {
 
     private JButton createMenuItem(String text, String panelName) {
         JButton menuItem = new JButton(text);
-        menuItem.setBackground(new Color(47, 111, 235));
+        menuItem.setBackground(UITheme.PRIMARY);
         menuItem.setForeground(Color.WHITE);
         menuItem.setFocusPainted(false);
         menuItem.setBorderPainted(false);
@@ -163,10 +164,10 @@ public class AdminDashboard extends JFrame {
         topPanel.setBackground(Color.WHITE); // Light background
         JLabel titleLabel = new JLabel("Pending Course Approvals");
         titleLabel.setFont(new Font("Segoe UI", Font.BOLD, 18));
-        titleLabel.setForeground(new Color(31, 41, 55)); // Dark text
+        titleLabel.setForeground(UITheme.TEXT); // Dark text
 
         JButton refreshButton = new JButton("Refresh");
-        refreshButton.setBackground(new Color(47, 111, 235)); // Navy blue
+        refreshButton.setBackground(UITheme.PRIMARY); // Navy blue
         refreshButton.setForeground(Color.WHITE);
         refreshButton.setFocusPainted(false);
         refreshButton.setBorderPainted(false);
@@ -186,8 +187,8 @@ public class AdminDashboard extends JFrame {
         };
         pendingCoursesTable = new JTable(pendingCoursesModel);
         pendingCoursesTable.setBackground(Color.WHITE);
-        pendingCoursesTable.setForeground(new Color(31, 41, 55));
-        pendingCoursesTable.setGridColor(new Color(230, 230, 230));
+        pendingCoursesTable.setForeground(UITheme.TEXT);
+        pendingCoursesTable.setGridColor(UITheme.BORDER);
         pendingCoursesTable.setRowHeight(30);
         pendingCoursesTable.getColumn("Actions").setCellRenderer(new ButtonRenderer());
         pendingCoursesTable.getColumn("Actions").setCellEditor(new PendingCourseButtonEditor(new JCheckBox()));
@@ -212,10 +213,10 @@ public class AdminDashboard extends JFrame {
         topPanel.setBackground(Color.WHITE); // Light background
         JLabel titleLabel = new JLabel("All Courses");
         titleLabel.setFont(new Font("Segoe UI", Font.BOLD, 18));
-        titleLabel.setForeground(new Color(31, 41, 55)); // Dark text
+        titleLabel.setForeground(UITheme.TEXT); // Dark text
 
         JButton refreshButton = new JButton("Refresh");
-        refreshButton.setBackground(new Color(47, 111, 235)); // Navy blue
+        refreshButton.setBackground(UITheme.PRIMARY); // Navy blue
         refreshButton.setForeground(Color.WHITE);
         refreshButton.setFocusPainted(false);
         refreshButton.setBorderPainted(false);
@@ -251,24 +252,24 @@ public class AdminDashboard extends JFrame {
 
         JLabel titleLabel = new JLabel("User Management");
         titleLabel.setFont(new Font("Segoe UI", Font.BOLD, 18));
-        titleLabel.setForeground(new Color(31, 41, 55));
+        titleLabel.setForeground(UITheme.TEXT);
 
         // Search and filter panel
         JPanel searchPanel = new JPanel(new FlowLayout(FlowLayout.LEFT, 10, 5));
         searchPanel.setBackground(Color.WHITE);
 
         JLabel searchLabel = new JLabel("Search:");
-        searchLabel.setForeground(new Color(31, 41, 55));
+        searchLabel.setForeground(UITheme.TEXT);
         searchPanel.add(searchLabel);
 
         userSearchField = new JTextField(20);
         userSearchField.setBackground(Color.WHITE);
-        userSearchField.setForeground(new Color(31, 41, 55));
-        userSearchField.setCaretColor(new Color(31, 41, 55));
+        userSearchField.setForeground(UITheme.TEXT);
+        userSearchField.setCaretColor(UITheme.TEXT);
         searchPanel.add(userSearchField);
 
         JButton searchButton = new JButton("Search");
-        searchButton.setBackground(new Color(47, 111, 235)); // Navy blue
+        searchButton.setBackground(UITheme.PRIMARY); // Navy blue
         searchButton.setForeground(Color.WHITE);
         searchButton.setFocusPainted(false);
         searchButton.setBorderPainted(false);
@@ -277,18 +278,18 @@ public class AdminDashboard extends JFrame {
         searchPanel.add(searchButton);
 
         JLabel roleLabel = new JLabel("Role:");
-        roleLabel.setForeground(new Color(31, 41, 55));
+        roleLabel.setForeground(UITheme.TEXT);
         searchPanel.add(roleLabel);
 
         String[] roles = {"All", "ADMIN", "INSTRUCTOR", "USER"};
         roleFilterComboBox = new JComboBox<>(roles);
         roleFilterComboBox.setBackground(Color.WHITE);
-        roleFilterComboBox.setForeground(new Color(31, 41, 55));
+        roleFilterComboBox.setForeground(UITheme.TEXT);
         roleFilterComboBox.addActionListener(e -> filterUsersByRole());
         searchPanel.add(roleFilterComboBox);
 
         JButton createUserButton = new JButton("Create New User");
-        createUserButton.setBackground(new Color(34, 197, 94));
+        createUserButton.setBackground(UITheme.ACCENT);
         createUserButton.setForeground(Color.WHITE);
         createUserButton.setFocusPainted(false);
         createUserButton.setBorderPainted(false);
@@ -297,7 +298,7 @@ public class AdminDashboard extends JFrame {
         searchPanel.add(createUserButton);
 
         JButton refreshButton = new JButton("Refresh");
-        refreshButton.setBackground(new Color(47, 111, 235)); // Navy blue
+        refreshButton.setBackground(UITheme.PRIMARY); // Navy blue
         refreshButton.setForeground(Color.WHITE);
         refreshButton.setFocusPainted(false);
         refreshButton.setBorderPainted(false);
@@ -320,8 +321,8 @@ public class AdminDashboard extends JFrame {
         };
         usersTable = new JTable(usersModel);
         usersTable.setBackground(Color.WHITE);
-        usersTable.setForeground(new Color(31, 41, 55));
-        usersTable.setGridColor(new Color(230, 230, 230));
+        usersTable.setForeground(UITheme.TEXT);
+        usersTable.setGridColor(UITheme.BORDER);
         usersTable.setRowHeight(30);
         usersTable.getColumn("Actions").setCellRenderer(new ButtonRenderer());
         usersTable.getColumn("Actions").setCellEditor(new UserButtonEditor(new JCheckBox()));
@@ -344,10 +345,10 @@ public class AdminDashboard extends JFrame {
         // Title
         JLabel titleLabel = new JLabel("Platform Statistics");
         titleLabel.setFont(new Font("Segoe UI", Font.BOLD, 24));
-        titleLabel.setForeground(new Color(31, 41, 55));
+        titleLabel.setForeground(UITheme.TEXT);
 
         JButton refreshButton = new JButton("Refresh Statistics");
-        refreshButton.setBackground(new Color(47, 111, 235)); // Navy blue
+        refreshButton.setBackground(UITheme.PRIMARY); // Navy blue
         refreshButton.setForeground(Color.WHITE);
         refreshButton.setFocusPainted(false);
         refreshButton.setBorderPainted(false);
@@ -376,25 +377,25 @@ public class AdminDashboard extends JFrame {
             // User statistics
             statsContent.add(createStatCard("Total Users",
                     String.format("%d (%d active)", stats.getTotalUsers() + stats.getTotalInstructors() + stats.getTotalAdmins(), stats.getActiveUsers()),
-                    new Color(47, 111, 235)));
-            statsContent.add(createStatCard("Students", String.valueOf(stats.getTotalUsers()), new Color(34, 197, 94)));
+                    UITheme.PRIMARY));
+            statsContent.add(createStatCard("Students", String.valueOf(stats.getTotalUsers()), UITheme.ACCENT));
             statsContent.add(createStatCard("Instructors", String.valueOf(stats.getTotalInstructors()), new Color(155, 89, 182)));
             statsContent.add(createStatCard("Admins", String.valueOf(stats.getTotalAdmins()), new Color(225, 29, 72)));
 
             // Course statistics
-            statsContent.add(createStatCard("Total Courses", String.valueOf(stats.getTotalCourses()), new Color(47, 111, 235)));
-            statsContent.add(createStatCard("Approved Courses", String.valueOf(stats.getApprovedCourses()), new Color(34, 197, 94)));
+            statsContent.add(createStatCard("Total Courses", String.valueOf(stats.getTotalCourses()), UITheme.PRIMARY));
+            statsContent.add(createStatCard("Approved Courses", String.valueOf(stats.getApprovedCourses()), UITheme.ACCENT));
             statsContent.add(createStatCard("Pending Approval", String.valueOf(stats.getPendingCourses()), new Color(241, 196, 15)));
             statsContent.add(createStatCard("Published Courses", String.valueOf(stats.getPublishedCourses()), new Color(26, 188, 156)));
 
             // Enrollment statistics
-            statsContent.add(createStatCard("Total Enrollments", String.valueOf(stats.getTotalEnrollments()), new Color(47, 111, 235)));
-            statsContent.add(createStatCard("Active Enrollments", String.valueOf(stats.getActiveEnrollments()), new Color(34, 197, 94)));
+            statsContent.add(createStatCard("Total Enrollments", String.valueOf(stats.getTotalEnrollments()), UITheme.PRIMARY));
+            statsContent.add(createStatCard("Active Enrollments", String.valueOf(stats.getActiveEnrollments()), UITheme.ACCENT));
             statsContent.add(createStatCard("Completed Enrollments", String.valueOf(stats.getCompletedEnrollments()), new Color(155, 89, 182)));
             statsContent.add(createStatCard("Average Progress", String.format("%.1f%%", stats.getAverageProgress()), new Color(241, 196, 15)));
 
             // Additional statistics
-            statsContent.add(createStatCard("Total Reviews", String.valueOf(stats.getTotalReviews()), new Color(47, 111, 235)));
+            statsContent.add(createStatCard("Total Reviews", String.valueOf(stats.getTotalReviews()), UITheme.PRIMARY));
             statsContent.add(createStatCard("Avg Enrollments/Course", String.format("%.1f", stats.getAverageEnrollmentsPerCourse()), new Color(26, 188, 156)));
 
             mainContent.add(statsContent);
@@ -408,7 +409,7 @@ public class AdminDashboard extends JFrame {
             // Charts title
             JLabel chartsTitle = new JLabel("Visual Analytics");
             chartsTitle.setFont(new Font("Segoe UI", Font.BOLD, 18));
-            chartsTitle.setForeground(new Color(31, 41, 55));
+            chartsTitle.setForeground(UITheme.TEXT);
             chartsTitle.setBorder(BorderFactory.createEmptyBorder(10, 0, 10, 0));
             chartsTitle.setAlignmentX(Component.LEFT_ALIGNMENT);
             chartsSection.add(chartsTitle);
@@ -459,7 +460,7 @@ public class AdminDashboard extends JFrame {
 
                 JLabel topCoursesTitle = new JLabel("Top 5 Courses by Enrollment");
                 topCoursesTitle.setFont(new Font("Segoe UI", Font.BOLD, 18));
-                topCoursesTitle.setForeground(new Color(31, 41, 55));
+                topCoursesTitle.setForeground(UITheme.TEXT);
                 topCoursesTitle.setBorder(BorderFactory.createEmptyBorder(10, 0, 10, 0));
                 topCoursesTitle.setAlignmentX(Component.LEFT_ALIGNMENT);
                 topCoursesSection.add(topCoursesTitle);
@@ -512,7 +513,7 @@ public class AdminDashboard extends JFrame {
 
         JLabel titleLabel = new JLabel(title);
         titleLabel.setFont(new Font("Segoe UI", Font.PLAIN, 14));
-        titleLabel.setForeground(new Color(107, 114, 128));
+        titleLabel.setForeground(UITheme.MUTED_TEXT);
 
         JLabel valueLabel = new JLabel(value);
         valueLabel.setFont(new Font("Segoe UI", Font.BOLD, 32));
@@ -592,7 +593,7 @@ public class AdminDashboard extends JFrame {
         card.setMaximumSize(new Dimension(280, 350));
 
         JPanel imagePanel = new JPanel(new BorderLayout());
-        imagePanel.setBackground(new Color(243, 244, 246));
+        imagePanel.setBackground(UITheme.BACKGROUND);
         imagePanel.setPreferredSize(new Dimension(280, 140));
         JLabel imageLabel = new JLabel();
         imageLabel.setHorizontalAlignment(SwingConstants.CENTER);
@@ -613,19 +614,19 @@ public class AdminDashboard extends JFrame {
 
         JLabel titleLabel = new JLabel(course.getTitle());
         titleLabel.setFont(new Font("Segoe UI", Font.BOLD, 15));
-        titleLabel.setForeground(new Color(31, 41, 55));
+        titleLabel.setForeground(UITheme.TEXT);
         titleLabel.setAlignmentX(Component.LEFT_ALIGNMENT);
 
         String instructor = course.getInstructorName() != null ? course.getInstructorName() : "Instructor";
         JLabel instructorLabel = new JLabel(instructor);
         instructorLabel.setFont(new Font("Segoe UI", Font.PLAIN, 12));
-        instructorLabel.setForeground(new Color(107, 114, 128));
+        instructorLabel.setForeground(UITheme.MUTED_TEXT);
         instructorLabel.setAlignmentX(Component.LEFT_ALIGNMENT);
 
         StarRatingPanel ratingPanel = new StarRatingPanel(course.getAverageRating(), 18, 4);
         JLabel learnersLabel = new JLabel(course.getEnrollmentCount() + " learners");
         learnersLabel.setFont(new Font("Segoe UI", Font.PLAIN, 12));
-        learnersLabel.setForeground(new Color(107, 114, 128));
+        learnersLabel.setForeground(UITheme.MUTED_TEXT);
         learnersLabel.setAlignmentX(Component.LEFT_ALIGNMENT);
 
         JPanel statsRow = new JPanel();
@@ -658,7 +659,7 @@ public class AdminDashboard extends JFrame {
             pendingRow.setAlignmentX(Component.LEFT_ALIGNMENT);
 
             JButton approveBtn = new JButton("Approve");
-            approveBtn.setBackground(new Color(34, 197, 94));
+            approveBtn.setBackground(UITheme.ACCENT);
             approveBtn.setForeground(Color.WHITE);
             approveBtn.setFocusPainted(false);
             approveBtn.setBorderPainted(false);
@@ -688,7 +689,7 @@ public class AdminDashboard extends JFrame {
         }
 
         JButton detailsButton = new JButton("View Details");
-        detailsButton.setBackground(new Color(47, 111, 235));
+        detailsButton.setBackground(UITheme.PRIMARY);
         detailsButton.setForeground(Color.WHITE);
         detailsButton.setFocusPainted(false);
         detailsButton.setBorderPainted(false);
@@ -749,8 +750,8 @@ public class AdminDashboard extends JFrame {
 
                 JTextArea textArea = new JTextArea(details);
                 textArea.setBackground(Color.WHITE);
-                textArea.setForeground(new Color(31, 41, 55));
-                textArea.setCaretColor(new Color(31, 41, 55));
+                textArea.setForeground(UITheme.TEXT);
+                textArea.setCaretColor(UITheme.TEXT);
                 textArea.setEditable(false);
                 JScrollPane scrollPane = new JScrollPane(textArea);
                 scrollPane.setBackground(Color.WHITE);
@@ -940,17 +941,17 @@ public class AdminDashboard extends JFrame {
         String[] roles = {"USER", "INSTRUCTOR", "ADMIN"};
         JComboBox<String> roleComboBox = new JComboBox<>(roles);
         roleComboBox.setBackground(Color.WHITE);
-        roleComboBox.setForeground(new Color(31, 41, 55));
+        roleComboBox.setForeground(UITheme.TEXT);
         roleComboBox.setPreferredSize(new Dimension(300, 45));
 
         String[] statuses = {"ACTIVE", "PENDING", "SUSPENDED"};
         JComboBox<String> statusComboBox = new JComboBox<>(statuses);
         statusComboBox.setBackground(Color.WHITE);
-        statusComboBox.setForeground(new Color(31, 41, 55));
+        statusComboBox.setForeground(UITheme.TEXT);
         statusComboBox.setPreferredSize(new Dimension(300, 45));
 
         ModernButton createButton = new ModernButton("Create User");
-        createButton.setBackground(new Color(34, 197, 94));
+        createButton.setBackground(UITheme.ACCENT);
         ModernButton cancelButton = new ModernButton("Cancel");
         cancelButton.setBackground(new Color(148, 163, 184));
 
@@ -1066,19 +1067,19 @@ public class AdminDashboard extends JFrame {
         String[] roles = {"USER", "INSTRUCTOR", "ADMIN"};
         JComboBox<String> roleComboBox = new JComboBox<>(roles);
         roleComboBox.setBackground(Color.WHITE);
-        roleComboBox.setForeground(new Color(31, 41, 55));
+        roleComboBox.setForeground(UITheme.TEXT);
         roleComboBox.setSelectedItem(user.getRole());
         roleComboBox.setPreferredSize(new Dimension(300, 45));
 
         String[] statuses = {"ACTIVE", "PENDING", "SUSPENDED"};
         JComboBox<String> statusComboBox = new JComboBox<>(statuses);
         statusComboBox.setBackground(Color.WHITE);
-        statusComboBox.setForeground(new Color(31, 41, 55));
+        statusComboBox.setForeground(UITheme.TEXT);
         statusComboBox.setSelectedItem(user.getStatus());
         statusComboBox.setPreferredSize(new Dimension(300, 45));
 
         ModernButton saveButton = new ModernButton("Save Changes");
-        saveButton.setBackground(new Color(47, 111, 235));
+        saveButton.setBackground(UITheme.PRIMARY);
         ModernButton cancelButton = new ModernButton("Cancel");
         cancelButton.setBackground(new Color(148, 163, 184));
 
@@ -1319,8 +1320,8 @@ public class AdminDashboard extends JFrame {
 
             JTextArea textArea = new JTextArea(details);
             textArea.setBackground(Color.WHITE);
-            textArea.setForeground(new Color(31, 41, 55));
-            textArea.setCaretColor(new Color(31, 41, 55));
+            textArea.setForeground(UITheme.TEXT);
+            textArea.setCaretColor(UITheme.TEXT);
             textArea.setEditable(false);
             JScrollPane scrollPane = new JScrollPane(textArea);
             scrollPane.setBackground(Color.WHITE);
@@ -1334,7 +1335,7 @@ public class AdminDashboard extends JFrame {
     private JLabel createLabel(String text) {
         JLabel label = new JLabel(text);
         label.setFont(new Font("Segoe UI", Font.BOLD, 13));
-        label.setForeground(new Color(31, 41, 55));
+        label.setForeground(UITheme.TEXT);
         label.setAlignmentX(Component.CENTER_ALIGNMENT);
         return label;
     }
@@ -1496,3 +1497,4 @@ public class AdminDashboard extends JFrame {
         }
     }
 }
+

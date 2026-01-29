@@ -7,6 +7,7 @@ import com.elearning.model.LessonProgress;
 import com.elearning.service.EnrollmentService;
 import com.elearning.service.LessonService;
 import com.elearning.ui.components.VideoPlayerPanel;
+import com.elearning.ui.components.UITheme;
 import com.elearning.util.SessionManager;
 
 import javax.swing.*;
@@ -89,7 +90,7 @@ public class LessonViewerDialog extends JDialog {
         // Course title
         JLabel titleLabel = new JLabel(course.getTitle());
         titleLabel.setFont(new Font("Segoe UI", Font.BOLD, 20));
-        titleLabel.setForeground(new Color(31, 41, 55));
+        titleLabel.setForeground(UITheme.TEXT);
 
         // Progress info
         JPanel progressInfoPanel = new JPanel(new BorderLayout(5, 5));
@@ -97,12 +98,12 @@ public class LessonViewerDialog extends JDialog {
 
         progressLabel = new JLabel("Progress: 0% (0/0 lessons completed)");
         progressLabel.setFont(new Font("Segoe UI", Font.PLAIN, 14));
-        progressLabel.setForeground(new Color(107, 114, 128));
+        progressLabel.setForeground(UITheme.MUTED_TEXT);
 
         courseProgressBar = new JProgressBar(0, 100);
         courseProgressBar.setPreferredSize(new Dimension(400, 25));
         courseProgressBar.setStringPainted(true);
-        courseProgressBar.setForeground(new Color(34, 197, 94)); // Green
+        courseProgressBar.setForeground(UITheme.ACCENT); // Green
         courseProgressBar.setValue(0);
 
         progressInfoPanel.add(progressLabel, BorderLayout.NORTH);
@@ -123,7 +124,7 @@ public class LessonViewerDialog extends JDialog {
         // Title
         JLabel titleLabel = new JLabel("Lessons");
         titleLabel.setFont(new Font("Segoe UI", Font.BOLD, 16));
-        titleLabel.setForeground(new Color(31, 41, 55));
+        titleLabel.setForeground(UITheme.TEXT);
         panel.add(titleLabel, BorderLayout.NORTH);
 
         // Lesson list
@@ -157,7 +158,7 @@ public class LessonViewerDialog extends JDialog {
         // Top: Lesson title
         lessonTitleLabel = new JLabel("Select a lesson to begin");
         lessonTitleLabel.setFont(new Font("Segoe UI", Font.BOLD, 18));
-        lessonTitleLabel.setForeground(new Color(31, 41, 55));
+        lessonTitleLabel.setForeground(UITheme.TEXT);
         lessonTitleLabel.setBorder(new EmptyBorder(5, 5, 10, 5));
         panel.add(lessonTitleLabel, BorderLayout.NORTH);
 
@@ -179,7 +180,7 @@ public class LessonViewerDialog extends JDialog {
         // Description
         JLabel descLabel = new JLabel("Description:");
         descLabel.setFont(new Font("Segoe UI", Font.BOLD, 14));
-        descLabel.setForeground(new Color(31, 41, 55));
+        descLabel.setForeground(UITheme.TEXT);
 
         lessonDescriptionArea = new JTextArea(4, 40);
         lessonDescriptionArea.setEditable(false);
@@ -187,7 +188,7 @@ public class LessonViewerDialog extends JDialog {
         lessonDescriptionArea.setWrapStyleWord(true);
         lessonDescriptionArea.setFont(new Font("Segoe UI", Font.PLAIN, 13));
         lessonDescriptionArea.setBackground(new Color(245, 245, 245));
-        lessonDescriptionArea.setForeground(new Color(107, 114, 128));
+        lessonDescriptionArea.setForeground(UITheme.MUTED_TEXT);
         lessonDescriptionArea.setBorder(new EmptyBorder(10, 10, 10, 10));
         lessonDescriptionArea.setText("Select a lesson to view description");
 
@@ -197,7 +198,7 @@ public class LessonViewerDialog extends JDialog {
         // Mark complete button
         markCompleteBtn = new JButton("Mark as Complete");
         markCompleteBtn.setFont(new Font("Segoe UI", Font.BOLD, 14));
-        markCompleteBtn.setBackground(new Color(34, 197, 94)); // Green
+        markCompleteBtn.setBackground(UITheme.ACCENT); // Green
         markCompleteBtn.setForeground(Color.WHITE);
         markCompleteBtn.setFocusPainted(false);
         markCompleteBtn.setBorderPainted(false);
@@ -399,7 +400,7 @@ public class LessonViewerDialog extends JDialog {
         } else {
             markCompleteBtn.setText("Mark as Complete");
             markCompleteBtn.setEnabled(true);
-            markCompleteBtn.setBackground(new Color(34, 197, 94)); // Green
+            markCompleteBtn.setBackground(UITheme.ACCENT); // Green
         }
 
         // Mark lesson as opened
@@ -531,13 +532,13 @@ public class LessonViewerDialog extends JDialog {
                 Color textColor;
                 if (progress != null && progress.isCompleted()) {
                     icon = "\u2713";
-                    textColor = new Color(34, 197, 94); // Green
+                    textColor = UITheme.ACCENT; // Green
                 } else if (lesson.isPreview()) {
                     icon = "\u26D4";
-                    textColor = new Color(31, 41, 55);
+                    textColor = UITheme.TEXT;
                 } else {
                     icon = "\u25B6";
-                    textColor = new Color(31, 41, 55);
+                    textColor = UITheme.TEXT;
                 }
 
                 // Format text
@@ -557,3 +558,4 @@ public class LessonViewerDialog extends JDialog {
         }
     }
 }
+

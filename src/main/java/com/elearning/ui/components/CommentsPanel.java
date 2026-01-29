@@ -3,6 +3,7 @@ package com.elearning.ui.components;
 import com.elearning.model.Comment;
 import com.elearning.model.User;
 import com.elearning.service.CommentService;
+import com.elearning.ui.components.UITheme;
 
 import javax.swing.*;
 import java.awt.*;
@@ -37,7 +38,7 @@ public class CommentsPanel extends JPanel {
         // Title
         JLabel titleLabel = new JLabel("Comments & Discussion");
         titleLabel.setFont(new Font("Segoe UI", Font.BOLD, 16));
-        titleLabel.setForeground(new Color(31, 41, 55));
+        titleLabel.setForeground(UITheme.TEXT);
 
         // Post comment panel
         JPanel postPanel = new JPanel(new BorderLayout(5, 5));
@@ -47,13 +48,13 @@ public class CommentsPanel extends JPanel {
         commentTextArea.setLineWrap(true);
         commentTextArea.setWrapStyleWord(true);
         commentTextArea.setBorder(BorderFactory.createCompoundBorder(
-            BorderFactory.createLineBorder(new Color(215, 222, 232), 1),
+            BorderFactory.createLineBorder(UITheme.BORDER, 1),
             BorderFactory.createEmptyBorder(5, 5, 5, 5)
         ));
         JScrollPane commentScrollPane = new JScrollPane(commentTextArea);
 
         JButton postButton = new JButton("Post Comment");
-        postButton.setBackground(new Color(47, 111, 235));
+        postButton.setBackground(UITheme.PRIMARY);
         postButton.setForeground(Color.WHITE);
         postButton.setFont(new Font("Segoe UI", Font.BOLD, 12));
         postButton.addActionListener(e -> {
@@ -157,7 +158,7 @@ public class CommentsPanel extends JPanel {
 
     private JPanel createCommentCard(Comment comment) {
         JPanel card = new JPanel(new BorderLayout(5, 5));
-        card.setBackground(new Color(243, 244, 246));
+        card.setBackground(UITheme.BACKGROUND);
         card.setBorder(BorderFactory.createCompoundBorder(
             BorderFactory.createLineBorder(new Color(226, 232, 240), 1),
             BorderFactory.createEmptyBorder(10, 10, 10, 10)
@@ -166,7 +167,7 @@ public class CommentsPanel extends JPanel {
         // User info
         JLabel userLabel = new JLabel(comment.getUserName() != null ? comment.getUserName() : "Anonymous");
         userLabel.setFont(new Font("Segoe UI", Font.BOLD, 12));
-        userLabel.setForeground(new Color(47, 111, 235));
+        userLabel.setForeground(UITheme.PRIMARY);
 
         String timeText = comment.getCreatedAt() != null ? comment.getCreatedAt().toString() : "";
         JLabel timeLabel = new JLabel(timeText);
@@ -174,7 +175,7 @@ public class CommentsPanel extends JPanel {
         timeLabel.setForeground(new Color(154, 164, 178));
 
         JPanel headerPanel = new JPanel(new BorderLayout());
-        headerPanel.setBackground(new Color(243, 244, 246));
+        headerPanel.setBackground(UITheme.BACKGROUND);
         headerPanel.add(userLabel, BorderLayout.WEST);
         headerPanel.add(timeLabel, BorderLayout.EAST);
 
@@ -183,17 +184,69 @@ public class CommentsPanel extends JPanel {
         contentArea.setEditable(false);
         contentArea.setLineWrap(true);
         contentArea.setWrapStyleWord(true);
-        contentArea.setBackground(new Color(243, 244, 246));
+        contentArea.setBackground(UITheme.BACKGROUND);
         contentArea.setFont(new Font("Segoe UI", Font.PLAIN, 12));
         contentArea.setBorder(BorderFactory.createEmptyBorder(5, 0, 0, 0));
 
+        JButton replyButton = new JButton("Reply");
+        replyButton.setBackground(new Color(8, 145, 178));
+        replyButton.setForeground(Color.WHITE);
+        replyButton.setFont(new Font("Segoe UI", Font.BOLD, 11));
+        replyButton.setFocusPainted(false);
+        replyButton.setBorderPainted(false);
+        replyButton.addActionListener(e -> showReplyDialog(comment));
+
+        JPanel actions = new JPanel(new FlowLayout(FlowLayout.LEFT, 0, 0));
+        actions.setBackground(UITheme.BACKGROUND);
+        actions.add(replyButton);
+
         card.add(headerPanel, BorderLayout.NORTH);
         card.add(contentArea, BorderLayout.CENTER);
+        card.add(actions, BorderLayout.SOUTH);
 
         return card;
+    }
+
+    private void showReplyDialog(Comment parent) {
+        JTextArea replyArea = new JTextArea(4, 30);
+        replyArea.setLineWrap(true);
+        replyArea.setWrapStyleWord(true);
+        JScrollPane scrollPane = new JScrollPane(replyArea);
+
+        int result = JOptionPane.showConfirmDialog(
+                this,
+                scrollPane,
+                "Reply to " + (parent.getUserName() != null ? parent.getUserName() : "comment"),
+                JOptionPane.OK_CANCEL_OPTION,
+                JOptionPane.PLAIN_MESSAGE
+        );
+
+        if (result == JOptionPane.OK_OPTION) {
+            String content = replyArea.getText().trim();
+            if (content.isEmpty()) {
+                JOptionPane.showMessageDialog(this, "Please enter a reply", "Error", JOptionPane.ERROR_MESSAGE);
+                return;
+            }
+            try {
+                Comment reply = new Comment();
+                reply.setUserId(currentUser.getId());
+                reply.setLessonId(lessonId);
+                reply.setParentId(parent.getId());
+                reply.setContent(content);
+                boolean success = commentService.postComment(reply, currentUser.getId(), currentUser.getRole());
+                if (success) {
+                    loadComments();
+                } else {
+                    JOptionPane.showMessageDialog(this, "Failed to post reply", "Error", JOptionPane.ERROR_MESSAGE);
+                }
+            } catch (Exception ex) {
+                JOptionPane.showMessageDialog(this, "Error: " + ex.getMessage(), "Error", JOptionPane.ERROR_MESSAGE);
+            }
+        }
     }
 
     public void refresh() {
         loadComments();
     }
 }
+

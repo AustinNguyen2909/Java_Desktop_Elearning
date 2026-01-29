@@ -4,14 +4,26 @@ import com.elearning.model.Course;
 import com.elearning.model.Enrollment;
 import com.elearning.model.Lesson;
 import com.elearning.model.User;
+import com.elearning.service.AuthService;
 import com.elearning.service.CourseService;
 import com.elearning.service.EnrollmentService;
+import com.elearning.service.UserService;
 import com.elearning.ui.components.StarRatingPanel;
+import com.elearning.ui.components.UITheme;
 import com.elearning.util.CourseCardImageUtil;
 import com.elearning.util.SessionManager;
 
 import javax.swing.*;
 import java.awt.*;
+import java.awt.geom.Ellipse2D;
+import java.awt.image.BufferedImage;
+import java.io.File;
+import java.nio.file.Files;
+import java.nio.file.Path;
+import java.nio.file.Paths;
+import java.nio.file.StandardCopyOption;
+import java.time.LocalDate;
+import java.time.format.DateTimeFormatter;
 import java.util.List;
 
 /**
@@ -21,16 +33,19 @@ public class UserDashboard extends JFrame {
     private final User currentUser;
     private final CourseService courseService;
     private final EnrollmentService enrollmentService;
+    private final UserService userService;
 
     private JPanel contentPanel;
     private JPanel availableCoursesGrid;
     private JPanel myCoursesGrid;
+    private JPanel profilePanel;
     private JTextField searchField;
 
     public UserDashboard() {
         this.currentUser = SessionManager.getInstance().getCurrentUser();
         this.courseService = CourseService.getInstance();
         this.enrollmentService = EnrollmentService.getInstance();
+        this.userService = UserService.getInstance();
 
         initComponents();
         loadAvailableCourses();
@@ -44,24 +59,25 @@ public class UserDashboard extends JFrame {
         setLocationRelativeTo(null);
 
         JPanel mainPanel = new JPanel(new BorderLayout());
-        mainPanel.setBackground(Color.WHITE);
+        mainPanel.setBackground(UITheme.BACKGROUND);
 
         // Header
         JPanel headerPanel = createHeader();
 
         // Sidebar + Content layout
         JPanel contentArea = new JPanel(new BorderLayout());
-        contentArea.setBackground(Color.WHITE);
+        contentArea.setBackground(UITheme.BACKGROUND);
 
         // Create sidebar
         JPanel sidebar = createSidebar();
 
         // Create content panel with CardLayout
         contentPanel = new JPanel(new CardLayout());
-        contentPanel.setBackground(Color.WHITE);
+        contentPanel.setBackground(UITheme.BACKGROUND);
         contentPanel.add(createBrowseCoursesPanel(), "Browse Courses");
         contentPanel.add(createMyCoursesPanel(), "My Courses");
-        contentPanel.add(createProfilePanel(), "My Profile");
+        profilePanel = createProfilePanel();
+        contentPanel.add(profilePanel, "My Profile");
 
         contentArea.add(sidebar, BorderLayout.WEST);
         contentArea.add(contentPanel, BorderLayout.CENTER);
@@ -74,13 +90,13 @@ public class UserDashboard extends JFrame {
 
     private JPanel createHeader() {
         JPanel headerPanel = new JPanel(new BorderLayout());
-        headerPanel.setBackground(Color.WHITE);
+        headerPanel.setBackground(UITheme.SURFACE);
         headerPanel.setPreferredSize(new Dimension(0, 60));
-        headerPanel.setBorder(BorderFactory.createMatteBorder(0, 0, 2, 0, new Color(230, 230, 230)));
+        headerPanel.setBorder(BorderFactory.createMatteBorder(0, 0, 2, 0, UITheme.BORDER));
 
         JLabel titleLabel = new JLabel("  Student Dashboard - " + currentUser.getFullName());
-        titleLabel.setFont(new Font("Segoe UI", Font.BOLD, 20));
-        titleLabel.setForeground(new Color(31, 41, 55));
+        titleLabel.setFont(new Font("Fira Sans", Font.BOLD, 20));
+        titleLabel.setForeground(UITheme.TEXT);
 
         headerPanel.add(titleLabel, BorderLayout.WEST);
 
@@ -90,9 +106,9 @@ public class UserDashboard extends JFrame {
     private JPanel createSidebar() {
         JPanel sidebar = new JPanel();
         sidebar.setLayout(new BoxLayout(sidebar, BoxLayout.Y_AXIS));
-        sidebar.setBackground(new Color(243, 244, 246));
+        sidebar.setBackground(UITheme.BACKGROUND);
         sidebar.setPreferredSize(new Dimension(250, 0));
-        sidebar.setBorder(BorderFactory.createMatteBorder(0, 0, 0, 1, new Color(230, 230, 230)));
+        sidebar.setBorder(BorderFactory.createMatteBorder(0, 0, 0, 1, UITheme.BORDER));
 
         // Add menu items
         sidebar.add(createMenuItem("Browse Courses", "Browse Courses"));
@@ -104,11 +120,11 @@ public class UserDashboard extends JFrame {
 
         // Logout button at bottom
         JButton logoutButton = new JButton("Logout");
-        logoutButton.setBackground(new Color(220, 53, 69));
+        logoutButton.setBackground(UITheme.DANGER);
         logoutButton.setForeground(Color.WHITE);
         logoutButton.setFocusPainted(false);
         logoutButton.setBorderPainted(false);
-        logoutButton.setFont(new Font("Segoe UI", Font.BOLD, 14));
+        logoutButton.setFont(new Font("Fira Sans", Font.BOLD, 14));
         logoutButton.setAlignmentX(Component.CENTER_ALIGNMENT);
         logoutButton.setMaximumSize(new Dimension(220, 45));
         logoutButton.addActionListener(e -> logout());
@@ -121,12 +137,12 @@ public class UserDashboard extends JFrame {
 
     private JButton createMenuItem(String text, String panelName) {
         JButton menuItem = new JButton(text);
-        menuItem.setBackground(new Color(47, 111, 235));
+        menuItem.setBackground(UITheme.PRIMARY);
         menuItem.setForeground(Color.WHITE);
         menuItem.setFocusPainted(false);
         menuItem.setBorderPainted(false);
         menuItem.setBorder(BorderFactory.createEmptyBorder(10, 0, 10, 0));
-        menuItem.setFont(new Font("Segoe UI", Font.BOLD, 14));
+        menuItem.setFont(new Font("Fira Sans", Font.BOLD, 14));
         menuItem.setAlignmentX(Component.CENTER_ALIGNMENT);
         menuItem.setMaximumSize(new Dimension(250, 80));
         menuItem.addActionListener(e -> {
@@ -138,43 +154,43 @@ public class UserDashboard extends JFrame {
 
     private JPanel createBrowseCoursesPanel() {
         JPanel panel = new JPanel(new BorderLayout(10, 10));
-        panel.setBackground(Color.WHITE); // Light background
+        panel.setBackground(UITheme.BACKGROUND);
         panel.setBorder(BorderFactory.createEmptyBorder(10, 10, 10, 10));
 
         // Top panel with search
         JPanel topPanel = new JPanel(new BorderLayout(10, 0));
-        topPanel.setBackground(Color.WHITE); // Light background
+        topPanel.setBackground(UITheme.BACKGROUND);
 
         JLabel titleLabel = new JLabel("Available Courses");
-        titleLabel.setFont(new Font("Segoe UI", Font.BOLD, 18));
-        titleLabel.setForeground(new Color(31, 41, 55)); // Dark text
+        titleLabel.setFont(new Font("Fira Sans", Font.BOLD, 18));
+        titleLabel.setForeground(UITheme.TEXT);
 
         JPanel searchPanel = new JPanel(new FlowLayout(FlowLayout.RIGHT));
-        searchPanel.setBackground(Color.WHITE); // Light background
+        searchPanel.setBackground(UITheme.BACKGROUND);
         JLabel searchLbl = new JLabel("Search:");
-        searchLbl.setForeground(new Color(31, 41, 55)); // Dark text
+        searchLbl.setForeground(UITheme.TEXT);
         searchPanel.add(searchLbl);
         searchField = new JTextField(20);
-        searchField.setBackground(Color.WHITE);
-        searchField.setForeground(new Color(31, 41, 55));
-        searchField.setCaretColor(new Color(31, 41, 55));
+        searchField.setBackground(UITheme.SURFACE);
+        searchField.setForeground(UITheme.TEXT);
+        searchField.setCaretColor(UITheme.TEXT);
         searchPanel.add(searchField);
 
         JButton searchButton = new JButton("Search");
-        searchButton.setBackground(new Color(47, 111, 235)); // Navy blue
+        searchButton.setBackground(UITheme.PRIMARY);
         searchButton.setForeground(Color.WHITE);
         searchButton.setFocusPainted(false);
         searchButton.setBorderPainted(false);
-        searchButton.setFont(new Font("Segoe UI", Font.BOLD, 12));
+        searchButton.setFont(new Font("Fira Sans", Font.BOLD, 12));
         searchButton.addActionListener(e -> searchCourses());
         searchPanel.add(searchButton);
 
         JButton refreshButton = new JButton("Refresh");
-        refreshButton.setBackground(new Color(47, 111, 235)); // Navy blue
+        refreshButton.setBackground(UITheme.PRIMARY);
         refreshButton.setForeground(Color.WHITE);
         refreshButton.setFocusPainted(false);
         refreshButton.setBorderPainted(false);
-        refreshButton.setFont(new Font("Segoe UI", Font.BOLD, 12));
+        refreshButton.setFont(new Font("Fira Sans", Font.BOLD, 12));
         refreshButton.addActionListener(e -> loadAvailableCourses());
         searchPanel.add(refreshButton);
 
@@ -183,12 +199,12 @@ public class UserDashboard extends JFrame {
 
         availableCoursesGrid = new com.elearning.ui.components.ScrollableWrapPanel(
                 new com.elearning.ui.components.WrapLayout(FlowLayout.LEFT, 16, 16));
-        availableCoursesGrid.setBackground(Color.WHITE);
+        availableCoursesGrid.setBackground(UITheme.BACKGROUND);
         availableCoursesGrid.setBorder(BorderFactory.createEmptyBorder(5, 5, 5, 5));
 
         JScrollPane scrollPane = new JScrollPane(availableCoursesGrid);
-        scrollPane.setBackground(Color.WHITE);
-        scrollPane.getViewport().setBackground(Color.WHITE);
+        scrollPane.setBackground(UITheme.BACKGROUND);
+        scrollPane.getViewport().setBackground(UITheme.BACKGROUND);
         scrollPane.setHorizontalScrollBarPolicy(ScrollPaneConstants.HORIZONTAL_SCROLLBAR_NEVER);
 
         panel.add(topPanel, BorderLayout.NORTH);
@@ -199,22 +215,22 @@ public class UserDashboard extends JFrame {
 
     private JPanel createMyCoursesPanel() {
         JPanel panel = new JPanel(new BorderLayout(10, 10));
-        panel.setBackground(Color.WHITE); // Light background
+        panel.setBackground(UITheme.BACKGROUND);
         panel.setBorder(BorderFactory.createEmptyBorder(10, 10, 10, 10));
 
         // Top panel
         JPanel topPanel = new JPanel(new BorderLayout());
-        topPanel.setBackground(Color.WHITE); // Light background
+        topPanel.setBackground(UITheme.BACKGROUND);
         JLabel titleLabel = new JLabel("My Enrolled Courses");
-        titleLabel.setFont(new Font("Segoe UI", Font.BOLD, 18));
-        titleLabel.setForeground(new Color(31, 41, 55)); // Dark text
+        titleLabel.setFont(new Font("Fira Sans", Font.BOLD, 18));
+        titleLabel.setForeground(UITheme.TEXT);
 
         JButton refreshButton = new JButton("Refresh");
-        refreshButton.setBackground(new Color(47, 111, 235)); // Navy blue
+        refreshButton.setBackground(UITheme.PRIMARY);
         refreshButton.setForeground(Color.WHITE);
         refreshButton.setFocusPainted(false);
         refreshButton.setBorderPainted(false);
-        refreshButton.setFont(new Font("Segoe UI", Font.BOLD, 12));
+        refreshButton.setFont(new Font("Fira Sans", Font.BOLD, 12));
         refreshButton.addActionListener(e -> loadMyCourses());
 
         topPanel.add(titleLabel, BorderLayout.WEST);
@@ -222,12 +238,12 @@ public class UserDashboard extends JFrame {
 
         myCoursesGrid = new com.elearning.ui.components.ScrollableWrapPanel(
                 new com.elearning.ui.components.WrapLayout(FlowLayout.LEFT, 16, 16));
-        myCoursesGrid.setBackground(Color.WHITE);
+        myCoursesGrid.setBackground(UITheme.BACKGROUND);
         myCoursesGrid.setBorder(BorderFactory.createEmptyBorder(5, 5, 5, 5));
 
         JScrollPane scrollPane = new JScrollPane(myCoursesGrid);
-        scrollPane.setBackground(Color.WHITE);
-        scrollPane.getViewport().setBackground(Color.WHITE);
+        scrollPane.setBackground(UITheme.BACKGROUND);
+        scrollPane.getViewport().setBackground(UITheme.BACKGROUND);
         scrollPane.setHorizontalScrollBarPolicy(ScrollPaneConstants.HORIZONTAL_SCROLLBAR_NEVER);
 
         panel.add(topPanel, BorderLayout.NORTH);
@@ -237,90 +253,136 @@ public class UserDashboard extends JFrame {
     }
 
     private JPanel createProfilePanel() {
-        JPanel panel = new JPanel(new BorderLayout());
-        panel.setBackground(Color.WHITE); // Light background
-        panel.setBorder(BorderFactory.createEmptyBorder(20, 20, 20, 20));
+        JPanel panel = new JPanel(new BorderLayout(16, 16));
+        panel.setBackground(new Color(236, 254, 255));
+        panel.setBorder(BorderFactory.createEmptyBorder(18, 18, 18, 18));
 
         JLabel titleLabel = new JLabel("My Profile");
-        titleLabel.setFont(new Font("Segoe UI", Font.BOLD, 18));
-        titleLabel.setForeground(new Color(31, 41, 55)); // Dark text
+        titleLabel.setFont(new Font("Fira Sans", Font.BOLD, 20));
+        titleLabel.setForeground(new Color(22, 78, 99));
 
-        JPanel profilePanel = new JPanel(new GridBagLayout());
-        profilePanel.setBackground(Color.WHITE); // Light background
-        GridBagConstraints gbc = new GridBagConstraints();
-        gbc.insets = new Insets(10, 10, 10, 10);
-        gbc.anchor = GridBagConstraints.WEST;
+        JPanel content = new JPanel(new BorderLayout(16, 16));
+        content.setOpaque(false);
 
-        int row = 0;
+        // Left profile card
+        JPanel leftCol = new JPanel();
+        leftCol.setOpaque(false);
+        leftCol.setLayout(new BoxLayout(leftCol, BoxLayout.Y_AXIS));
+        leftCol.setPreferredSize(new Dimension(260, 0));
 
-        // Username
-        gbc.gridx = 0;
-        gbc.gridy = row++;
-        JLabel usernameLbl = new JLabel("Username:");
-        usernameLbl.setForeground(new Color(31, 41, 55)); // Dark text
-        profilePanel.add(usernameLbl, gbc);
-        gbc.gridx = 1;
-        JLabel usernameVal = new JLabel(currentUser.getUsername());
-        usernameVal.setForeground(new Color(31, 41, 55)); // Dark text
-        profilePanel.add(usernameVal, gbc);
+        JPanel profileCard = new com.elearning.ui.components.CardPanel();
+        profileCard.setLayout(new BoxLayout(profileCard, BoxLayout.Y_AXIS));
+        profileCard.setBackground(Color.WHITE);
+        profileCard.setBorder(BorderFactory.createEmptyBorder(16, 16, 16, 16));
 
-        // Full Name
-        gbc.gridx = 0;
-        gbc.gridy = row++;
-        JLabel nameLbl = new JLabel("Full Name:");
-        nameLbl.setForeground(new Color(31, 41, 55)); // Dark text
-        profilePanel.add(nameLbl, gbc);
-        gbc.gridx = 1;
-        JLabel nameVal = new JLabel(currentUser.getFullName());
-        nameVal.setForeground(new Color(31, 41, 55)); // Dark text
-        profilePanel.add(nameVal, gbc);
+        JLabel avatarLabel = new JLabel();
+        avatarLabel.setAlignmentX(Component.CENTER_ALIGNMENT);
+        avatarLabel.setIcon(loadAvatarIcon(currentUser.getAvatarPath(), currentUser.getFullName(), 96));
 
-        // Email
-        gbc.gridx = 0;
-        gbc.gridy = row++;
-        JLabel emailLbl = new JLabel("Email:");
-        emailLbl.setForeground(new Color(31, 41, 55)); // Dark text
-        profilePanel.add(emailLbl, gbc);
-        gbc.gridx = 1;
-        JLabel emailVal = new JLabel(currentUser.getEmail());
-        emailVal.setForeground(new Color(31, 41, 55)); // Dark text
-        profilePanel.add(emailVal, gbc);
+        JLabel nameLabel = new JLabel(currentUser.getFullName());
+        nameLabel.setFont(new Font("Fira Sans", Font.BOLD, 16));
+        nameLabel.setForeground(new Color(22, 78, 99));
+        nameLabel.setAlignmentX(Component.CENTER_ALIGNMENT);
 
-        // Phone
-        gbc.gridx = 0;
-        gbc.gridy = row++;
-        JLabel phoneLbl = new JLabel("Phone:");
-        phoneLbl.setForeground(new Color(31, 41, 55)); // Dark text
-        profilePanel.add(phoneLbl, gbc);
-        gbc.gridx = 1;
-        JLabel phoneVal = new JLabel(currentUser.getPhone() != null ? currentUser.getPhone() : "N/A");
-        phoneVal.setForeground(new Color(31, 41, 55)); // Dark text
-        profilePanel.add(phoneVal, gbc);
+        JLabel roleLabel = new JLabel(displayRole(currentUser.getRole()));
+        roleLabel.setFont(new Font("Fira Sans", Font.PLAIN, 12));
+        roleLabel.setForeground(new Color(8, 145, 178));
+        roleLabel.setAlignmentX(Component.CENTER_ALIGNMENT);
 
-        // Role
-        gbc.gridx = 0;
-        gbc.gridy = row++;
-        JLabel roleLbl = new JLabel("Role:");
-        roleLbl.setForeground(new Color(31, 41, 55)); // Dark text
-        profilePanel.add(roleLbl, gbc);
-        gbc.gridx = 1;
-        JLabel roleVal = new JLabel(currentUser.getRole());
-        roleVal.setForeground(new Color(31, 41, 55)); // Dark text
-        profilePanel.add(roleVal, gbc);
+        JButton changePhotoBtn = new JButton("Change Photo");
+        changePhotoBtn.setBackground(new Color(8, 145, 178));
+        changePhotoBtn.setForeground(Color.WHITE);
+        changePhotoBtn.setFocusPainted(false);
+        changePhotoBtn.setBorderPainted(false);
+        changePhotoBtn.setFont(new Font("Fira Sans", Font.BOLD, 12));
+        changePhotoBtn.setAlignmentX(Component.CENTER_ALIGNMENT);
+        changePhotoBtn.setMaximumSize(new Dimension(200, 36));
+        changePhotoBtn.addActionListener(e -> handleAvatarChange(avatarLabel));
 
-        // Status
-        gbc.gridx = 0;
-        gbc.gridy = row++;
-        JLabel statusLbl = new JLabel("Status:");
-        statusLbl.setForeground(new Color(31, 41, 55)); // Dark text
-        profilePanel.add(statusLbl, gbc);
-        gbc.gridx = 1;
-        JLabel statusVal = new JLabel(currentUser.getStatus());
-        statusVal.setForeground(new Color(31, 41, 55)); // Dark text
-        profilePanel.add(statusVal, gbc);
+        JLabel statusChip = new JLabel(currentUser.getStatus());
+        statusChip.setFont(new Font("Fira Sans", Font.BOLD, 11));
+        statusChip.setForeground(new Color(5, 150, 105));
+        statusChip.setOpaque(true);
+        statusChip.setBackground(new Color(209, 250, 229));
+        statusChip.setBorder(BorderFactory.createEmptyBorder(4, 8, 4, 8));
+        statusChip.setAlignmentX(Component.CENTER_ALIGNMENT);
+
+        profileCard.add(avatarLabel);
+        profileCard.add(Box.createRigidArea(new Dimension(0, 10)));
+        profileCard.add(nameLabel);
+        profileCard.add(Box.createRigidArea(new Dimension(0, 4)));
+        profileCard.add(roleLabel);
+        profileCard.add(Box.createRigidArea(new Dimension(0, 10)));
+        profileCard.add(statusChip);
+        profileCard.add(Box.createRigidArea(new Dimension(0, 12)));
+        profileCard.add(changePhotoBtn);
+
+        if (!"ADMIN".equals(currentUser.getRole())) {
+            JButton editProfileBtn = new JButton("Edit Profile");
+            editProfileBtn.setBackground(UITheme.ACCENT);
+            editProfileBtn.setForeground(Color.WHITE);
+            editProfileBtn.setFocusPainted(false);
+            editProfileBtn.setBorderPainted(false);
+            editProfileBtn.setFont(new Font("Fira Sans", Font.BOLD, 12));
+            editProfileBtn.setAlignmentX(Component.CENTER_ALIGNMENT);
+            editProfileBtn.setMaximumSize(new Dimension(200, 36));
+            editProfileBtn.addActionListener(e -> showEditProfileDialog());
+
+            JButton changePasswordBtn = new JButton("Change Password");
+            changePasswordBtn.setBackground(new Color(15, 118, 110));
+            changePasswordBtn.setForeground(Color.WHITE);
+            changePasswordBtn.setFocusPainted(false);
+            changePasswordBtn.setBorderPainted(false);
+            changePasswordBtn.setFont(new Font("Fira Sans", Font.BOLD, 12));
+            changePasswordBtn.setAlignmentX(Component.CENTER_ALIGNMENT);
+            changePasswordBtn.setMaximumSize(new Dimension(200, 36));
+            changePasswordBtn.addActionListener(e -> showChangePasswordDialog());
+
+            profileCard.add(Box.createRigidArea(new Dimension(0, 8)));
+            profileCard.add(editProfileBtn);
+            profileCard.add(Box.createRigidArea(new Dimension(0, 6)));
+            profileCard.add(changePasswordBtn);
+        }
+
+        leftCol.add(profileCard);
+
+        // Right content sections
+        JPanel rightCol = new JPanel();
+        rightCol.setOpaque(false);
+        rightCol.setLayout(new BoxLayout(rightCol, BoxLayout.Y_AXIS));
+
+        JPanel personalCard = createProfileSection("Personal Details",
+                createProfileRow("Username", currentUser.getUsername()),
+                createProfileRow("Full name", currentUser.getFullName()),
+                createProfileRow("Email", currentUser.getEmail()),
+                createProfileRow("Phone", currentUser.getPhone() != null ? currentUser.getPhone() : "N/A"));
+
+        String joinedAt = currentUser.getCreatedAt() != null
+                ? currentUser.getCreatedAt().format(DateTimeFormatter.ofPattern("MMM dd, yyyy"))
+                : "N/A";
+        JPanel accountCard = createProfileSection("Account",
+                createProfileRow("Role", displayRole(currentUser.getRole())),
+                createProfileRow("Status", currentUser.getStatus()),
+                createProfileRow("Joined", joinedAt));
+
+        JPanel educationCard = createProfileSection("Education & Work",
+                createProfileRow("Date of birth",
+                        currentUser.getDateOfBirth() != null ? currentUser.getDateOfBirth().toString() : "N/A"),
+                createProfileRow("School", valueOrNA(currentUser.getSchool())),
+                createProfileRow("Job title", valueOrNA(currentUser.getJobTitle())),
+                createProfileRow("Experience", valueOrNA(currentUser.getExperience())));
+
+        rightCol.add(personalCard);
+        rightCol.add(Box.createRigidArea(new Dimension(0, 12)));
+        rightCol.add(accountCard);
+        rightCol.add(Box.createRigidArea(new Dimension(0, 12)));
+        rightCol.add(educationCard);
+
+        content.add(leftCol, BorderLayout.WEST);
+        content.add(rightCol, BorderLayout.CENTER);
 
         panel.add(titleLabel, BorderLayout.NORTH);
-        panel.add(profilePanel, BorderLayout.CENTER);
+        panel.add(content, BorderLayout.CENTER);
 
         return panel;
     }
@@ -443,7 +505,7 @@ public class UserDashboard extends JFrame {
         card.setMaximumSize(new Dimension(280, 380));
 
         JPanel imagePanel = new JPanel(new BorderLayout());
-        imagePanel.setBackground(new Color(243, 244, 246));
+        imagePanel.setBackground(UITheme.BACKGROUND);
         imagePanel.setPreferredSize(new Dimension(280, 140));
         JLabel imageLabel = new JLabel();
         imageLabel.setHorizontalAlignment(SwingConstants.CENTER);
@@ -459,19 +521,19 @@ public class UserDashboard extends JFrame {
 
         JLabel titleLabel = new JLabel(title);
         titleLabel.setFont(new Font("Segoe UI", Font.BOLD, 15));
-        titleLabel.setForeground(new Color(31, 41, 55));
+        titleLabel.setForeground(UITheme.TEXT);
         titleLabel.setAlignmentX(Component.LEFT_ALIGNMENT);
 
         JLabel subtitleLabel = new JLabel(subtitle != null ? subtitle : "");
         subtitleLabel.setFont(new Font("Segoe UI", Font.PLAIN, 12));
-        subtitleLabel.setForeground(new Color(107, 114, 128));
+        subtitleLabel.setForeground(UITheme.MUTED_TEXT);
         subtitleLabel.setAlignmentX(Component.LEFT_ALIGNMENT);
 
         StarRatingPanel ratingPanel = new StarRatingPanel(rating, 18, 4);
 
         JLabel learnersLabel = new JLabel(learners + " learners");
         learnersLabel.setFont(new Font("Segoe UI", Font.PLAIN, 12));
-        learnersLabel.setForeground(new Color(107, 114, 128));
+        learnersLabel.setForeground(UITheme.MUTED_TEXT);
         learnersLabel.setAlignmentX(Component.LEFT_ALIGNMENT);
 
         JLabel metaLabel = new JLabel(metaLine != null ? metaLine : "");
@@ -495,7 +557,7 @@ public class UserDashboard extends JFrame {
         actions.setMaximumSize(new Dimension(260, 44));
 
         JButton primaryBtn = new JButton(primaryText);
-        primaryBtn.setBackground(new Color(47, 111, 235));
+        primaryBtn.setBackground(UITheme.PRIMARY);
         primaryBtn.setForeground(Color.WHITE);
         primaryBtn.setFocusPainted(false);
         primaryBtn.setBorderPainted(false);
@@ -511,8 +573,8 @@ public class UserDashboard extends JFrame {
 
         if (secondaryText != null && secondaryAction != null) {
             JButton secondaryBtn = new JButton(secondaryText);
-            secondaryBtn.setBackground(new Color(243, 244, 246));
-            secondaryBtn.setForeground(new Color(31, 41, 55));
+            secondaryBtn.setBackground(UITheme.BACKGROUND);
+            secondaryBtn.setForeground(UITheme.TEXT);
             secondaryBtn.setFocusPainted(false);
             secondaryBtn.setBorderPainted(true);
             secondaryBtn.setBorder(BorderFactory.createEmptyBorder(10, 0, 10, 0));
@@ -644,9 +706,9 @@ public class UserDashboard extends JFrame {
 
             if (!isSelected) {
                 label.setBackground(Color.WHITE);
-                label.setForeground(new Color(31, 41, 55));
+                label.setForeground(UITheme.TEXT);
             } else {
-                label.setBackground(new Color(47, 111, 235));
+                label.setBackground(UITheme.PRIMARY);
                 label.setForeground(Color.WHITE);
             }
 
@@ -695,5 +757,332 @@ public class UserDashboard extends JFrame {
         });
     }
 
+    private JPanel createProfileSection(String title, JPanel... rows) {
+        JPanel card = new com.elearning.ui.components.CardPanel();
+        card.setBackground(Color.WHITE);
+        card.setLayout(new BoxLayout(card, BoxLayout.Y_AXIS));
+        card.setBorder(BorderFactory.createEmptyBorder(14, 16, 14, 16));
+
+        JLabel titleLabel = new JLabel(title);
+        titleLabel.setFont(new Font("Fira Sans", Font.BOLD, 14));
+        titleLabel.setForeground(new Color(22, 78, 99));
+        titleLabel.setAlignmentX(Component.LEFT_ALIGNMENT);
+
+        card.add(titleLabel);
+        card.add(Box.createRigidArea(new Dimension(0, 10)));
+
+        for (JPanel row : rows) {
+            card.add(row);
+            card.add(Box.createRigidArea(new Dimension(0, 6)));
+        }
+
+        return card;
+    }
+
+    private JPanel createProfileRow(String label, String value) {
+        JPanel row = new JPanel(new BorderLayout());
+        row.setOpaque(false);
+        row.setMaximumSize(new Dimension(Integer.MAX_VALUE, 24));
+
+        JLabel key = new JLabel(label);
+        key.setFont(new Font("Fira Sans", Font.PLAIN, 12));
+        key.setForeground(new Color(100, 116, 139));
+
+        JLabel val = new JLabel(value);
+        val.setFont(new Font("Fira Sans", Font.BOLD, 12));
+        val.setForeground(new Color(22, 78, 99));
+
+        row.add(key, BorderLayout.WEST);
+        row.add(val, BorderLayout.EAST);
+        return row;
+    }
+
+    private String valueOrNA(String value) {
+        return value == null || value.isBlank() ? "N/A" : value;
+    }
+
+    private String displayRole(String role) {
+        if (role == null) {
+            return "Unknown";
+        }
+        return switch (role) {
+            case "USER" -> "Student";
+            case "INSTRUCTOR" -> "Instructor";
+            case "ADMIN" -> "Admin";
+            default -> role;
+        };
+    }
+
+    private void refreshProfilePanel() {
+        contentPanel.remove(profilePanel);
+        profilePanel = createProfilePanel();
+        contentPanel.add(profilePanel, "My Profile");
+        CardLayout cl = (CardLayout) contentPanel.getLayout();
+        cl.show(contentPanel, "My Profile");
+        contentPanel.revalidate();
+        contentPanel.repaint();
+    }
+
+    private void showEditProfileDialog() {
+        JDialog dialog = new JDialog(this, "Edit Profile", true);
+        dialog.setSize(520, 620);
+        dialog.setLocationRelativeTo(this);
+
+        JPanel panel = new JPanel();
+        panel.setLayout(new BoxLayout(panel, BoxLayout.Y_AXIS));
+        panel.setBorder(BorderFactory.createEmptyBorder(18, 18, 18, 18));
+        panel.setBackground(Color.WHITE);
+
+        JTextField usernameField = new JTextField(currentUser.getUsername());
+        usernameField.setEnabled(false);
+        JTextField fullNameField = new JTextField(currentUser.getFullName());
+        JTextField emailField = new JTextField(currentUser.getEmail());
+        JTextField phoneField = new JTextField(valueOrNA(currentUser.getPhone()).equals("N/A") ? "" : currentUser.getPhone());
+        JTextField dobField = new JTextField(currentUser.getDateOfBirth() != null
+                ? currentUser.getDateOfBirth().toString()
+                : "");
+        JTextField schoolField = new JTextField(valueOrNA(currentUser.getSchool()).equals("N/A") ? "" : currentUser.getSchool());
+        JTextField jobField = new JTextField(valueOrNA(currentUser.getJobTitle()).equals("N/A") ? "" : currentUser.getJobTitle());
+
+        JTextArea experienceArea = new JTextArea(valueOrNA(currentUser.getExperience()).equals("N/A") ? "" : currentUser.getExperience(), 4, 20);
+        experienceArea.setLineWrap(true);
+        experienceArea.setWrapStyleWord(true);
+        JScrollPane experienceScroll = new JScrollPane(experienceArea);
+
+        panel.add(createFieldBlock("Username (read-only)", usernameField));
+        panel.add(createFieldBlock("Full name", fullNameField));
+        panel.add(createFieldBlock("Email", emailField));
+        panel.add(createFieldBlock("Phone", phoneField));
+        panel.add(createFieldBlock("Date of birth (YYYY-MM-DD)", dobField));
+        panel.add(createFieldBlock("School", schoolField));
+        panel.add(createFieldBlock("Job title", jobField));
+        panel.add(createFieldBlock("Experience", experienceScroll));
+
+        JButton saveButton = new JButton("Save Changes");
+        saveButton.setBackground(UITheme.ACCENT);
+        saveButton.setForeground(Color.WHITE);
+        saveButton.setFocusPainted(false);
+        saveButton.setBorderPainted(false);
+        saveButton.setFont(new Font("Fira Sans", Font.BOLD, 12));
+
+        JButton cancelButton = new JButton("Cancel");
+        cancelButton.setBackground(new Color(148, 163, 184));
+        cancelButton.setForeground(Color.WHITE);
+        cancelButton.setFocusPainted(false);
+        cancelButton.setBorderPainted(false);
+        cancelButton.setFont(new Font("Fira Sans", Font.BOLD, 12));
+
+        JPanel buttonRow = new JPanel(new FlowLayout(FlowLayout.CENTER, 10, 0));
+        buttonRow.setBackground(Color.WHITE);
+        buttonRow.add(saveButton);
+        buttonRow.add(cancelButton);
+        panel.add(Box.createRigidArea(new Dimension(0, 8)));
+        panel.add(buttonRow);
+
+        saveButton.addActionListener(e -> {
+            try {
+                currentUser.setFullName(fullNameField.getText().trim());
+                currentUser.setEmail(emailField.getText().trim());
+                currentUser.setPhone(phoneField.getText().trim().isEmpty() ? null : phoneField.getText().trim());
+                currentUser.setSchool(schoolField.getText().trim().isEmpty() ? null : schoolField.getText().trim());
+                currentUser.setJobTitle(jobField.getText().trim().isEmpty() ? null : jobField.getText().trim());
+                currentUser.setExperience(experienceArea.getText().trim().isEmpty() ? null : experienceArea.getText().trim());
+
+                String dobText = dobField.getText().trim();
+                if (!dobText.isEmpty()) {
+                    currentUser.setDateOfBirth(LocalDate.parse(dobText));
+                } else {
+                    currentUser.setDateOfBirth(null);
+                }
+
+                boolean success = userService.updateUser(currentUser, currentUser.getId(), currentUser.getRole());
+                if (success) {
+                    JOptionPane.showMessageDialog(dialog, "Profile updated successfully!", "Success",
+                            JOptionPane.INFORMATION_MESSAGE);
+                    dialog.dispose();
+                    refreshProfilePanel();
+                } else {
+                    JOptionPane.showMessageDialog(dialog, "Failed to update profile", "Error",
+                            JOptionPane.ERROR_MESSAGE);
+                }
+            } catch (Exception ex) {
+                JOptionPane.showMessageDialog(dialog, "Error: " + ex.getMessage(), "Error",
+                        JOptionPane.ERROR_MESSAGE);
+            }
+        });
+
+        cancelButton.addActionListener(e -> dialog.dispose());
+
+        dialog.add(new JScrollPane(panel));
+        dialog.setVisible(true);
+    }
+
+    private JPanel createFieldBlock(String label, JComponent field) {
+        JPanel block = new JPanel();
+        block.setLayout(new BoxLayout(block, BoxLayout.Y_AXIS));
+        block.setBackground(Color.WHITE);
+        block.setBorder(BorderFactory.createEmptyBorder(6, 0, 6, 0));
+
+        JLabel lbl = new JLabel(label);
+        lbl.setFont(new Font("Fira Sans", Font.PLAIN, 12));
+        lbl.setForeground(new Color(71, 85, 105));
+        block.add(lbl);
+        block.add(Box.createRigidArea(new Dimension(0, 4)));
+        field.setFont(new Font("Fira Sans", Font.PLAIN, 12));
+        field.setMaximumSize(new Dimension(Integer.MAX_VALUE, 28));
+        block.add(field);
+        return block;
+    }
+
+    private void showChangePasswordDialog() {
+        JDialog dialog = new JDialog(this, "Change Password", true);
+        dialog.setSize(420, 320);
+        dialog.setLocationRelativeTo(this);
+
+        JPanel panel = new JPanel();
+        panel.setLayout(new BoxLayout(panel, BoxLayout.Y_AXIS));
+        panel.setBorder(BorderFactory.createEmptyBorder(18, 18, 18, 18));
+        panel.setBackground(Color.WHITE);
+
+        JPasswordField oldPassword = new JPasswordField();
+        JPasswordField newPassword = new JPasswordField();
+        JPasswordField confirmPassword = new JPasswordField();
+
+        panel.add(createFieldBlock("Current password", oldPassword));
+        panel.add(createFieldBlock("New password", newPassword));
+        panel.add(createFieldBlock("Confirm new password", confirmPassword));
+
+        JButton updateBtn = new JButton("Update Password");
+        updateBtn.setBackground(new Color(8, 145, 178));
+        updateBtn.setForeground(Color.WHITE);
+        updateBtn.setFocusPainted(false);
+        updateBtn.setBorderPainted(false);
+        updateBtn.setFont(new Font("Fira Sans", Font.BOLD, 12));
+
+        JButton cancelBtn = new JButton("Cancel");
+        cancelBtn.setBackground(new Color(148, 163, 184));
+        cancelBtn.setForeground(Color.WHITE);
+        cancelBtn.setFocusPainted(false);
+        cancelBtn.setBorderPainted(false);
+        cancelBtn.setFont(new Font("Fira Sans", Font.BOLD, 12));
+
+        JPanel buttonRow = new JPanel(new FlowLayout(FlowLayout.CENTER, 10, 0));
+        buttonRow.setBackground(Color.WHITE);
+        buttonRow.add(updateBtn);
+        buttonRow.add(cancelBtn);
+        panel.add(Box.createRigidArea(new Dimension(0, 8)));
+        panel.add(buttonRow);
+
+        updateBtn.addActionListener(e -> {
+            String oldPass = new String(oldPassword.getPassword());
+            String newPass = new String(newPassword.getPassword());
+            String confirm = new String(confirmPassword.getPassword());
+
+            if (newPass.isEmpty() || !newPass.equals(confirm)) {
+                JOptionPane.showMessageDialog(dialog, "New passwords do not match", "Error",
+                        JOptionPane.ERROR_MESSAGE);
+                return;
+            }
+
+            boolean success = AuthService.getInstance().changePassword(currentUser.getId(), oldPass, newPass);
+            if (success) {
+                JOptionPane.showMessageDialog(dialog, "Password updated successfully!", "Success",
+                        JOptionPane.INFORMATION_MESSAGE);
+                dialog.dispose();
+            } else {
+                JOptionPane.showMessageDialog(dialog, "Failed to update password", "Error",
+                        JOptionPane.ERROR_MESSAGE);
+            }
+        });
+
+        cancelBtn.addActionListener(e -> dialog.dispose());
+
+        dialog.add(panel);
+        dialog.setVisible(true);
+    }
+
+    private void handleAvatarChange(JLabel avatarLabel) {
+        JFileChooser chooser = new JFileChooser();
+        chooser.setDialogTitle("Choose Profile Photo");
+        chooser.setAcceptAllFileFilterUsed(false);
+        chooser.addChoosableFileFilter(new javax.swing.filechooser.FileNameExtensionFilter(
+                "Images", "png", "jpg", "jpeg"));
+
+        int result = chooser.showOpenDialog(this);
+        if (result != JFileChooser.APPROVE_OPTION) {
+            return;
+        }
+
+        File selected = chooser.getSelectedFile();
+        try {
+            Path avatarsDir = Paths.get("avatars");
+            if (!Files.exists(avatarsDir)) {
+                Files.createDirectories(avatarsDir);
+            }
+            String extension = selected.getName().contains(".")
+                    ? selected.getName().substring(selected.getName().lastIndexOf('.') + 1)
+                    : "png";
+            String fileName = "user_" + currentUser.getId() + "_" + System.currentTimeMillis() + "." + extension;
+            Path dest = avatarsDir.resolve(fileName);
+            Files.copy(selected.toPath(), dest, StandardCopyOption.REPLACE_EXISTING);
+
+            currentUser.setAvatarPath(dest.toString());
+            userService.updateUser(currentUser, currentUser.getId(), currentUser.getRole());
+            avatarLabel.setIcon(loadAvatarIcon(currentUser.getAvatarPath(), currentUser.getFullName(), 96));
+        } catch (Exception ex) {
+            JOptionPane.showMessageDialog(this,
+                    "Failed to update avatar: " + ex.getMessage(),
+                    "Error",
+                    JOptionPane.ERROR_MESSAGE);
+        }
+    }
+
+    private ImageIcon loadAvatarIcon(String path, String name, int size) {
+        BufferedImage avatarImage;
+        try {
+            if (path != null && !path.isBlank() && new File(path).exists()) {
+                avatarImage = javax.imageio.ImageIO.read(new File(path));
+            } else {
+                avatarImage = createInitialsAvatar(name, size);
+            }
+        } catch (Exception e) {
+            avatarImage = createInitialsAvatar(name, size);
+        }
+
+        BufferedImage circle = new BufferedImage(size, size, BufferedImage.TYPE_INT_ARGB);
+        Graphics2D g2 = circle.createGraphics();
+        g2.setRenderingHint(RenderingHints.KEY_ANTIALIASING, RenderingHints.VALUE_ANTIALIAS_ON);
+        g2.setClip(new Ellipse2D.Double(0, 0, size, size));
+        g2.drawImage(avatarImage, 0, 0, size, size, null);
+        g2.dispose();
+        return new ImageIcon(circle);
+    }
+
+    private BufferedImage createInitialsAvatar(String name, int size) {
+        BufferedImage image = new BufferedImage(size, size, BufferedImage.TYPE_INT_ARGB);
+        Graphics2D g2 = image.createGraphics();
+        g2.setRenderingHint(RenderingHints.KEY_ANTIALIASING, RenderingHints.VALUE_ANTIALIAS_ON);
+        g2.setColor(new Color(8, 145, 178));
+        g2.fillOval(0, 0, size, size);
+        g2.setColor(Color.WHITE);
+        g2.setFont(new Font("Fira Sans", Font.BOLD, size / 3));
+        String initials = "U";
+        if (name != null && !name.isBlank()) {
+            String[] parts = name.trim().split("\\s+");
+            if (parts.length >= 2) {
+                initials = ("" + parts[0].charAt(0) + parts[1].charAt(0)).toUpperCase();
+            } else {
+                initials = ("" + parts[0].charAt(0)).toUpperCase();
+            }
+        }
+        FontMetrics fm = g2.getFontMetrics();
+        int textWidth = fm.stringWidth(initials);
+        int textHeight = fm.getAscent();
+        g2.drawString(initials, (size - textWidth) / 2, (size + textHeight / 2) / 2);
+        g2.dispose();
+        return image;
+    }
+
     // no-op
 }
+

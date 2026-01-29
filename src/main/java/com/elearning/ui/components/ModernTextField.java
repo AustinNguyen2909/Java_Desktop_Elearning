@@ -9,7 +9,7 @@ import java.awt.*;
  */
 public class ModernTextField extends JTextField {
     private String placeholder;
-    private Color placeholderColor = new Color(154, 164, 178);
+    private Color placeholderColor = UITheme.MUTED_TEXT;
 
     public ModernTextField(String placeholder) {
         this.placeholder = placeholder;
@@ -23,12 +23,12 @@ public class ModernTextField extends JTextField {
     }
 
     private void init() {
-        setFont(new Font("Segoe UI", Font.PLAIN, 14));
-        setBackground(Color.WHITE); // Light background
-        setForeground(new Color(31, 41, 55)); // Dark text
-        setCaretColor(new Color(31, 41, 55)); // Dark caret
+        setFont(new Font("Fira Sans", Font.PLAIN, 14));
+        setBackground(UITheme.SURFACE);
+        setForeground(UITheme.TEXT);
+        setCaretColor(UITheme.TEXT);
         setBorder(BorderFactory.createCompoundBorder(
-                BorderFactory.createLineBorder(new Color(215, 222, 232), 1, true),
+                BorderFactory.createLineBorder(UITheme.BORDER, 1, true),
                 new EmptyBorder(8, 12, 8, 12)
         ));
         setPreferredSize(new Dimension(300, 45));

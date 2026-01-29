@@ -1,0 +1,776 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>ERD Studio — E-Learning DB</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+  <link href="https://fonts.googleapis.com/css2?family=Sora:wght@400;500;600;700&family=Source+Sans+3:wght@400;500;600&display=swap" rel="stylesheet" />
+  <style>
+    :root {
+      --bg: #0b1220;
+      --bg-2: #0f1a2e;
+      --panel: #121c33;
+      --panel-2: #0f192c;
+      --card: #121f3b;
+      --card-2: #0f1b33;
+      --text: #e6edf7;
+      --muted: #9fb0c8;
+      --accent: #57d0c7;
+      --accent-2: #f8c35c;
+      --danger: #ff7a7a;
+      --border: #223456;
+      --shadow: 0 20px 60px rgba(0, 0, 0, 0.35);
+      --grid: rgba(255, 255, 255, 0.05);
+      --focus: 0 0 0 3px rgba(87, 208, 199, 0.35);
+      --radius: 14px;
+      --radius-lg: 18px;
+    }
+
+    * { box-sizing: border-box; }
+
+    body {
+      margin: 0;
+      font-family: "Source Sans 3", system-ui, -apple-system, sans-serif;
+      color: var(--text);
+      background: radial-gradient(1200px 600px at 20% -10%, rgba(87, 208, 199, 0.15), transparent 60%),
+        radial-gradient(900px 500px at 100% 0%, rgba(248, 195, 92, 0.1), transparent 60%),
+        var(--bg);
+      min-height: 100vh;
+    }
+
+    h1, h2, h3, h4 {
+      font-family: "Sora", system-ui, -apple-system, sans-serif;
+      margin: 0;
+    }
+
+    button, input, select {
+      font-family: inherit;
+    }
+
+    .app {
+      display: grid;
+      grid-template-rows: auto 1fr;
+      min-height: 100vh;
+    }
+
+    header {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      padding: 18px 28px;
+      background: linear-gradient(135deg, rgba(18, 28, 51, 0.9), rgba(15, 26, 46, 0.95));
+      border-bottom: 1px solid var(--border);
+      position: sticky;
+      top: 0;
+      z-index: 30;
+      backdrop-filter: blur(12px);
+    }
+
+    .brand {
+      display: flex;
+      align-items: center;
+      gap: 16px;
+    }
+
+    .brand-icon {
+      width: 40px;
+      height: 40px;
+      border-radius: 12px;
+      background: linear-gradient(135deg, var(--accent), #2b7bff);
+      display: grid;
+      place-items: center;
+      box-shadow: var(--shadow);
+    }
+
+    .brand-icon svg {
+      width: 22px;
+      height: 22px;
+      fill: white;
+    }
+
+    .brand-meta p {
+      margin: 4px 0 0;
+      color: var(--muted);
+      font-size: 14px;
+    }
+
+    .toolbar {
+      display: flex;
+      gap: 10px;
+      flex-wrap: wrap;
+    }
+
+    .btn {
+      background: var(--panel);
+      color: var(--text);
+      border: 1px solid var(--border);
+      padding: 8px 14px;
+      border-radius: 10px;
+      font-size: 14px;
+      cursor: pointer;
+      display: inline-flex;
+      align-items: center;
+      gap: 8px;
+      transition: border-color 0.2s ease, background 0.2s ease, transform 0.2s ease;
+    }
+
+    .btn:hover {
+      border-color: rgba(87, 208, 199, 0.7);
+      background: #162443;
+    }
+
+    .btn:focus-visible {
+      outline: none;
+      box-shadow: var(--focus);
+    }
+
+    .btn.primary {
+      background: linear-gradient(135deg, #1c345f, #1d4d8f);
+      border-color: transparent;
+    }
+
+    .btn.primary:hover {
+      filter: brightness(1.07);
+    }
+
+    .layout {
+      display: grid;
+      grid-template-columns: 280px 1fr 320px;
+      gap: 16px;
+      padding: 18px;
+    }
+
+    .panel {
+      background: var(--panel);
+      border: 1px solid var(--border);
+      border-radius: var(--radius);
+      padding: 16px;
+      box-shadow: var(--shadow);
+    }
+
+    .panel h3 {
+      font-size: 16px;
+      margin-bottom: 12px;
+    }
+
+    .search {
+      position: relative;
+      margin-bottom: 14px;
+    }
+
+    .search input {
+      width: 100%;
+      background: var(--panel-2);
+      border: 1px solid var(--border);
+      color: var(--text);
+      border-radius: 10px;
+      padding: 10px 12px;
+      font-size: 14px;
+    }
+
+    .search input:focus-visible {
+      outline: none;
+      box-shadow: var(--focus);
+    }
+
+    .tag {
+      display: inline-flex;
+      align-items: center;
+      padding: 4px 8px;
+      border-radius: 999px;
+      font-size: 12px;
+      background: rgba(87, 208, 199, 0.12);
+      color: var(--accent);
+      border: 1px solid rgba(87, 208, 199, 0.35);
+    }
+
+    .entity-list {
+      display: grid;
+      gap: 10px;
+      max-height: calc(100vh - 240px);
+      overflow: auto;
+      padding-right: 6px;
+    }
+
+    .entity-item {
+      background: var(--panel-2);
+      border: 1px solid transparent;
+      padding: 12px;
+      border-radius: 12px;
+      cursor: pointer;
+      transition: border-color 0.2s ease, transform 0.2s ease;
+    }
+
+    .entity-item:hover {
+      border-color: rgba(248, 195, 92, 0.8);
+      transform: translateY(-2px);
+    }
+
+    .entity-item h4 {
+      font-size: 14px;
+      margin-bottom: 4px;
+    }
+
+    .entity-item p {
+      margin: 0;
+      font-size: 13px;
+      color: var(--muted);
+    }
+
+    .canvas-wrap {
+      position: relative;
+      background: linear-gradient(180deg, rgba(12, 20, 36, 0.95), rgba(10, 16, 30, 0.98));
+      border: 1px solid var(--border);
+      border-radius: var(--radius-lg);
+      min-height: 720px;
+      overflow: hidden;
+    }
+
+    .canvas-grid {
+      position: absolute;
+      inset: 0;
+      background-image:
+        linear-gradient(var(--grid) 1px, transparent 1px),
+        linear-gradient(90deg, var(--grid) 1px, transparent 1px);
+      background-size: 26px 26px;
+      pointer-events: none;
+    }
+
+    .canvas-toolbar {
+      position: absolute;
+      top: 12px;
+      left: 12px;
+      right: 12px;
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      z-index: 10;
+      pointer-events: none;
+    }
+
+    .canvas-toolbar .group {
+      display: inline-flex;
+      gap: 8px;
+      pointer-events: auto;
+    }
+
+    .canvas-toolbar .group .btn {
+      padding: 6px 10px;
+      font-size: 13px;
+    }
+
+    .canvas {
+      position: relative;
+      width: 100%;
+      height: 100%;
+      padding: 72px 24px 24px;
+    }
+
+    .node {
+      position: absolute;
+      width: 230px;
+      background: var(--card);
+      border: 1px solid rgba(87, 208, 199, 0.25);
+      border-radius: 14px;
+      box-shadow: 0 14px 35px rgba(0, 0, 0, 0.35);
+    }
+
+    .node header {
+      position: static;
+      padding: 10px 12px;
+      border-bottom: 1px solid var(--border);
+      background: rgba(255, 255, 255, 0.02);
+      cursor: grab;
+    }
+
+    .node header h4 {
+      font-size: 14px;
+    }
+
+    .node header span {
+      font-size: 11px;
+      color: var(--muted);
+    }
+
+    .node ul {
+      list-style: none;
+      margin: 0;
+      padding: 10px 12px 12px;
+      display: grid;
+      gap: 6px;
+      font-size: 13px;
+      color: var(--muted);
+    }
+
+    .node li strong {
+      color: var(--text);
+      font-weight: 600;
+    }
+
+    .node .badge {
+      display: inline-flex;
+      align-items: center;
+      padding: 2px 6px;
+      border-radius: 999px;
+      font-size: 10px;
+      border: 1px solid rgba(87, 208, 199, 0.4);
+      color: var(--accent);
+    }
+
+    .links {
+      position: absolute;
+      inset: 0;
+      pointer-events: none;
+    }
+
+    .links line {
+      stroke: rgba(248, 195, 92, 0.6);
+      stroke-width: 2;
+    }
+
+    .links .muted {
+      stroke: rgba(159, 176, 200, 0.4);
+      stroke-dasharray: 6 6;
+    }
+
+    .inspector {
+      display: grid;
+      gap: 14px;
+    }
+
+    .inspector .card {
+      background: var(--panel-2);
+      border: 1px solid var(--border);
+      border-radius: 14px;
+      padding: 12px;
+    }
+
+    .inspector .card h4 {
+      font-size: 14px;
+      margin-bottom: 8px;
+    }
+
+    .meta-row {
+      display: flex;
+      justify-content: space-between;
+      font-size: 13px;
+      color: var(--muted);
+      margin-bottom: 6px;
+    }
+
+    .relationship {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      background: #0c1527;
+      border: 1px solid var(--border);
+      border-radius: 10px;
+      padding: 8px 10px;
+      margin-bottom: 8px;
+      font-size: 13px;
+      color: var(--muted);
+    }
+
+    .relationship strong {
+      color: var(--text);
+    }
+
+    .legend {
+      display: grid;
+      gap: 10px;
+      font-size: 13px;
+      color: var(--muted);
+    }
+
+    .legend span {
+      display: inline-flex;
+      align-items: center;
+      gap: 8px;
+    }
+
+    .dot {
+      width: 8px;
+      height: 8px;
+      border-radius: 50%;
+      background: var(--accent);
+    }
+
+    .dot.secondary { background: var(--accent-2); }
+    .dot.muted { background: #6b7a94; }
+
+    .footer {
+      color: var(--muted);
+      font-size: 12px;
+      text-align: center;
+      padding: 10px;
+    }
+
+    @media (max-width: 1200px) {
+      .layout {
+        grid-template-columns: 1fr;
+      }
+      .panel {
+        order: 2;
+      }
+      .canvas-wrap {
+        order: 1;
+      }
+    }
+
+    @media (prefers-reduced-motion: reduce) {
+      * {
+        transition: none !important;
+        animation: none !important;
+      }
+    }
+  </style>
+</head>
+<body>
+  <div class="app">
+    <header>
+      <div class="brand">
+        <div class="brand-icon" aria-hidden="true">
+          <svg viewBox="0 0 24 24" role="img" aria-label="ERD Studio logo">
+            <path d="M4 6h7a3 3 0 0 1 0 6H6v6H4V6zm2 2v2h5a1 1 0 0 0 0-2H6zm9-2h5v12h-5a3 3 0 0 1 0-6h3V8h-3a3 3 0 0 1 0-6zm0 8a1 1 0 0 0 0 2h3v-2h-3zm0-8a1 1 0 0 0 0 2h3V6h-3z" />
+          </svg>
+        </div>
+        <div class="brand-meta">
+          <h1>ERD Studio</h1>
+          <p>E-Learning Database Schema Workspace</p>
+        </div>
+        <span class="tag">Auto-sync: Connected</span>
+      </div>
+      <div class="toolbar" role="toolbar" aria-label="Canvas actions">
+        <button class="btn" type="button">Add Entity</button>
+        <button class="btn" type="button">Auto Layout</button>
+        <button class="btn" type="button">Export SVG</button>
+        <button class="btn" type="button">Export PNG</button>
+        <button class="btn primary" type="button">Validate Schema</button>
+      </div>
+    </header>
+
+    <main class="layout">
+      <aside class="panel" aria-label="Entity library">
+        <h3>Entities</h3>
+        <div class="search">
+          <input type="search" placeholder="Search tables..." aria-label="Search tables" />
+        </div>
+        <div class="entity-list">
+          <div class="entity-item">
+            <h4>users</h4>
+            <p>Identity, roles, account status</p>
+          </div>
+          <div class="entity-item">
+            <h4>courses</h4>
+            <p>Catalog, approvals, hero images</p>
+          </div>
+          <div class="entity-item">
+            <h4>lessons</h4>
+            <p>Video lessons, ordering, preview</p>
+          </div>
+          <div class="entity-item">
+            <h4>enrollments</h4>
+            <p>Course progress and completion</p>
+          </div>
+          <div class="entity-item">
+            <h4>lesson_progress</h4>
+            <p>Lesson-level completion</p>
+          </div>
+          <div class="entity-item">
+            <h4>lesson_comments</h4>
+            <p>Threaded discussions</p>
+          </div>
+          <div class="entity-item">
+            <h4>course_reviews</h4>
+            <p>Ratings, feedback, moderation</p>
+          </div>
+          <div class="entity-item">
+            <h4>course_review_comments</h4>
+            <p>Review threads</p>
+          </div>
+          <div class="entity-item">
+            <h4>certificates</h4>
+            <p>Issued credentials</p>
+          </div>
+          <div class="entity-item">
+            <h4>user_activity</h4>
+            <p>Audit trail and analytics</p>
+          </div>
+        </div>
+      </aside>
+
+      <section class="canvas-wrap" aria-label="ERD canvas">
+        <div class="canvas-toolbar">
+          <div class="group">
+            <button class="btn" type="button">Pan</button>
+            <button class="btn" type="button">Connect</button>
+            <button class="btn" type="button">Comment</button>
+          </div>
+          <div class="group">
+            <button class="btn" type="button">Zoom 100%</button>
+            <button class="btn" type="button">Grid</button>
+          </div>
+        </div>
+        <div class="canvas-grid" aria-hidden="true"></div>
+        <svg class="links" id="links" aria-hidden="true">
+          <line data-from="users" data-to="courses" />
+          <line data-from="users" data-to="enrollments" />
+          <line data-from="courses" data-to="lessons" />
+          <line data-from="courses" data-to="enrollments" />
+          <line data-from="lessons" data-to="lesson_progress" />
+          <line data-from="lessons" data-to="lesson_comments" />
+          <line data-from="courses" data-to="course_reviews" />
+          <line class="muted" data-from="course_reviews" data-to="course_review_comments" />
+          <line class="muted" data-from="courses" data-to="certificates" />
+          <line class="muted" data-from="users" data-to="user_activity" />
+        </svg>
+        <div class="canvas" id="canvas">
+          <article class="node" id="users" style="left: 40px; top: 90px;">
+            <header>
+              <h4>users</h4>
+              <span>PK: id</span>
+            </header>
+            <ul>
+              <li><strong>username</strong> (unique)</li>
+              <li>role</li>
+              <li>email</li>
+              <li>status</li>
+              <li class="badge">auth + profile</li>
+            </ul>
+          </article>
+
+          <article class="node" id="courses" style="left: 320px; top: 60px;">
+            <header>
+              <h4>courses</h4>
+              <span>PK: id</span>
+            </header>
+            <ul>
+              <li><strong>instructor_id</strong> (FK)</li>
+              <li>title</li>
+              <li>status</li>
+              <li>thumbnail_path</li>
+              <li class="badge">catalog</li>
+            </ul>
+          </article>
+
+          <article class="node" id="lessons" style="left: 320px; top: 310px;">
+            <header>
+              <h4>lessons</h4>
+              <span>PK: id</span>
+            </header>
+            <ul>
+              <li><strong>course_id</strong> (FK)</li>
+              <li>title</li>
+              <li>video_path</li>
+              <li>order_index</li>
+              <li class="badge">content</li>
+            </ul>
+          </article>
+
+          <article class="node" id="enrollments" style="left: 640px; top: 70px;">
+            <header>
+              <h4>enrollments</h4>
+              <span>PK: id</span>
+            </header>
+            <ul>
+              <li><strong>user_id</strong> (FK)</li>
+              <li><strong>course_id</strong> (FK)</li>
+              <li>progress_percent</li>
+              <li>completed_at</li>
+              <li class="badge">progress</li>
+            </ul>
+          </article>
+
+          <article class="node" id="lesson_progress" style="left: 640px; top: 290px;">
+            <header>
+              <h4>lesson_progress</h4>
+              <span>PK: id</span>
+            </header>
+            <ul>
+              <li><strong>user_id</strong> (FK)</li>
+              <li><strong>lesson_id</strong> (FK)</li>
+              <li>is_completed</li>
+              <li>last_opened_at</li>
+              <li class="badge">tracking</li>
+            </ul>
+          </article>
+
+          <article class="node" id="lesson_comments" style="left: 320px; top: 540px;">
+            <header>
+              <h4>lesson_comments</h4>
+              <span>PK: id</span>
+            </header>
+            <ul>
+              <li><strong>lesson_id</strong> (FK)</li>
+              <li><strong>user_id</strong> (FK)</li>
+              <li>parent_id</li>
+              <li>content</li>
+              <li class="badge">discussion</li>
+            </ul>
+          </article>
+
+          <article class="node" id="course_reviews" style="left: 900px; top: 220px;">
+            <header>
+              <h4>course_reviews</h4>
+              <span>PK: id</span>
+            </header>
+            <ul>
+              <li><strong>course_id</strong> (FK)</li>
+              <li><strong>user_id</strong> (FK)</li>
+              <li>rating</li>
+              <li>comment</li>
+              <li class="badge">feedback</li>
+            </ul>
+          </article>
+
+          <article class="node" id="course_review_comments" style="left: 900px; top: 470px;">
+            <header>
+              <h4>course_review_comments</h4>
+              <span>PK: id</span>
+            </header>
+            <ul>
+              <li><strong>review_id</strong> (FK)</li>
+              <li><strong>user_id</strong> (FK)</li>
+              <li>parent_id</li>
+              <li>content</li>
+              <li class="badge">threaded</li>
+            </ul>
+          </article>
+
+          <article class="node" id="certificates" style="left: 640px; top: 520px;">
+            <header>
+              <h4>certificates</h4>
+              <span>PK: id</span>
+            </header>
+            <ul>
+              <li><strong>user_id</strong> (FK)</li>
+              <li><strong>course_id</strong> (FK)</li>
+              <li>certificate_code</li>
+              <li>issued_at</li>
+              <li class="badge">completion</li>
+            </ul>
+          </article>
+
+          <article class="node" id="user_activity" style="left: 40px; top: 520px;">
+            <header>
+              <h4>user_activity</h4>
+              <span>PK: id</span>
+            </header>
+            <ul>
+              <li><strong>user_id</strong> (FK)</li>
+              <li>action_type</li>
+              <li>metadata</li>
+              <li>created_at</li>
+              <li class="badge">audit</li>
+            </ul>
+          </article>
+        </div>
+      </section>
+
+      <aside class="panel inspector" aria-label="Inspector panel">
+        <div>
+          <h3>Inspector</h3>
+          <p style="color: var(--muted); margin: 6px 0 0;">Select an entity to see relationships and metadata.</p>
+        </div>
+        <div class="card">
+          <h4>Entity Summary</h4>
+          <div class="meta-row"><span>Selected</span><strong>courses</strong></div>
+          <div class="meta-row"><span>Primary key</span><strong>id</strong></div>
+          <div class="meta-row"><span>Indexes</span><strong>idx_instructor, idx_status</strong></div>
+          <div class="meta-row"><span>Constraints</span><strong>2 foreign keys</strong></div>
+        </div>
+        <div class="card">
+          <h4>Relationships</h4>
+          <div class="relationship"><strong>courses</strong><span>1 ? N</span><strong>lessons</strong></div>
+          <div class="relationship"><strong>courses</strong><span>1 ? N</span><strong>enrollments</strong></div>
+          <div class="relationship"><strong>courses</strong><span>1 ? N</span><strong>course_reviews</strong></div>
+          <div class="relationship"><strong>courses</strong><span>1 ? N</span><strong>certificates</strong></div>
+        </div>
+        <div class="card">
+          <h4>Legend</h4>
+          <div class="legend">
+            <span><span class="dot"></span> Core entities</span>
+            <span><span class="dot secondary"></span> Activity & feedback</span>
+            <span><span class="dot muted"></span> Derived or audit</span>
+          </div>
+        </div>
+      </aside>
+    </main>
+
+    <footer class="footer">Drag any entity header to reposition. Lines auto-update.</footer>
+  </div>
+
+  <script>
+    const nodes = Array.from(document.querySelectorAll(".node"));
+    const links = Array.from(document.querySelectorAll("#links line"));
+
+    function centerPoint(el) {
+      const rect = el.getBoundingClientRect();
+      const canvasRect = document.getElementById("canvas").getBoundingClientRect();
+      return {
+        x: rect.left - canvasRect.left + rect.width / 2,
+        y: rect.top - canvasRect.top + rect.height / 2
+      };
+    }
+
+    function updateLinks() {
+      links.forEach((line) => {
+        const from = document.getElementById(line.dataset.from);
+        const to = document.getElementById(line.dataset.to);
+        if (!from || !to) return;
+        const a = centerPoint(from);
+        const b = centerPoint(to);
+        line.setAttribute("x1", a.x);
+        line.setAttribute("y1", a.y);
+        line.setAttribute("x2", b.x);
+        line.setAttribute("y2", b.y);
+      });
+    }
+
+    function makeDraggable(node) {
+      const header = node.querySelector("header");
+      let dragging = false;
+      let startX = 0;
+      let startY = 0;
+      let originX = 0;
+      let originY = 0;
+
+      function onPointerDown(event) {
+        dragging = true;
+        header.setPointerCapture(event.pointerId);
+        startX = event.clientX;
+        startY = event.clientY;
+        originX = parseFloat(node.style.left) || 0;
+        originY = parseFloat(node.style.top) || 0;
+        node.style.cursor = "grabbing";
+      }
+
+      function onPointerMove(event) {
+        if (!dragging) return;
+        const dx = event.clientX - startX;
+        const dy = event.clientY - startY;
+        node.style.left = `${originX + dx}px`;
+        node.style.top = `${originY + dy}px`;
+        updateLinks();
+      }
+
+      function onPointerUp(event) {
+        dragging = false;
+        node.style.cursor = "grab";
+        header.releasePointerCapture(event.pointerId);
+      }
+
+      header.addEventListener("pointerdown", onPointerDown);
+      header.addEventListener("pointermove", onPointerMove);
+      header.addEventListener("pointerup", onPointerUp);
+      header.addEventListener("pointerleave", onPointerUp);
+    }
+
+    nodes.forEach(makeDraggable);
+    window.addEventListener("resize", updateLinks);
+    window.addEventListener("load", updateLinks);
+  </script>
+</body>
+</html>

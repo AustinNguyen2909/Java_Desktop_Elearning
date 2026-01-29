@@ -159,8 +159,9 @@ public class UserDAO {
      * Insert new user
      */
     public boolean insert(User user) {
-        String sql = "INSERT INTO users (username, password_hash, role, email, phone, full_name, avatar_path, status) " +
-                     "VALUES (?, ?, ?, ?, ?, ?, ?, ?)";
+        String sql = "INSERT INTO users (username, password_hash, role, email, phone, full_name, avatar_path, status, " +
+                     "date_of_birth, school, job_title, experience) " +
+                     "VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)";
         try (Connection conn = DBConnection.getInstance().getConnection();
              PreparedStatement stmt = conn.prepareStatement(sql, Statement.RETURN_GENERATED_KEYS)) {
 
@@ -172,6 +173,14 @@ public class UserDAO {
             stmt.setString(6, user.getFullName());
             stmt.setString(7, user.getAvatarPath());
             stmt.setString(8, user.getStatus() != null ? user.getStatus() : "PENDING");
+            if (user.getDateOfBirth() != null) {
+                stmt.setDate(9, Date.valueOf(user.getDateOfBirth()));
+            } else {
+                stmt.setNull(9, Types.DATE);
+            }
+            stmt.setString(10, user.getSchool());
+            stmt.setString(11, user.getJobTitle());
+            stmt.setString(12, user.getExperience());
 
             int affectedRows = stmt.executeUpdate();
 
@@ -193,7 +202,8 @@ public class UserDAO {
      */
     public boolean update(User user) {
         String sql = "UPDATE users SET username = ?, password_hash = ?, role = ?, email = ?, phone = ?, " +
-                     "full_name = ?, avatar_path = ?, status = ? WHERE id = ?";
+                     "full_name = ?, avatar_path = ?, status = ?, date_of_birth = ?, school = ?, job_title = ?, " +
+                     "experience = ? WHERE id = ?";
         try (Connection conn = DBConnection.getInstance().getConnection();
              PreparedStatement stmt = conn.prepareStatement(sql)) {
 
@@ -205,7 +215,15 @@ public class UserDAO {
             stmt.setString(6, user.getFullName());
             stmt.setString(7, user.getAvatarPath());
             stmt.setString(8, user.getStatus());
-            stmt.setInt(9, user.getId());
+            if (user.getDateOfBirth() != null) {
+                stmt.setDate(9, Date.valueOf(user.getDateOfBirth()));
+            } else {
+                stmt.setNull(9, Types.DATE);
+            }
+            stmt.setString(10, user.getSchool());
+            stmt.setString(11, user.getJobTitle());
+            stmt.setString(12, user.getExperience());
+            stmt.setInt(13, user.getId());
 
             return stmt.executeUpdate() > 0;
         } catch (SQLException e) {
@@ -244,6 +262,13 @@ public class UserDAO {
         user.setFullName(rs.getString("full_name"));
         user.setAvatarPath(rs.getString("avatar_path"));
         user.setStatus(rs.getString("status"));
+        Date dob = rs.getDate("date_of_birth");
+        if (dob != null) {
+            user.setDateOfBirth(dob.toLocalDate());
+        }
+        user.setSchool(rs.getString("school"));
+        user.setJobTitle(rs.getString("job_title"));
+        user.setExperience(rs.getString("experience"));
 
         Timestamp createdAt = rs.getTimestamp("created_at");
         if (createdAt != null) {
