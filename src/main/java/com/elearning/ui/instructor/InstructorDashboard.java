@@ -576,21 +576,21 @@ public class InstructorDashboard extends JFrame {
             statsCardsPanel.setBorder(BorderFactory.createEmptyBorder(20, 20, 20, 20));
 
             // Create stat cards
-            statsCardsPanel.add(createStatCard("Total Courses", String.valueOf(stats.totalCourses),
+            statsCardsPanel.add(createStatCard("Total Courses", String.valueOf(stats.getTotalCourses()),
                     new Color(47, 111, 235))); // Blue
-            statsCardsPanel.add(createStatCard("Approved Courses", String.valueOf(stats.approvedCourses),
+            statsCardsPanel.add(createStatCard("Approved Courses", String.valueOf(stats.getApprovedCourses()),
                     new Color(34, 197, 94))); // Green
-            statsCardsPanel.add(createStatCard("Published Courses", String.valueOf(stats.publishedCourses),
+            statsCardsPanel.add(createStatCard("Published Courses", String.valueOf(stats.getPublishedCourses()),
                     new Color(155, 89, 182))); // Purple
-            statsCardsPanel.add(createStatCard("Total Students", String.valueOf(stats.totalStudents),
+            statsCardsPanel.add(createStatCard("Total Students", String.valueOf(stats.getTotalStudents()),
                     new Color(47, 111, 235))); // Blue
-            statsCardsPanel.add(createStatCard("Total Reviews", String.valueOf(stats.totalReviews),
+            statsCardsPanel.add(createStatCard("Total Reviews", String.valueOf(stats.getTotalReviews()),
                     new Color(241, 196, 15))); // Yellow
-            statsCardsPanel.add(createStatCard("Average Rating", String.format("%.1f / 5.0", stats.averageRating),
+            statsCardsPanel.add(createStatCard("Average Rating", String.format("%.1f / 5.0", stats.getAverageRating()),
                     new Color(230, 126, 34))); // Orange
-            statsCardsPanel.add(createStatCard("Avg Enrollments/Course", String.format("%.1f", stats.averageEnrollmentsPerCourse),
+            statsCardsPanel.add(createStatCard("Avg Enrollments/Course", String.format("%.1f", stats.getAverageEnrollmentsPerCourse()),
                     new Color(26, 188, 156))); // Teal
-            statsCardsPanel.add(createStatCard("Completion Rate", String.format("%.1f%%", stats.completionRate),
+            statsCardsPanel.add(createStatCard("Completion Rate", String.format("%.1f%%", stats.getCompletionRate()),
                     new Color(34, 197, 94))); // Green
 
             contentPanel.add(statsCardsPanel);
@@ -602,9 +602,9 @@ public class InstructorDashboard extends JFrame {
 
             // Course performance chart
             ChartPanel performanceChart = ChartUtil.createInstructorPerformanceChart(
-                    stats.totalCourses,
-                    stats.approvedCourses,
-                    stats.publishedCourses
+                    stats.getTotalCourses(),
+                    stats.getApprovedCourses(),
+                    stats.getPublishedCourses()
             );
             chartsPanel.add(performanceChart);
 

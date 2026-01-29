@@ -375,27 +375,27 @@ public class AdminDashboard extends JFrame {
 
             // User statistics
             statsContent.add(createStatCard("Total Users",
-                    String.format("%d (%d active)", stats.totalUsers + stats.totalInstructors + stats.totalAdmins, stats.activeUsers),
+                    String.format("%d (%d active)", stats.getTotalUsers() + stats.getTotalInstructors() + stats.getTotalAdmins(), stats.getActiveUsers()),
                     new Color(47, 111, 235)));
-            statsContent.add(createStatCard("Students", String.valueOf(stats.totalUsers), new Color(34, 197, 94)));
-            statsContent.add(createStatCard("Instructors", String.valueOf(stats.totalInstructors), new Color(155, 89, 182)));
-            statsContent.add(createStatCard("Admins", String.valueOf(stats.totalAdmins), new Color(225, 29, 72)));
+            statsContent.add(createStatCard("Students", String.valueOf(stats.getTotalUsers()), new Color(34, 197, 94)));
+            statsContent.add(createStatCard("Instructors", String.valueOf(stats.getTotalInstructors()), new Color(155, 89, 182)));
+            statsContent.add(createStatCard("Admins", String.valueOf(stats.getTotalAdmins()), new Color(225, 29, 72)));
 
             // Course statistics
-            statsContent.add(createStatCard("Total Courses", String.valueOf(stats.totalCourses), new Color(47, 111, 235)));
-            statsContent.add(createStatCard("Approved Courses", String.valueOf(stats.approvedCourses), new Color(34, 197, 94)));
-            statsContent.add(createStatCard("Pending Approval", String.valueOf(stats.pendingCourses), new Color(241, 196, 15)));
-            statsContent.add(createStatCard("Published Courses", String.valueOf(stats.publishedCourses), new Color(26, 188, 156)));
+            statsContent.add(createStatCard("Total Courses", String.valueOf(stats.getTotalCourses()), new Color(47, 111, 235)));
+            statsContent.add(createStatCard("Approved Courses", String.valueOf(stats.getApprovedCourses()), new Color(34, 197, 94)));
+            statsContent.add(createStatCard("Pending Approval", String.valueOf(stats.getPendingCourses()), new Color(241, 196, 15)));
+            statsContent.add(createStatCard("Published Courses", String.valueOf(stats.getPublishedCourses()), new Color(26, 188, 156)));
 
             // Enrollment statistics
-            statsContent.add(createStatCard("Total Enrollments", String.valueOf(stats.totalEnrollments), new Color(47, 111, 235)));
-            statsContent.add(createStatCard("Active Enrollments", String.valueOf(stats.activeEnrollments), new Color(34, 197, 94)));
-            statsContent.add(createStatCard("Completed Enrollments", String.valueOf(stats.completedEnrollments), new Color(155, 89, 182)));
-            statsContent.add(createStatCard("Average Progress", String.format("%.1f%%", stats.averageProgress), new Color(241, 196, 15)));
+            statsContent.add(createStatCard("Total Enrollments", String.valueOf(stats.getTotalEnrollments()), new Color(47, 111, 235)));
+            statsContent.add(createStatCard("Active Enrollments", String.valueOf(stats.getActiveEnrollments()), new Color(34, 197, 94)));
+            statsContent.add(createStatCard("Completed Enrollments", String.valueOf(stats.getCompletedEnrollments()), new Color(155, 89, 182)));
+            statsContent.add(createStatCard("Average Progress", String.format("%.1f%%", stats.getAverageProgress()), new Color(241, 196, 15)));
 
             // Additional statistics
-            statsContent.add(createStatCard("Total Reviews", String.valueOf(stats.totalReviews), new Color(47, 111, 235)));
-            statsContent.add(createStatCard("Avg Enrollments/Course", String.format("%.1f", stats.averageEnrollmentsPerCourse), new Color(26, 188, 156)));
+            statsContent.add(createStatCard("Total Reviews", String.valueOf(stats.getTotalReviews()), new Color(47, 111, 235)));
+            statsContent.add(createStatCard("Avg Enrollments/Course", String.format("%.1f", stats.getAverageEnrollmentsPerCourse()), new Color(26, 188, 156)));
 
             mainContent.add(statsContent);
 
@@ -420,18 +420,18 @@ public class AdminDashboard extends JFrame {
 
             // User role distribution pie chart
             ChartPanel userRoleChart = ChartUtil.createUserRolePieChart(
-                    stats.totalUsers,
-                    stats.totalInstructors,
-                    stats.totalAdmins
+                    stats.getTotalUsers(),
+                    stats.getTotalInstructors(),
+                    stats.getTotalAdmins()
             );
             userRoleChart.setPreferredSize(new Dimension(280, 250));
             chartsPanel.add(userRoleChart);
 
             // Course status pie chart
-            int rejectedCourses = stats.totalCourses - stats.approvedCourses - stats.pendingCourses;
+            int rejectedCourses = stats.getTotalCourses() - stats.getApprovedCourses() - stats.getPendingCourses();
             ChartPanel courseStatusChart = ChartUtil.createCourseStatusPieChart(
-                    stats.approvedCourses,
-                    stats.pendingCourses,
+                    stats.getApprovedCourses(),
+                    stats.getPendingCourses(),
                     rejectedCourses
             );
             courseStatusChart.setPreferredSize(new Dimension(280, 250));
@@ -439,8 +439,8 @@ public class AdminDashboard extends JFrame {
 
             // Enrollment status pie chart
             ChartPanel enrollmentStatusChart = ChartUtil.createEnrollmentStatusPieChart(
-                    stats.activeEnrollments,
-                    stats.completedEnrollments
+                    stats.getActiveEnrollments(),
+                    stats.getCompletedEnrollments()
             );
             enrollmentStatusChart.setPreferredSize(new Dimension(280, 250));
             chartsPanel.add(enrollmentStatusChart);
