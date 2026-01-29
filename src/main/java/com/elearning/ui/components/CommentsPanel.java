@@ -18,7 +18,7 @@ public class CommentsPanel extends JPanel {
     private JPanel commentsListPanel;
 
     public CommentsPanel(User currentUser, int lessonId) {
-        this.commentService = new CommentService();
+        this.commentService = CommentService.getInstance();
         this.currentUser = currentUser;
         this.lessonId = lessonId;
 

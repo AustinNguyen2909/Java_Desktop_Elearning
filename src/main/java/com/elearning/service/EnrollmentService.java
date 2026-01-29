@@ -12,6 +12,7 @@ import java.util.List;
 
 /**
  * Service for enrollment and progress tracking
+ * Singleton pattern for single instance across application
  */
 public class EnrollmentService {
     private final EnrollmentDAO enrollmentDAO;
@@ -19,11 +20,22 @@ public class EnrollmentService {
     private final CourseDAO courseDAO;
     private final LessonDAO lessonDAO;
 
-    public EnrollmentService() {
+    // Private constructor to prevent direct instantiation
+    private EnrollmentService() {
         this.enrollmentDAO = new EnrollmentDAO();
         this.lessonProgressDAO = new LessonProgressDAO();
         this.courseDAO = new CourseDAO();
         this.lessonDAO = new LessonDAO();
+    }
+
+    // Static inner holder class - lazily loaded and thread-safe
+    private static class SingletonHolder {
+        private static final EnrollmentService INSTANCE = new EnrollmentService();
+    }
+
+    // Public accessor method
+    public static EnrollmentService getInstance() {
+        return SingletonHolder.INSTANCE;
     }
 
     /**

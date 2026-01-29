@@ -10,6 +10,7 @@ import java.util.Map;
 
 /**
  * Service for analytics and statistics generation
+ * Singleton pattern for single instance across application
  */
 public class AnalyticsService {
     private final UserDAO userDAO;
@@ -18,12 +19,23 @@ public class AnalyticsService {
     private final EnrollmentDAO enrollmentDAO;
     private final ReviewDAO reviewDAO;
 
-    public AnalyticsService() {
+    // Private constructor to prevent direct instantiation
+    private AnalyticsService() {
         this.userDAO = new UserDAO();
         this.courseDAO = new CourseDAO();
         this.lessonDAO = new LessonDAO();
         this.enrollmentDAO = new EnrollmentDAO();
         this.reviewDAO = new ReviewDAO();
+    }
+
+    // Static inner holder class - lazily loaded and thread-safe
+    private static class SingletonHolder {
+        private static final AnalyticsService INSTANCE = new AnalyticsService();
+    }
+
+    // Public accessor method
+    public static AnalyticsService getInstance() {
+        return SingletonHolder.INSTANCE;
     }
 
     /**
@@ -34,38 +46,41 @@ public class AnalyticsService {
             throw new SecurityException("Only admins can view platform statistics");
         }
 
-        PlatformStatistics stats = new PlatformStatistics();
-
         // User counts
-        stats.totalUsers = countUsersByRole("USER");
-        stats.totalInstructors = countUsersByRole("INSTRUCTOR");
-        stats.totalAdmins = countUsersByRole("ADMIN");
-        stats.activeUsers = countActiveUsers();
+        int totalUsers = countUsersByRole("USER");
+        int totalInstructors = countUsersByRole("INSTRUCTOR");
+        int totalAdmins = countUsersByRole("ADMIN");
+        int activeUsers = countActiveUsers();
 
         // Course counts
-        stats.totalCourses = courseDAO.findAll().size();
-        stats.approvedCourses = courseDAO.findApprovedCourses().size();
-        stats.pendingCourses = courseDAO.findPendingCourses().size();
-        stats.publishedCourses = courseDAO.findPublishedCourses().size();
+        int totalCourses = courseDAO.findAll().size();
+        int approvedCourses = courseDAO.findApprovedCourses().size();
+        int pendingCourses = courseDAO.findPendingCourses().size();
+        int publishedCourses = courseDAO.findPublishedCourses().size();
 
         // Enrollment stats
-        stats.totalEnrollments = enrollmentDAO.getTotalEnrollmentCount();
-        stats.activeEnrollments = enrollmentDAO.getInProgressCount();
-        stats.completedEnrollments = enrollmentDAO.getCompletedCount();
+        int totalEnrollments = enrollmentDAO.getTotalEnrollmentCount();
+        int activeEnrollments = enrollmentDAO.getInProgressCount();
+        int completedEnrollments = enrollmentDAO.getCompletedCount();
 
         // Review stats
-        stats.totalReviews = countAllReviews();
+        int totalReviews = countAllReviews();
 
         // Calculate averages
-        if (stats.totalEnrollments > 0) {
-            stats.averageProgress = enrollmentDAO.getGlobalAverageProgress();
+        double averageProgress = 0.0;
+        if (totalEnrollments > 0) {
+            averageProgress = enrollmentDAO.getGlobalAverageProgress();
         }
 
-        if (stats.totalCourses > 0) {
-            stats.averageEnrollmentsPerCourse = (double) stats.totalEnrollments / stats.totalCourses;
+        double averageEnrollmentsPerCourse = 0.0;
+        if (totalCourses > 0) {
+            averageEnrollmentsPerCourse = (double) totalEnrollments / totalCourses;
         }
 
-        return stats;
+        return new PlatformStatistics(totalUsers, totalInstructors, totalAdmins, activeUsers,
+                totalCourses, approvedCourses, pendingCourses, publishedCourses,
+                totalEnrollments, activeEnrollments, completedEnrollments,
+                totalReviews, averageProgress, averageEnrollmentsPerCourse);
     }
 
     /**
@@ -77,11 +92,9 @@ public class AnalyticsService {
             throw new SecurityException("Unauthorized access to instructor statistics");
         }
 
-        InstructorStatistics stats = new InstructorStatistics();
-
         // Get instructor's courses
         List<Course> courses = courseDAO.findByInstructorId(instructorId);
-        stats.totalCourses = courses.size();
+        int totalCourses = courses.size();
 
         int approvedCount = 0;
         int publishedCount = 0;
@@ -111,62 +124,61 @@ public class AnalyticsService {
             }
         }
 
-        stats.approvedCourses = approvedCount;
-        stats.publishedCourses = publishedCount;
-        stats.totalStudents = totalEnrollments;
-        stats.totalReviews = totalReviews;
-
+        // Calculate averages
+        double averageRating = 0.0;
         if (approvedCount > 0) {
-            stats.averageRating = totalRating / approvedCount;
+            averageRating = totalRating / approvedCount;
         }
 
-        if (stats.totalCourses > 0) {
-            stats.averageEnrollmentsPerCourse = (double) totalEnrollments / stats.totalCourses;
+        double averageEnrollmentsPerCourse = 0.0;
+        if (totalCourses > 0) {
+            averageEnrollmentsPerCourse = (double) totalEnrollments / totalCourses;
         }
 
         // Calculate completion rate
+        double completionRate = 0.0;
         if (totalEnrollments > 0) {
             int completedEnrollments = 0;
             for (Course course : courses) {
                 completedEnrollments += enrollmentDAO.getCompletionCount(course.getId());
             }
-            stats.completionRate = (double) completedEnrollments / totalEnrollments * 100;
+            completionRate = (double) completedEnrollments / totalEnrollments * 100;
         }
 
-        return stats;
+        return new InstructorStatistics(totalCourses, approvedCount, publishedCount,
+                totalEnrollments, totalReviews, averageRating,
+                averageEnrollmentsPerCourse, completionRate);
     }
 
     /**
      * Get course-specific statistics
      */
     public CourseStatistics getCourseStatistics(int courseId) {
-        CourseStatistics stats = new CourseStatistics();
-
         Course course = courseDAO.findById(courseId);
         if (course == null) {
             throw new IllegalArgumentException("Course not found");
         }
 
-        stats.courseId = courseId;
-        stats.courseTitle = course.getTitle();
+        String courseTitle = course.getTitle();
 
         // Enrollment stats
-        stats.totalEnrollments = enrollmentDAO.getEnrollmentCount(courseId);
-        stats.activeEnrollments = enrollmentDAO.getEnrollmentCount(courseId) -
-                                  enrollmentDAO.getCompletionCount(courseId);
-        stats.completedEnrollments = enrollmentDAO.getCompletionCount(courseId);
-        stats.averageProgress = enrollmentDAO.getAverageProgress(courseId);
+        int totalEnrollments = enrollmentDAO.getEnrollmentCount(courseId);
+        int completedEnrollments = enrollmentDAO.getCompletionCount(courseId);
+        int activeEnrollments = totalEnrollments - completedEnrollments;
+        double averageProgress = enrollmentDAO.getAverageProgress(courseId);
 
         // Lesson stats
-        stats.totalLessons = lessonDAO.countLessons(courseId);
-        stats.totalDuration = lessonDAO.getTotalDuration(courseId);
+        int totalLessons = lessonDAO.countLessons(courseId);
+        int totalDuration = lessonDAO.getTotalDuration(courseId);
 
         // Review stats
-        stats.totalReviews = reviewDAO.countByCourseId(courseId);
-        stats.averageRating = reviewDAO.getAverageRating(courseId);
-        stats.ratingDistribution = reviewDAO.getRatingDistribution(courseId);
+        int totalReviews = reviewDAO.countByCourseId(courseId);
+        double averageRating = reviewDAO.getAverageRating(courseId);
+        int[] ratingDistribution = reviewDAO.getRatingDistribution(courseId);
 
-        return stats;
+        return new CourseStatistics(courseId, courseTitle, totalEnrollments, activeEnrollments,
+                completedEnrollments, averageProgress, totalLessons, totalDuration,
+                totalReviews, averageRating, ratingDistribution);
     }
 
     /**
@@ -209,20 +221,55 @@ public class AnalyticsService {
      * Platform-wide statistics
      */
     public static class PlatformStatistics {
-        public int totalUsers;
-        public int totalInstructors;
-        public int totalAdmins;
-        public int activeUsers;
-        public int totalCourses;
-        public int approvedCourses;
-        public int pendingCourses;
-        public int publishedCourses;
-        public int totalEnrollments;
-        public int activeEnrollments;
-        public int completedEnrollments;
-        public int totalReviews;
-        public double averageProgress;
-        public double averageEnrollmentsPerCourse;
+        private final int totalUsers;
+        private final int totalInstructors;
+        private final int totalAdmins;
+        private final int activeUsers;
+        private final int totalCourses;
+        private final int approvedCourses;
+        private final int pendingCourses;
+        private final int publishedCourses;
+        private final int totalEnrollments;
+        private final int activeEnrollments;
+        private final int completedEnrollments;
+        private final int totalReviews;
+        private final double averageProgress;
+        private final double averageEnrollmentsPerCourse;
+
+        public PlatformStatistics(int totalUsers, int totalInstructors, int totalAdmins, int activeUsers,
+                                  int totalCourses, int approvedCourses, int pendingCourses, int publishedCourses,
+                                  int totalEnrollments, int activeEnrollments, int completedEnrollments,
+                                  int totalReviews, double averageProgress, double averageEnrollmentsPerCourse) {
+            this.totalUsers = totalUsers;
+            this.totalInstructors = totalInstructors;
+            this.totalAdmins = totalAdmins;
+            this.activeUsers = activeUsers;
+            this.totalCourses = totalCourses;
+            this.approvedCourses = approvedCourses;
+            this.pendingCourses = pendingCourses;
+            this.publishedCourses = publishedCourses;
+            this.totalEnrollments = totalEnrollments;
+            this.activeEnrollments = activeEnrollments;
+            this.completedEnrollments = completedEnrollments;
+            this.totalReviews = totalReviews;
+            this.averageProgress = averageProgress;
+            this.averageEnrollmentsPerCourse = averageEnrollmentsPerCourse;
+        }
+
+        public int getTotalUsers() { return totalUsers; }
+        public int getTotalInstructors() { return totalInstructors; }
+        public int getTotalAdmins() { return totalAdmins; }
+        public int getActiveUsers() { return activeUsers; }
+        public int getTotalCourses() { return totalCourses; }
+        public int getApprovedCourses() { return approvedCourses; }
+        public int getPendingCourses() { return pendingCourses; }
+        public int getPublishedCourses() { return publishedCourses; }
+        public int getTotalEnrollments() { return totalEnrollments; }
+        public int getActiveEnrollments() { return activeEnrollments; }
+        public int getCompletedEnrollments() { return completedEnrollments; }
+        public int getTotalReviews() { return totalReviews; }
+        public double getAverageProgress() { return averageProgress; }
+        public double getAverageEnrollmentsPerCourse() { return averageEnrollmentsPerCourse; }
 
         @Override
         public String toString() {
@@ -246,14 +293,36 @@ public class AnalyticsService {
      * Instructor-specific statistics
      */
     public static class InstructorStatistics {
-        public int totalCourses;
-        public int approvedCourses;
-        public int publishedCourses;
-        public int totalStudents;
-        public int totalReviews;
-        public double averageRating;
-        public double averageEnrollmentsPerCourse;
-        public double completionRate;
+        private final int totalCourses;
+        private final int approvedCourses;
+        private final int publishedCourses;
+        private final int totalStudents;
+        private final int totalReviews;
+        private final double averageRating;
+        private final double averageEnrollmentsPerCourse;
+        private final double completionRate;
+
+        public InstructorStatistics(int totalCourses, int approvedCourses, int publishedCourses,
+                                    int totalStudents, int totalReviews, double averageRating,
+                                    double averageEnrollmentsPerCourse, double completionRate) {
+            this.totalCourses = totalCourses;
+            this.approvedCourses = approvedCourses;
+            this.publishedCourses = publishedCourses;
+            this.totalStudents = totalStudents;
+            this.totalReviews = totalReviews;
+            this.averageRating = averageRating;
+            this.averageEnrollmentsPerCourse = averageEnrollmentsPerCourse;
+            this.completionRate = completionRate;
+        }
+
+        public int getTotalCourses() { return totalCourses; }
+        public int getApprovedCourses() { return approvedCourses; }
+        public int getPublishedCourses() { return publishedCourses; }
+        public int getTotalStudents() { return totalStudents; }
+        public int getTotalReviews() { return totalReviews; }
+        public double getAverageRating() { return averageRating; }
+        public double getAverageEnrollmentsPerCourse() { return averageEnrollmentsPerCourse; }
+        public double getCompletionRate() { return completionRate; }
 
         @Override
         public String toString() {
@@ -275,17 +344,46 @@ public class AnalyticsService {
      * Course-specific statistics
      */
     public static class CourseStatistics {
-        public int courseId;
-        public String courseTitle;
-        public int totalEnrollments;
-        public int activeEnrollments;
-        public int completedEnrollments;
-        public double averageProgress;
-        public int totalLessons;
-        public int totalDuration;
-        public int totalReviews;
-        public double averageRating;
-        public int[] ratingDistribution;
+        private final int courseId;
+        private final String courseTitle;
+        private final int totalEnrollments;
+        private final int activeEnrollments;
+        private final int completedEnrollments;
+        private final double averageProgress;
+        private final int totalLessons;
+        private final int totalDuration;
+        private final int totalReviews;
+        private final double averageRating;
+        private final int[] ratingDistribution;
+
+        public CourseStatistics(int courseId, String courseTitle, int totalEnrollments,
+                                int activeEnrollments, int completedEnrollments, double averageProgress,
+                                int totalLessons, int totalDuration, int totalReviews,
+                                double averageRating, int[] ratingDistribution) {
+            this.courseId = courseId;
+            this.courseTitle = courseTitle;
+            this.totalEnrollments = totalEnrollments;
+            this.activeEnrollments = activeEnrollments;
+            this.completedEnrollments = completedEnrollments;
+            this.averageProgress = averageProgress;
+            this.totalLessons = totalLessons;
+            this.totalDuration = totalDuration;
+            this.totalReviews = totalReviews;
+            this.averageRating = averageRating;
+            this.ratingDistribution = ratingDistribution;
+        }
+
+        public int getCourseId() { return courseId; }
+        public String getCourseTitle() { return courseTitle; }
+        public int getTotalEnrollments() { return totalEnrollments; }
+        public int getActiveEnrollments() { return activeEnrollments; }
+        public int getCompletedEnrollments() { return completedEnrollments; }
+        public double getAverageProgress() { return averageProgress; }
+        public int getTotalLessons() { return totalLessons; }
+        public int getTotalDuration() { return totalDuration; }
+        public int getTotalReviews() { return totalReviews; }
+        public double getAverageRating() { return averageRating; }
+        public int[] getRatingDistribution() { return ratingDistribution; }
 
         @Override
         public String toString() {

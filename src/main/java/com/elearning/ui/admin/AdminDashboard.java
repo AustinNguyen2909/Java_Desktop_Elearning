@@ -42,9 +42,9 @@ public class AdminDashboard extends JFrame {
 
     public AdminDashboard() {
         this.currentUser = SessionManager.getInstance().getCurrentUser();
-        this.courseService = new CourseService();
-        this.userService = new UserService();
-        this.analyticsService = new AnalyticsService();
+        this.courseService = CourseService.getInstance();
+        this.userService = UserService.getInstance();
+        this.analyticsService = AnalyticsService.getInstance();
 
         initComponents();
         loadPendingCourses();

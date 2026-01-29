@@ -10,12 +10,24 @@ import java.util.List;
 /**
  * Service layer for user management operations
  * Handles business logic and authorization
+ * Singleton pattern for single instance across application
  */
 public class UserService {
     private final UserDAO userDAO;
 
-    public UserService() {
+    // Private constructor to prevent direct instantiation
+    private UserService() {
         this.userDAO = new UserDAO();
+    }
+
+    // Static inner holder class - lazily loaded and thread-safe
+    private static class SingletonHolder {
+        private static final UserService INSTANCE = new UserService();
+    }
+
+    // Public accessor method
+    public static UserService getInstance() {
+        return SingletonHolder.INSTANCE;
     }
 
     /**

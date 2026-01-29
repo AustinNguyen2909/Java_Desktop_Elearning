@@ -56,9 +56,9 @@ public class CourseDetailsDialog extends JDialog {
         super(owner, "Course Details", true);
         this.courseId = courseId;
         this.currentUser = SessionManager.getInstance().getCurrentUser();
-        this.courseService = new CourseService();
-        this.lessonService = new LessonService();
-        this.enrollmentService = new EnrollmentService();
+        this.courseService = CourseService.getInstance();
+        this.lessonService = LessonService.getInstance();
+        this.enrollmentService = EnrollmentService.getInstance();
 
         loadCourseData();
         initComponents();

@@ -38,10 +38,10 @@ public class InstructorDashboard extends JFrame {
 
     public InstructorDashboard() {
         this.currentUser = SessionManager.getInstance().getCurrentUser();
-        this.courseService = new CourseService();
-        this.enrollmentService = new EnrollmentService();
-        this.lessonService = new LessonService();
-        this.analyticsService = new AnalyticsService();
+        this.courseService = CourseService.getInstance();
+        this.enrollmentService = EnrollmentService.getInstance();
+        this.lessonService = LessonService.getInstance();
+        this.analyticsService = AnalyticsService.getInstance();
 
         initComponents();
         loadCourses();

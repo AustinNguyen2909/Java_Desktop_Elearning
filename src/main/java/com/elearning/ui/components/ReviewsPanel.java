@@ -21,7 +21,7 @@ public class ReviewsPanel extends JPanel {
     private StarRatingPanel averageStarsPanel;
 
     public ReviewsPanel(User currentUser, int courseId) {
-        this.reviewService = new ReviewService();
+        this.reviewService = ReviewService.getInstance();
         this.currentUser = currentUser;
         this.courseId = courseId;
 

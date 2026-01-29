@@ -6,12 +6,24 @@ import com.elearning.util.PasswordUtil;
 
 /**
  * Service for authentication and user registration
+ * Singleton pattern for single instance across application
  */
 public class AuthService {
     private final UserDAO userDAO;
 
-    public AuthService() {
+    // Private constructor to prevent direct instantiation
+    private AuthService() {
         this.userDAO = new UserDAO();
+    }
+
+    // Static inner holder class - lazily loaded and thread-safe
+    private static class SingletonHolder {
+        private static final AuthService INSTANCE = new AuthService();
+    }
+
+    // Public accessor method
+    public static AuthService getInstance() {
+        return SingletonHolder.INSTANCE;
     }
 
     /**

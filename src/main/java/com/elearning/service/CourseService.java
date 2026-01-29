@@ -7,12 +7,24 @@ import java.util.List;
 
 /**
  * Service for course management and approval workflow
+ * Singleton pattern for single instance across application
  */
 public class CourseService {
     private final CourseDAO courseDAO;
 
-    public CourseService() {
+    // Private constructor to prevent direct instantiation
+    private CourseService() {
         this.courseDAO = new CourseDAO();
+    }
+
+    // Static inner holder class - lazily loaded and thread-safe
+    private static class SingletonHolder {
+        private static final CourseService INSTANCE = new CourseService();
+    }
+
+    // Public accessor method
+    public static CourseService getInstance() {
+        return SingletonHolder.INSTANCE;
     }
 
     /**
