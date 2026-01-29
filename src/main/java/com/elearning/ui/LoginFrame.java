@@ -27,7 +27,7 @@ public class LoginFrame extends JFrame {
     private AuthService authService;
 
     public LoginFrame() {
-        authService = new AuthService();
+        authService = AuthService.getInstance();
         initComponents();
         setupLayout();
         setupListeners();

@@ -33,7 +33,7 @@ public class LessonDialog extends JDialog {
         this.courseId = courseId;
         this.lesson = lesson;
         this.currentUser = SessionManager.getInstance().getCurrentUser();
-        this.lessonService = new LessonService();
+        this.lessonService = LessonService.getInstance();
 
         initComponents();
         if (lesson != null) {

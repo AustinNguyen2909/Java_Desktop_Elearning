@@ -11,16 +11,28 @@ import java.util.List;
 
 /**
  * Service for comment management
+ * Singleton pattern for single instance across application
  */
 public class CommentService {
     private final CommentDAO commentDAO;
     private final LessonDAO lessonDAO;
     private final EnrollmentDAO enrollmentDAO;
 
-    public CommentService() {
+    // Private constructor to prevent direct instantiation
+    private CommentService() {
         this.commentDAO = new CommentDAO();
         this.lessonDAO = new LessonDAO();
         this.enrollmentDAO = new EnrollmentDAO();
+    }
+
+    // Static inner holder class - lazily loaded and thread-safe
+    private static class SingletonHolder {
+        private static final CommentService INSTANCE = new CommentService();
+    }
+
+    // Public accessor method
+    public static CommentService getInstance() {
+        return SingletonHolder.INSTANCE;
     }
 
     /**

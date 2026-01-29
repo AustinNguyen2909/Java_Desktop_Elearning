@@ -29,8 +29,8 @@ public class UserDashboard extends JFrame {
 
     public UserDashboard() {
         this.currentUser = SessionManager.getInstance().getCurrentUser();
-        this.courseService = new CourseService();
-        this.enrollmentService = new EnrollmentService();
+        this.courseService = CourseService.getInstance();
+        this.enrollmentService = EnrollmentService.getInstance();
 
         initComponents();
         loadAvailableCourses();

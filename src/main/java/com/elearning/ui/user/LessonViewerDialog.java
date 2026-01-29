@@ -44,8 +44,8 @@ public class LessonViewerDialog extends JDialog {
         super(parent, course.getTitle() + " - Lessons", true);
         this.course = course;
         this.userId = SessionManager.getInstance().getCurrentUser().getId();
-        this.lessonService = new LessonService();
-        this.enrollmentService = new EnrollmentService();
+        this.lessonService = LessonService.getInstance();
+        this.enrollmentService = EnrollmentService.getInstance();
         this.progressDAO = new LessonProgressDAO();
         this.progressMap = new HashMap<>();
 

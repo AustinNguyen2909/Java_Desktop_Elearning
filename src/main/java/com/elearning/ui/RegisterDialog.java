@@ -28,7 +28,7 @@ public class RegisterDialog extends JDialog {
 
     public RegisterDialog(JFrame parent) {
         super(parent, "Register New Account", true);
-        authService = new AuthService();
+        authService = AuthService.getInstance();
         initComponents();
         setupLayout();
         setupListeners();

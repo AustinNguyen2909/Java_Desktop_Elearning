@@ -11,16 +11,28 @@ import java.util.List;
 
 /**
  * Service for review management
+ * Singleton pattern for single instance across application
  */
 public class ReviewService {
     private final ReviewDAO reviewDAO;
     private final CourseDAO courseDAO;
     private final EnrollmentDAO enrollmentDAO;
 
-    public ReviewService() {
+    // Private constructor to prevent direct instantiation
+    private ReviewService() {
         this.reviewDAO = new ReviewDAO();
         this.courseDAO = new CourseDAO();
         this.enrollmentDAO = new EnrollmentDAO();
+    }
+
+    // Static inner holder class - lazily loaded and thread-safe
+    private static class SingletonHolder {
+        private static final ReviewService INSTANCE = new ReviewService();
+    }
+
+    // Public accessor method
+    public static ReviewService getInstance() {
+        return SingletonHolder.INSTANCE;
     }
 
     /**

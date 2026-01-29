@@ -9,14 +9,26 @@ import java.util.List;
 
 /**
  * Service for lesson management
+ * Singleton pattern for single instance across application
  */
 public class LessonService {
     private final LessonDAO lessonDAO;
     private final CourseDAO courseDAO;
 
-    public LessonService() {
+    // Private constructor to prevent direct instantiation
+    private LessonService() {
         this.lessonDAO = new LessonDAO();
         this.courseDAO = new CourseDAO();
+    }
+
+    // Static inner holder class - lazily loaded and thread-safe
+    private static class SingletonHolder {
+        private static final LessonService INSTANCE = new LessonService();
+    }
+
+    // Public accessor method
+    public static LessonService getInstance() {
+        return SingletonHolder.INSTANCE;
     }
 
     /**
