@@ -19,9 +19,15 @@ CREATE DATABASE IF NOT EXISTS elearning_db;
 USE elearning_db;
 
 -- Drop tables if they exist (for clean setup)
+DROP TABLE IF EXISTS user_activity;
+DROP TABLE IF EXISTS certificates;
+DROP TABLE IF EXISTS course_review_likes;
+DROP TABLE IF EXISTS course_review_comments;
+DROP TABLE IF EXISTS lesson_views;
+DROP TABLE IF EXISTS lesson_likes;
 DROP TABLE IF EXISTS lesson_progress;
-DROP TABLE IF EXISTS reviews;
-DROP TABLE IF EXISTS comments;
+DROP TABLE IF EXISTS course_reviews;
+DROP TABLE IF EXISTS lesson_comments;
 DROP TABLE IF EXISTS enrollments;
 DROP TABLE IF EXISTS lessons;
 DROP TABLE IF EXISTS courses;
@@ -88,6 +94,8 @@ CREATE TABLE lessons (
     duration_minutes INT,
     order_index INT NOT NULL DEFAULT 0,       -- Display order in course
     is_preview BOOLEAN DEFAULT FALSE,         -- Allow non-enrolled users to preview
+    like_count INT DEFAULT 0,                 -- Cached likes for quick display
+    comment_count INT DEFAULT 0,              -- Cached comments for quick display
     created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
     updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
 
@@ -139,7 +147,7 @@ CREATE TABLE lesson_progress (
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4;
 
 -- Comments table
-CREATE TABLE comments (
+CREATE TABLE lesson_comments (
     id INT PRIMARY KEY AUTO_INCREMENT,
     user_id INT NOT NULL,
     lesson_id INT NOT NULL,
@@ -151,15 +159,45 @@ CREATE TABLE comments (
 
     FOREIGN KEY (user_id) REFERENCES users(id) ON DELETE CASCADE,
     FOREIGN KEY (lesson_id) REFERENCES lessons(id) ON DELETE CASCADE,
-    FOREIGN KEY (parent_id) REFERENCES comments(id) ON DELETE CASCADE,
+    FOREIGN KEY (parent_id) REFERENCES lesson_comments(id) ON DELETE CASCADE,
 
     INDEX idx_lesson (lesson_id),
     INDEX idx_user (user_id),
     INDEX idx_parent (parent_id)
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4;
 
+-- Lesson likes
+CREATE TABLE lesson_likes (
+    id INT PRIMARY KEY AUTO_INCREMENT,
+    lesson_id INT NOT NULL,
+    user_id INT NOT NULL,
+    created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+
+    UNIQUE KEY uk_lesson_user (lesson_id, user_id),
+    INDEX idx_lesson (lesson_id),
+    INDEX idx_user (user_id),
+
+    FOREIGN KEY (lesson_id) REFERENCES lessons(id) ON DELETE CASCADE,
+    FOREIGN KEY (user_id) REFERENCES users(id) ON DELETE CASCADE
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4;
+
+-- Lesson views (for analytics)
+CREATE TABLE lesson_views (
+    id BIGINT PRIMARY KEY AUTO_INCREMENT,
+    lesson_id INT NOT NULL,
+    user_id INT NOT NULL,
+    viewed_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+
+    INDEX idx_lesson (lesson_id),
+    INDEX idx_user (user_id),
+    INDEX idx_viewed (viewed_at),
+
+    FOREIGN KEY (lesson_id) REFERENCES lessons(id) ON DELETE CASCADE,
+    FOREIGN KEY (user_id) REFERENCES users(id) ON DELETE CASCADE
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4;
+
 -- Reviews table
-CREATE TABLE reviews (
+CREATE TABLE course_reviews (
     id INT PRIMARY KEY AUTO_INCREMENT,
     user_id INT NOT NULL,
     course_id INT NOT NULL,
@@ -175,4 +213,81 @@ CREATE TABLE reviews (
     UNIQUE KEY uk_user_course (user_id, course_id),
     INDEX idx_course (course_id),
     INDEX idx_rating (rating)
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4;
+
+-- Review comments
+CREATE TABLE course_review_comments (
+    id INT PRIMARY KEY AUTO_INCREMENT,
+    review_id INT NOT NULL,
+    user_id INT NOT NULL,
+    parent_id INT NULL,
+    content TEXT NOT NULL,
+    is_edited BOOLEAN DEFAULT FALSE,
+    created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+    updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
+
+    FOREIGN KEY (review_id) REFERENCES course_reviews(id) ON DELETE CASCADE,
+    FOREIGN KEY (user_id) REFERENCES users(id) ON DELETE CASCADE,
+    FOREIGN KEY (parent_id) REFERENCES course_review_comments(id) ON DELETE CASCADE,
+
+    INDEX idx_review (review_id),
+    INDEX idx_user (user_id),
+    INDEX idx_parent (parent_id)
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4;
+
+-- Review likes
+CREATE TABLE course_review_likes (
+    id INT PRIMARY KEY AUTO_INCREMENT,
+    review_id INT NOT NULL,
+    user_id INT NOT NULL,
+    created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+
+    UNIQUE KEY uk_review_user (review_id, user_id),
+    INDEX idx_review (review_id),
+    INDEX idx_user (user_id),
+
+    FOREIGN KEY (review_id) REFERENCES course_reviews(id) ON DELETE CASCADE,
+    FOREIGN KEY (user_id) REFERENCES users(id) ON DELETE CASCADE
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4;
+
+-- Certificates
+CREATE TABLE certificates (
+    id INT PRIMARY KEY AUTO_INCREMENT,
+    user_id INT NOT NULL,
+    course_id INT NOT NULL,
+    certificate_code VARCHAR(64) NOT NULL UNIQUE,
+    issued_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+    file_path VARCHAR(255) NULL,
+
+    UNIQUE KEY uk_user_course (user_id, course_id),
+    INDEX idx_user (user_id),
+    INDEX idx_course (course_id),
+
+    FOREIGN KEY (user_id) REFERENCES users(id) ON DELETE CASCADE,
+    FOREIGN KEY (course_id) REFERENCES courses(id) ON DELETE CASCADE
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4;
+
+-- User activity log
+CREATE TABLE user_activity (
+    id BIGINT PRIMARY KEY AUTO_INCREMENT,
+    user_id INT NOT NULL,
+    course_id INT NULL,
+    lesson_id INT NULL,
+    action_type ENUM(
+        'LESSON_VIEW', 'LESSON_LIKE', 'LESSON_COMMENT',
+        'REVIEW_CREATE', 'REVIEW_COMMENT', 'REVIEW_LIKE',
+        'COURSE_ENROLL', 'COURSE_COMPLETE', 'CERT_ISSUED'
+    ) NOT NULL,
+    metadata JSON NULL,
+    created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+
+    INDEX idx_user (user_id),
+    INDEX idx_course (course_id),
+    INDEX idx_lesson (lesson_id),
+    INDEX idx_action (action_type),
+    INDEX idx_created (created_at),
+
+    FOREIGN KEY (user_id) REFERENCES users(id) ON DELETE CASCADE,
+    FOREIGN KEY (course_id) REFERENCES courses(id) ON DELETE SET NULL,
+    FOREIGN KEY (lesson_id) REFERENCES lessons(id) ON DELETE SET NULL
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4;

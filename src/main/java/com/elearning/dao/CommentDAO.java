@@ -19,7 +19,7 @@ public class CommentDAO {
     public List<Comment> findByLessonId(int lessonId) {
         List<Comment> comments = new ArrayList<>();
         String sql = "SELECT c.*, u.full_name as user_name, u.avatar_path as user_avatar " +
-                     "FROM comments c " +
+                     "FROM lesson_comments c " +
                      "JOIN users u ON c.user_id = u.id " +
                      "WHERE c.lesson_id = ? " +
                      "ORDER BY c.created_at ASC";
@@ -45,7 +45,7 @@ public class CommentDAO {
     public List<Comment> findTopLevelComments(int lessonId) {
         List<Comment> comments = new ArrayList<>();
         String sql = "SELECT c.*, u.full_name as user_name, u.avatar_path as user_avatar " +
-                     "FROM comments c " +
+                     "FROM lesson_comments c " +
                      "JOIN users u ON c.user_id = u.id " +
                      "WHERE c.lesson_id = ? AND c.parent_id IS NULL " +
                      "ORDER BY c.created_at DESC";
@@ -71,7 +71,7 @@ public class CommentDAO {
     public List<Comment> findReplies(int parentId) {
         List<Comment> replies = new ArrayList<>();
         String sql = "SELECT c.*, u.full_name as user_name, u.avatar_path as user_avatar " +
-                     "FROM comments c " +
+                     "FROM lesson_comments c " +
                      "JOIN users u ON c.user_id = u.id " +
                      "WHERE c.parent_id = ? " +
                      "ORDER BY c.created_at ASC";
@@ -96,7 +96,7 @@ public class CommentDAO {
      */
     public Comment findById(int id) {
         String sql = "SELECT c.*, u.full_name as user_name, u.avatar_path as user_avatar " +
-                     "FROM comments c " +
+                     "FROM lesson_comments c " +
                      "JOIN users u ON c.user_id = u.id " +
                      "WHERE c.id = ?";
 
@@ -119,7 +119,7 @@ public class CommentDAO {
      * Insert new comment
      */
     public boolean insert(Comment comment) {
-        String sql = "INSERT INTO comments (user_id, lesson_id, parent_id, content, is_edited) " +
+        String sql = "INSERT INTO lesson_comments (user_id, lesson_id, parent_id, content, is_edited) " +
                      "VALUES (?, ?, ?, ?, ?)";
 
         try (Connection conn = DBConnection.getInstance().getConnection();
@@ -156,7 +156,7 @@ public class CommentDAO {
      * Update comment
      */
     public boolean update(Comment comment) {
-        String sql = "UPDATE comments SET content = ?, is_edited = TRUE, updated_at = NOW() " +
+        String sql = "UPDATE lesson_comments SET content = ?, is_edited = TRUE, updated_at = NOW() " +
                      "WHERE id = ?";
 
         try (Connection conn = DBConnection.getInstance().getConnection();
@@ -177,8 +177,8 @@ public class CommentDAO {
      */
     public boolean delete(int commentId) {
         // First delete all replies
-        String deleteRepliesSql = "DELETE FROM comments WHERE parent_id = ?";
-        String deleteCommentSql = "DELETE FROM comments WHERE id = ?";
+        String deleteRepliesSql = "DELETE FROM lesson_comments WHERE parent_id = ?";
+        String deleteCommentSql = "DELETE FROM lesson_comments WHERE id = ?";
 
         try (Connection conn = DBConnection.getInstance().getConnection()) {
             conn.setAutoCommit(false);
@@ -213,7 +213,7 @@ public class CommentDAO {
      * Count comments for a lesson
      */
     public int countByLessonId(int lessonId) {
-        String sql = "SELECT COUNT(*) FROM comments WHERE lesson_id = ?";
+        String sql = "SELECT COUNT(*) FROM lesson_comments WHERE lesson_id = ?";
 
         try (Connection conn = DBConnection.getInstance().getConnection();
              PreparedStatement stmt = conn.prepareStatement(sql)) {
@@ -234,7 +234,7 @@ public class CommentDAO {
      * Count replies for a comment
      */
     public int countReplies(int commentId) {
-        String sql = "SELECT COUNT(*) FROM comments WHERE parent_id = ?";
+        String sql = "SELECT COUNT(*) FROM lesson_comments WHERE parent_id = ?";
 
         try (Connection conn = DBConnection.getInstance().getConnection();
              PreparedStatement stmt = conn.prepareStatement(sql)) {

@@ -20,7 +20,7 @@ public class CourseDAO {
         List<Course> courses = new ArrayList<>();
         String sql = "SELECT c.*, u.full_name as instructor_name, " +
                      "(SELECT COUNT(*) FROM enrollments e WHERE e.course_id = c.id) as enrollment_count, " +
-                     "(SELECT AVG(rating) FROM reviews r WHERE r.course_id = c.id) as avg_rating " +
+                     "(SELECT AVG(rating) FROM course_reviews r WHERE r.course_id = c.id) as avg_rating " +
                      "FROM courses c " +
                      "JOIN users u ON c.instructor_id = u.id " +
                      "WHERE c.status = 'APPROVED' AND c.is_published = TRUE " +
@@ -75,7 +75,7 @@ public class CourseDAO {
         List<Course> courses = new ArrayList<>();
         String sql = "SELECT c.*, " +
                      "(SELECT COUNT(*) FROM enrollments e WHERE e.course_id = c.id) as enrollment_count, " +
-                     "(SELECT AVG(rating) FROM reviews r WHERE r.course_id = c.id) as avg_rating " +
+                     "(SELECT AVG(rating) FROM course_reviews r WHERE r.course_id = c.id) as avg_rating " +
                      "FROM courses c " +
                      "WHERE c.instructor_id = ? " +
                      "ORDER BY c.created_at DESC";
@@ -357,7 +357,7 @@ public class CourseDAO {
                      "FROM courses c " +
                      "JOIN users u ON c.instructor_id = u.id " +
                      "LEFT JOIN enrollments e ON c.id = e.course_id " +
-                     "LEFT JOIN reviews r ON c.id = r.course_id " +
+                     "LEFT JOIN course_reviews r ON c.id = r.course_id " +
                      "WHERE c.status = 'APPROVED' AND c.is_published = TRUE " +
                      "GROUP BY c.id " +
                      "ORDER BY enrollment_count DESC " +

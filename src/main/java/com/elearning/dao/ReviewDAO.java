@@ -19,7 +19,7 @@ public class ReviewDAO {
     public List<Review> findByCourseId(int courseId) {
         List<Review> reviews = new ArrayList<>();
         String sql = "SELECT r.*, u.full_name as user_name, u.avatar_path as user_avatar " +
-                     "FROM reviews r " +
+                     "FROM course_reviews r " +
                      "JOIN users u ON r.user_id = u.id " +
                      "WHERE r.course_id = ? " +
                      "ORDER BY r.created_at DESC";
@@ -44,7 +44,7 @@ public class ReviewDAO {
      */
     public Review findByUserAndCourse(int userId, int courseId) {
         String sql = "SELECT r.*, u.full_name as user_name, u.avatar_path as user_avatar " +
-                     "FROM reviews r " +
+                     "FROM course_reviews r " +
                      "JOIN users u ON r.user_id = u.id " +
                      "WHERE r.user_id = ? AND r.course_id = ?";
 
@@ -69,7 +69,7 @@ public class ReviewDAO {
      */
     public Review findById(int id) {
         String sql = "SELECT r.*, u.full_name as user_name, u.avatar_path as user_avatar " +
-                     "FROM reviews r " +
+                     "FROM course_reviews r " +
                      "JOIN users u ON r.user_id = u.id " +
                      "WHERE r.id = ?";
 
@@ -92,7 +92,7 @@ public class ReviewDAO {
      * Insert new review
      */
     public boolean insert(Review review) {
-        String sql = "INSERT INTO reviews (user_id, course_id, rating, comment, is_edited) " +
+        String sql = "INSERT INTO course_reviews (user_id, course_id, rating, comment, is_edited) " +
                      "VALUES (?, ?, ?, ?, ?)";
 
         try (Connection conn = DBConnection.getInstance().getConnection();
@@ -123,7 +123,7 @@ public class ReviewDAO {
      * Update review
      */
     public boolean update(Review review) {
-        String sql = "UPDATE reviews SET rating = ?, comment = ?, is_edited = TRUE, updated_at = NOW() " +
+        String sql = "UPDATE course_reviews SET rating = ?, comment = ?, is_edited = TRUE, updated_at = NOW() " +
                      "WHERE id = ?";
 
         try (Connection conn = DBConnection.getInstance().getConnection();
@@ -144,7 +144,7 @@ public class ReviewDAO {
      * Delete review
      */
     public boolean delete(int reviewId) {
-        String sql = "DELETE FROM reviews WHERE id = ?";
+        String sql = "DELETE FROM course_reviews WHERE id = ?";
 
         try (Connection conn = DBConnection.getInstance().getConnection();
              PreparedStatement stmt = conn.prepareStatement(sql)) {
@@ -161,7 +161,7 @@ public class ReviewDAO {
      * Get average rating for a course
      */
     public double getAverageRating(int courseId) {
-        String sql = "SELECT AVG(rating) as avg_rating FROM reviews WHERE course_id = ?";
+        String sql = "SELECT AVG(rating) as avg_rating FROM course_reviews WHERE course_id = ?";
 
         try (Connection conn = DBConnection.getInstance().getConnection();
              PreparedStatement stmt = conn.prepareStatement(sql)) {
@@ -182,7 +182,7 @@ public class ReviewDAO {
      * Count reviews for a course
      */
     public int countByCourseId(int courseId) {
-        String sql = "SELECT COUNT(*) FROM reviews WHERE course_id = ?";
+        String sql = "SELECT COUNT(*) FROM course_reviews WHERE course_id = ?";
 
         try (Connection conn = DBConnection.getInstance().getConnection();
              PreparedStatement stmt = conn.prepareStatement(sql)) {
@@ -204,7 +204,7 @@ public class ReviewDAO {
      */
     public int[] getRatingDistribution(int courseId) {
         int[] distribution = new int[5]; // Index 0-4 for ratings 1-5
-        String sql = "SELECT rating, COUNT(*) as count FROM reviews WHERE course_id = ? GROUP BY rating";
+        String sql = "SELECT rating, COUNT(*) as count FROM course_reviews WHERE course_id = ? GROUP BY rating";
 
         try (Connection conn = DBConnection.getInstance().getConnection();
              PreparedStatement stmt = conn.prepareStatement(sql)) {

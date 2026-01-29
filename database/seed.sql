@@ -166,16 +166,16 @@ INSERT INTO lesson_progress (user_id, lesson_id, is_completed, completed_at, las
 (5, 1, TRUE, DATE_SUB(NOW(), INTERVAL 3 DAY), DATE_SUB(NOW(), INTERVAL 3 DAY)),  -- Welcome to Java ✓
 (5, 2, FALSE, NULL, NOW());                                                       -- Setting Up Environment (watching now)
 
--- Insert comments
-INSERT INTO comments (user_id, lesson_id, parent_id, content) VALUES
+-- Insert lesson comments
+INSERT INTO lesson_comments (user_id, lesson_id, parent_id, content) VALUES
 (4, 1, NULL, 'Great introduction! Very clear explanation.'),
 (5, 1, NULL, 'Is Java pass-by-value or pass-by-reference?'),
 (2, 1, 2, 'Good question! Java is strictly pass-by-value. Object references are passed by value.'),
 (4, 3, NULL, 'The Hello World example helped me understand the basic structure.'),
 (4, 6, NULL, 'Looking forward to learning more SQL queries!');
 
--- Insert reviews
-INSERT INTO reviews (user_id, course_id, rating, comment) VALUES
+-- Insert course reviews
+INSERT INTO course_reviews (user_id, course_id, rating, comment) VALUES
 (4, 1, 5, 'Excellent course! The instructor explains complex concepts in a very understandable way.'),
 (5, 1, 4, 'Good course, but I wish there were more practical exercises.'),
 (4, 3, 5, 'Perfect for beginners. The pace is just right and examples are very practical.'),
@@ -197,6 +197,65 @@ INSERT INTO reviews (user_id, course_id, rating, comment) VALUES
 (4, 15, 5, 'Linux basics were easy to follow.'),
 (5, 15, 4, 'Good coverage for developers.'),
 (10, 16, 4, 'Solid intro to ML in Java.');
+
+-- Lesson likes
+INSERT INTO lesson_likes (lesson_id, user_id) VALUES
+((SELECT id FROM lessons WHERE course_id = 1 AND order_index = 1), (SELECT id FROM users WHERE username = 'student1')),
+((SELECT id FROM lessons WHERE course_id = 1 AND order_index = 2), (SELECT id FROM users WHERE username = 'student1')),
+((SELECT id FROM lessons WHERE course_id = 1 AND order_index = 1), (SELECT id FROM users WHERE username = 'student2')),
+((SELECT id FROM lessons WHERE course_id = 3 AND order_index = 1), (SELECT id FROM users WHERE username = 'student1')),
+((SELECT id FROM lessons WHERE course_id = 3 AND order_index = 2), (SELECT id FROM users WHERE username = 'student2'));
+
+-- Lesson views (sample)
+INSERT INTO lesson_views (lesson_id, user_id, viewed_at) VALUES
+((SELECT id FROM lessons WHERE course_id = 1 AND order_index = 1), (SELECT id FROM users WHERE username = 'student1'), DATE_SUB(NOW(), INTERVAL 5 DAY)),
+((SELECT id FROM lessons WHERE course_id = 1 AND order_index = 2), (SELECT id FROM users WHERE username = 'student1'), DATE_SUB(NOW(), INTERVAL 4 DAY)),
+((SELECT id FROM lessons WHERE course_id = 1 AND order_index = 3), (SELECT id FROM users WHERE username = 'student1'), DATE_SUB(NOW(), INTERVAL 3 DAY)),
+((SELECT id FROM lessons WHERE course_id = 3 AND order_index = 1), (SELECT id FROM users WHERE username = 'student1'), DATE_SUB(NOW(), INTERVAL 2 DAY)),
+((SELECT id FROM lessons WHERE course_id = 3 AND order_index = 2), (SELECT id FROM users WHERE username = 'student2'), DATE_SUB(NOW(), INTERVAL 1 DAY));
+
+-- Course review comments
+INSERT INTO course_review_comments (review_id, user_id, parent_id, content) VALUES
+((SELECT id FROM course_reviews WHERE user_id = (SELECT id FROM users WHERE username = 'student1') AND course_id = 1 LIMIT 1),
+ (SELECT id FROM users WHERE username = 'student2'), NULL, 'Thanks for the feedback! I will take this course soon.'),
+((SELECT id FROM course_reviews WHERE user_id = (SELECT id FROM users WHERE username = 'student2') AND course_id = 1 LIMIT 1),
+ (SELECT id FROM users WHERE username = 'instructor1'), NULL, 'We are adding more exercises in the next update.'),
+((SELECT id FROM course_reviews WHERE user_id = (SELECT id FROM users WHERE username = 'student1') AND course_id = 3 LIMIT 1),
+ (SELECT id FROM users WHERE username = 'student1'), NULL, 'Glad the pace felt right.');
+
+-- Course review likes
+INSERT INTO course_review_likes (review_id, user_id) VALUES
+((SELECT id FROM course_reviews WHERE user_id = (SELECT id FROM users WHERE username = 'student1') AND course_id = 1 LIMIT 1),
+ (SELECT id FROM users WHERE username = 'student2')),
+((SELECT id FROM course_reviews WHERE user_id = (SELECT id FROM users WHERE username = 'student2') AND course_id = 1 LIMIT 1),
+ (SELECT id FROM users WHERE username = 'student1'));
+
+-- Certificates (issued for completed courses)
+INSERT INTO certificates (user_id, course_id, certificate_code, issued_at, file_path) VALUES
+((SELECT id FROM users WHERE username = 'student1'), (SELECT id FROM courses WHERE title = 'Java Foundations'),
+ 'CERT-JAVA-FOUND-0001', NOW(), NULL);
+
+-- User activity log (sample)
+INSERT INTO user_activity (user_id, course_id, lesson_id, action_type, metadata, created_at) VALUES
+((SELECT id FROM users WHERE username = 'student1'), (SELECT id FROM courses WHERE title = 'Java Foundations'),
+ (SELECT id FROM lessons WHERE course_id = 1 AND order_index = 1), 'LESSON_VIEW', JSON_OBJECT('source','course_player'), DATE_SUB(NOW(), INTERVAL 5 DAY)),
+((SELECT id FROM users WHERE username = 'student1'), (SELECT id FROM courses WHERE title = 'Java Foundations'),
+ (SELECT id FROM lessons WHERE course_id = 1 AND order_index = 1), 'LESSON_LIKE', JSON_OBJECT('device','desktop'), DATE_SUB(NOW(), INTERVAL 5 DAY)),
+((SELECT id FROM users WHERE username = 'student1'), (SELECT id FROM courses WHERE title = 'Java Foundations'),
+ (SELECT id FROM lessons WHERE course_id = 1 AND order_index = 2), 'LESSON_COMMENT', JSON_OBJECT('length',42), DATE_SUB(NOW(), INTERVAL 4 DAY)),
+((SELECT id FROM users WHERE username = 'student1'), (SELECT id FROM courses WHERE title = 'Java Foundations'),
+ NULL, 'REVIEW_CREATE', JSON_OBJECT('rating',5), DATE_SUB(NOW(), INTERVAL 3 DAY)),
+((SELECT id FROM users WHERE username = 'student2'), (SELECT id FROM courses WHERE title = 'Java Foundations'),
+ NULL, 'REVIEW_COMMENT', JSON_OBJECT('target','review'), DATE_SUB(NOW(), INTERVAL 2 DAY)),
+((SELECT id FROM users WHERE username = 'student1'), (SELECT id FROM courses WHERE title = 'Java Foundations'),
+ NULL, 'COURSE_COMPLETE', JSON_OBJECT('progress',100), DATE_SUB(NOW(), INTERVAL 1 DAY)),
+((SELECT id FROM users WHERE username = 'student1'), (SELECT id FROM courses WHERE title = 'Java Foundations'),
+ NULL, 'CERT_ISSUED', JSON_OBJECT('code','CERT-JAVA-FOUND-0001'), NOW());
+
+-- Update cached counters for lessons
+UPDATE lessons l
+SET like_count = (SELECT COUNT(*) FROM lesson_likes ll WHERE ll.lesson_id = l.id),
+    comment_count = (SELECT COUNT(*) FROM lesson_comments c WHERE c.lesson_id = l.id);
 
 COMMIT;
 
