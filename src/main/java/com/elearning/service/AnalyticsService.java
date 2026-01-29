@@ -5,6 +5,7 @@ import com.elearning.model.Course;
 import com.elearning.model.Enrollment;
 
 import java.util.HashMap;
+import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
 
@@ -186,6 +187,27 @@ public class AnalyticsService {
      */
     public List<Course> getTopCoursesByEnrollment(int limit) {
         return courseDAO.findTopCoursesByEnrollment(limit);
+    }
+
+    /**
+     * Get user registration trends for the last N days
+     * Returns a map with date as key and UserRegistrationData as value
+     */
+    public Map<String, UserRegistrationData> getUserRegistrationTrends(int days) {
+        Map<String, UserRegistrationData> trends = new LinkedHashMap<>();
+        Map<String, Map<String, Integer>> rawData = userDAO.getUserRegistrationsByDate(days);
+
+        for (Map.Entry<String, Map<String, Integer>> entry : rawData.entrySet()) {
+            String date = entry.getKey();
+            Map<String, Integer> roleCounts = entry.getValue();
+
+            int students = roleCounts.getOrDefault("USER", 0);
+            int instructors = roleCounts.getOrDefault("INSTRUCTOR", 0);
+
+            trends.put(date, new UserRegistrationData(date, students, instructors));
+        }
+
+        return trends;
     }
 
     /**
@@ -398,5 +420,24 @@ public class AnalyticsService {
                 totalReviews, averageRating
             );
         }
+    }
+
+    /**
+     * User registration data for a specific date
+     */
+    public static class UserRegistrationData {
+        private final String date;
+        private final int students;
+        private final int instructors;
+
+        public UserRegistrationData(String date, int students, int instructors) {
+            this.date = date;
+            this.students = students;
+            this.instructors = instructors;
+        }
+
+        public String getDate() { return date; }
+        public int getStudents() { return students; }
+        public int getInstructors() { return instructors; }
     }
 }

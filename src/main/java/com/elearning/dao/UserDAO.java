@@ -5,6 +5,9 @@ import com.elearning.util.DBConnection;
 
 import java.sql.*;
 import java.time.LocalDateTime;
+import java.util.HashMap;
+import java.util.LinkedHashMap;
+import java.util.Map;
 
 /**
  * DAO for User entity
@@ -281,5 +284,39 @@ public class UserDAO {
         }
 
         return user;
+    }
+
+    /**
+     * Get user registration counts by date for the last N days
+     * Returns a map with date as key and a map of role counts as value
+     */
+    public Map<String, Map<String, Integer>> getUserRegistrationsByDate(int days) {
+        Map<String, Map<String, Integer>> registrations = new LinkedHashMap<>();
+        String sql = "SELECT DATE(created_at) as reg_date, role, COUNT(*) as count " +
+                     "FROM users " +
+                     "WHERE created_at >= DATE_SUB(CURDATE(), INTERVAL ? DAY) " +
+                     "AND role IN ('USER', 'INSTRUCTOR') " +
+                     "GROUP BY DATE(created_at), role " +
+                     "ORDER BY reg_date ASC";
+
+        try (Connection conn = DBConnection.getInstance().getConnection();
+             PreparedStatement stmt = conn.prepareStatement(sql)) {
+
+            stmt.setInt(1, days);
+            ResultSet rs = stmt.executeQuery();
+
+            while (rs.next()) {
+                String date = rs.getString("reg_date");
+                String role = rs.getString("role");
+                int count = rs.getInt("count");
+
+                registrations.putIfAbsent(date, new HashMap<>());
+                registrations.get(date).put(role, count);
+            }
+        } catch (SQLException e) {
+            e.printStackTrace();
+        }
+
+        return registrations;
     }
 }

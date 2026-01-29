@@ -1,11 +1,15 @@
 package com.elearning.util;
 
+import com.elearning.service.AnalyticsService;
 import org.jfree.chart.ChartFactory;
 import org.jfree.chart.ChartPanel;
 import org.jfree.chart.JFreeChart;
+import org.jfree.chart.axis.CategoryAxis;
+import org.jfree.chart.axis.CategoryLabelPositions;
 import org.jfree.chart.plot.CategoryPlot;
 import org.jfree.chart.plot.PiePlot;
 import org.jfree.chart.plot.PlotOrientation;
+import org.jfree.chart.renderer.category.LineAndShapeRenderer;
 import org.jfree.data.category.CategoryDataset;
 import org.jfree.data.category.DefaultCategoryDataset;
 import org.jfree.data.general.DefaultPieDataset;
@@ -13,6 +17,7 @@ import org.jfree.data.general.PieDataset;
 
 import javax.swing.*;
 import java.awt.*;
+import java.util.Map;
 
 /**
  * Utility class for creating charts and visualizations using JFreeChart
@@ -113,14 +118,13 @@ public class ChartUtil {
     }
 
     /**
-     * Create a user role distribution pie chart
+     * Create a user role distribution pie chart (Students and Instructors only)
      */
-    public static ChartPanel createUserRolePieChart(int students, int instructors, int admins) {
+    public static ChartPanel createUserRolePieChart(int students, int instructors) {
         DefaultPieDataset<String> dataset = new DefaultPieDataset<>();
 
         if (students > 0) dataset.setValue("Students", students);
         if (instructors > 0) dataset.setValue("Instructors", instructors);
-        if (admins > 0) dataset.setValue("Admins", admins);
 
         JFreeChart chart = ChartFactory.createPieChart(
                 "User Distribution",
@@ -134,7 +138,6 @@ public class ChartUtil {
         PiePlot plot = (PiePlot) chart.getPlot();
         plot.setSectionPaint("Students", new Color(47, 111, 235));
         plot.setSectionPaint("Instructors", new Color(155, 89, 182));
-        plot.setSectionPaint("Admins", new Color(225, 29, 72));
         plot.setBackgroundPaint(Color.WHITE);
         chart.setBackgroundPaint(Color.WHITE);
 
@@ -213,6 +216,60 @@ public class ChartUtil {
 
         ChartPanel chartPanel = new ChartPanel(chart);
         chartPanel.setPreferredSize(new Dimension(400, 300));
+        return chartPanel;
+    }
+
+    /**
+     * Create a line chart for user registration trends
+     * Shows Students and Instructors as separate lines over time
+     */
+    public static ChartPanel createUserRegistrationTrendsChart(Map<String, AnalyticsService.UserRegistrationData> data) {
+        DefaultCategoryDataset dataset = new DefaultCategoryDataset();
+
+        // Add data for both Students and Instructors
+        for (Map.Entry<String, AnalyticsService.UserRegistrationData> entry : data.entrySet()) {
+            String date = entry.getKey();
+            AnalyticsService.UserRegistrationData regData = entry.getValue();
+
+            dataset.addValue(regData.getStudents(), "Students", date);
+            dataset.addValue(regData.getInstructors(), "Instructors", date);
+        }
+
+        JFreeChart chart = ChartFactory.createLineChart(
+                "New User Registrations",
+                "Date",
+                "Number of Users",
+                dataset,
+                PlotOrientation.VERTICAL,
+                true,
+                true,
+                false
+        );
+
+        // Customize chart appearance
+        CategoryPlot plot = chart.getCategoryPlot();
+        plot.setBackgroundPaint(Color.WHITE);
+        plot.setRangeGridlinePaint(new Color(230, 230, 230));
+        chart.setBackgroundPaint(Color.WHITE);
+
+        // Customize line renderer
+        LineAndShapeRenderer renderer = new LineAndShapeRenderer();
+        renderer.setSeriesPaint(0, new Color(47, 111, 235)); // Students - Blue
+        renderer.setSeriesPaint(1, new Color(155, 89, 182)); // Instructors - Purple
+        renderer.setSeriesStroke(0, new BasicStroke(2.5f));
+        renderer.setSeriesStroke(1, new BasicStroke(2.5f));
+        renderer.setSeriesShapesVisible(0, true);
+        renderer.setSeriesShapesVisible(1, true);
+        plot.setRenderer(renderer);
+
+        // Rotate category labels if there are many dates
+        if (data.size() > 10) {
+            CategoryAxis domainAxis = plot.getDomainAxis();
+            domainAxis.setCategoryLabelPositions(CategoryLabelPositions.UP_45);
+        }
+
+        ChartPanel chartPanel = new ChartPanel(chart);
+        chartPanel.setPreferredSize(new Dimension(850, 300));
         return chartPanel;
     }
 }
