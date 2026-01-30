@@ -1,10 +1,12 @@
 package com.elearning.ui.user;
 
+import com.elearning.model.Certificate;
 import com.elearning.model.Course;
 import com.elearning.model.Enrollment;
 import com.elearning.model.Lesson;
 import com.elearning.model.User;
 import com.elearning.service.AuthService;
+import com.elearning.service.CertificateService;
 import com.elearning.service.CourseService;
 import com.elearning.service.EnrollmentService;
 import com.elearning.service.UserService;
@@ -34,6 +36,7 @@ public class UserDashboard extends JFrame {
     private final CourseService courseService;
     private final EnrollmentService enrollmentService;
     private final UserService userService;
+    private final CertificateService certificateService;
 
     private JPanel contentPanel;
     private JPanel availableCoursesGrid;
@@ -46,6 +49,7 @@ public class UserDashboard extends JFrame {
         this.courseService = CourseService.getInstance();
         this.enrollmentService = EnrollmentService.getInstance();
         this.userService = UserService.getInstance();
+        this.certificateService = CertificateService.getInstance();
 
         initComponents();
         loadAvailableCourses();
@@ -261,6 +265,23 @@ public class UserDashboard extends JFrame {
         titleLabel.setFont(new Font("Fira Sans", Font.BOLD, 20));
         titleLabel.setForeground(new Color(22, 78, 99));
 
+        JButton refreshButton = new JButton("Refresh");
+        refreshButton.setBackground(UITheme.PRIMARY);
+        refreshButton.setForeground(Color.WHITE);
+        refreshButton.setFocusPainted(false);
+        refreshButton.setBorderPainted(false);
+        refreshButton.setFont(new Font("Fira Sans", Font.BOLD, 12));
+        refreshButton.setPreferredSize(new Dimension(110, 32));
+        refreshButton.addActionListener(e -> {
+            reloadCurrentUserData();
+            refreshProfilePanel();
+        });
+
+        JPanel headerRow = new JPanel(new BorderLayout());
+        headerRow.setOpaque(false);
+        headerRow.add(titleLabel, BorderLayout.WEST);
+        headerRow.add(refreshButton, BorderLayout.EAST);
+
         JPanel content = new JPanel(new BorderLayout(16, 16));
         content.setOpaque(false);
 
@@ -378,10 +399,15 @@ public class UserDashboard extends JFrame {
         rightCol.add(Box.createRigidArea(new Dimension(0, 12)));
         rightCol.add(educationCard);
 
+        if ("USER".equals(currentUser.getRole())) {
+            rightCol.add(Box.createRigidArea(new Dimension(0, 12)));
+            rightCol.add(createCertificatesSection());
+        }
+
         content.add(leftCol, BorderLayout.WEST);
         content.add(rightCol, BorderLayout.CENTER);
 
-        panel.add(titleLabel, BorderLayout.NORTH);
+        panel.add(headerRow, BorderLayout.NORTH);
         panel.add(content, BorderLayout.CENTER);
 
         return panel;
@@ -797,6 +823,208 @@ public class UserDashboard extends JFrame {
         return row;
     }
 
+    private JPanel createCertificatesSection() {
+        JPanel card = new com.elearning.ui.components.CardPanel();
+        card.setBackground(Color.WHITE);
+        card.setLayout(new BorderLayout());
+        card.setBorder(BorderFactory.createEmptyBorder(14, 16, 14, 16));
+
+        JLabel titleLabel = new JLabel("My Certificates");
+        titleLabel.setFont(new Font("Fira Sans", Font.BOLD, 14));
+        titleLabel.setForeground(new Color(22, 78, 99));
+
+        JPanel listPanel = new JPanel();
+        listPanel.setOpaque(false);
+        listPanel.setLayout(new BoxLayout(listPanel, BoxLayout.Y_AXIS));
+
+        List<Certificate> certificates = certificateService.getCertificatesForUser(currentUser.getId());
+        if (certificates.isEmpty()) {
+            JLabel emptyLabel = new JLabel("Complete a course to earn your first certificate.");
+            emptyLabel.setFont(new Font("Fira Sans", Font.PLAIN, 12));
+            emptyLabel.setForeground(UITheme.MUTED_TEXT);
+            emptyLabel.setAlignmentX(Component.LEFT_ALIGNMENT);
+            listPanel.add(emptyLabel);
+        } else {
+            for (Certificate certificate : certificates) {
+                listPanel.add(createCertificateItem(certificate));
+                listPanel.add(Box.createRigidArea(new Dimension(0, 8)));
+            }
+        }
+
+        JScrollPane scrollPane = new JScrollPane(listPanel);
+        scrollPane.setBorder(BorderFactory.createEmptyBorder());
+        scrollPane.setBackground(Color.WHITE);
+        scrollPane.getViewport().setBackground(Color.WHITE);
+        scrollPane.setHorizontalScrollBarPolicy(ScrollPaneConstants.HORIZONTAL_SCROLLBAR_NEVER);
+        scrollPane.setVerticalScrollBarPolicy(ScrollPaneConstants.VERTICAL_SCROLLBAR_AS_NEEDED);
+        scrollPane.setPreferredSize(new Dimension(0, 220));
+
+        JPanel body = new JPanel(new BorderLayout());
+        body.setOpaque(false);
+        body.add(Box.createRigidArea(new Dimension(0, 10)), BorderLayout.NORTH);
+        body.add(scrollPane, BorderLayout.CENTER);
+
+        card.add(titleLabel, BorderLayout.NORTH);
+        card.add(body, BorderLayout.CENTER);
+
+        return card;
+    }
+
+    private JPanel createCertificateItem(Certificate certificate) {
+        JPanel item = new JPanel(new BorderLayout(12, 0));
+        item.setBackground(new Color(241, 249, 252));
+        item.setBorder(BorderFactory.createEmptyBorder(10, 12, 10, 12));
+        item.setAlignmentX(Component.LEFT_ALIGNMENT);
+
+        JPanel info = new JPanel();
+        info.setOpaque(false);
+        info.setLayout(new BoxLayout(info, BoxLayout.Y_AXIS));
+
+        JLabel courseLabel = new JLabel(certificate.getCourseTitle());
+        courseLabel.setFont(new Font("Fira Sans", Font.BOLD, 13));
+        courseLabel.setForeground(UITheme.TEXT);
+
+        String issuedText = certificate.getIssuedAt() != null
+                ? certificate.getIssuedAt().toLocalDate().format(DateTimeFormatter.ofPattern("MMM dd, yyyy"))
+                : "N/A";
+        JLabel metaLabel = new JLabel("Issued: " + issuedText);
+        metaLabel.setFont(new Font("Fira Sans", Font.PLAIN, 12));
+        metaLabel.setForeground(UITheme.MUTED_TEXT);
+
+        JLabel codeLabel = new JLabel(certificate.getCertificateCode());
+        codeLabel.setFont(new Font("Fira Sans", Font.PLAIN, 11));
+        codeLabel.setForeground(new Color(100, 116, 139));
+
+        info.add(courseLabel);
+        info.add(Box.createRigidArea(new Dimension(0, 4)));
+        info.add(metaLabel);
+        info.add(codeLabel);
+
+        JPanel actions = new JPanel();
+        actions.setOpaque(false);
+        actions.setLayout(new BoxLayout(actions, BoxLayout.Y_AXIS));
+
+        JButton viewButton = new JButton("View");
+        viewButton.setBackground(UITheme.PRIMARY);
+        viewButton.setForeground(Color.WHITE);
+        viewButton.setFocusPainted(false);
+        viewButton.setBorderPainted(false);
+        viewButton.setFont(new Font("Fira Sans", Font.BOLD, 11));
+        viewButton.setMaximumSize(new Dimension(110, 28));
+        viewButton.addActionListener(e -> showCertificatePreview(certificate));
+
+        JButton downloadButton = new JButton("Download");
+        downloadButton.setBackground(UITheme.BACKGROUND);
+        downloadButton.setForeground(UITheme.TEXT);
+        downloadButton.setFocusPainted(false);
+        downloadButton.setBorder(BorderFactory.createLineBorder(UITheme.BORDER));
+        downloadButton.setFont(new Font("Fira Sans", Font.BOLD, 11));
+        downloadButton.setMaximumSize(new Dimension(110, 28));
+        downloadButton.addActionListener(e -> downloadCertificate(certificate));
+
+        actions.add(viewButton);
+        actions.add(Box.createRigidArea(new Dimension(0, 6)));
+        actions.add(downloadButton);
+
+        item.add(info, BorderLayout.CENTER);
+        item.add(actions, BorderLayout.EAST);
+
+        return item;
+    }
+
+    private void showCertificatePreview(Certificate certificate) {
+        Path imagePath = certificateService.ensureCertificateImage(certificate, currentUser.getFullName());
+        if (imagePath == null || !Files.exists(imagePath)) {
+            JOptionPane.showMessageDialog(this, "Certificate file not found.", "Error", JOptionPane.ERROR_MESSAGE);
+            return;
+        }
+
+        ImageIcon icon = new ImageIcon(imagePath.toString());
+        JLabel imageLabel = new JLabel(icon);
+
+        JScrollPane scrollPane = new JScrollPane(imageLabel);
+        scrollPane.setHorizontalScrollBarPolicy(ScrollPaneConstants.HORIZONTAL_SCROLLBAR_AS_NEEDED);
+        scrollPane.setVerticalScrollBarPolicy(ScrollPaneConstants.VERTICAL_SCROLLBAR_AS_NEEDED);
+        scrollPane.getVerticalScrollBar().setUnitIncrement(24);
+        scrollPane.getVerticalScrollBar().setBlockIncrement(160);
+
+        JFrame previewFrame = new JFrame("Certificate Preview");
+        previewFrame.setSize(860, 620);
+        previewFrame.setLocationRelativeTo(this);
+        previewFrame.setLayout(new BorderLayout());
+        previewFrame.setResizable(true);
+        previewFrame.setDefaultCloseOperation(WindowConstants.DISPOSE_ON_CLOSE);
+
+        JPanel toolBar = new JPanel(new FlowLayout(FlowLayout.RIGHT, 8, 6));
+        toolBar.setBackground(UITheme.SURFACE);
+
+        JButton zoomOutBtn = new JButton("-");
+        zoomOutBtn.setBackground(UITheme.BACKGROUND);
+        zoomOutBtn.setForeground(UITheme.TEXT);
+        zoomOutBtn.setFocusPainted(false);
+        zoomOutBtn.setBorder(BorderFactory.createLineBorder(UITheme.BORDER));
+        zoomOutBtn.setPreferredSize(new Dimension(32, 28));
+
+        JButton zoomInBtn = new JButton("+");
+        zoomInBtn.setBackground(UITheme.PRIMARY);
+        zoomInBtn.setForeground(Color.WHITE);
+        zoomInBtn.setFocusPainted(false);
+        zoomInBtn.setBorderPainted(false);
+        zoomInBtn.setPreferredSize(new Dimension(32, 28));
+
+        toolBar.add(zoomOutBtn);
+        toolBar.add(zoomInBtn);
+
+        final double[] zoom = {1.0};
+        Runnable updateImage = () -> {
+            int w = (int) Math.max(200, icon.getIconWidth() * zoom[0]);
+            int h = (int) Math.max(200, icon.getIconHeight() * zoom[0]);
+            Image scaled = icon.getImage().getScaledInstance(w, h, Image.SCALE_SMOOTH);
+            imageLabel.setIcon(new ImageIcon(scaled));
+            imageLabel.revalidate();
+        };
+
+        zoomOutBtn.addActionListener(e -> {
+            zoom[0] = Math.max(0.5, zoom[0] - 0.1);
+            updateImage.run();
+        });
+        zoomInBtn.addActionListener(e -> {
+            zoom[0] = Math.min(2.0, zoom[0] + 0.1);
+            updateImage.run();
+        });
+        previewFrame.add(toolBar, BorderLayout.NORTH);
+        previewFrame.add(scrollPane, BorderLayout.CENTER);
+        previewFrame.setVisible(true);
+    }
+
+    private void downloadCertificate(Certificate certificate) {
+        Path imagePath = certificateService.ensureCertificateImage(certificate, currentUser.getFullName());
+        if (imagePath == null || !Files.exists(imagePath)) {
+            JOptionPane.showMessageDialog(this, "Certificate file not found.", "Error", JOptionPane.ERROR_MESSAGE);
+            return;
+        }
+
+        JFileChooser chooser = new JFileChooser();
+        chooser.setDialogTitle("Save Certificate");
+        chooser.setSelectedFile(new File(certificate.getCertificateCode() + ".png"));
+        int result = chooser.showSaveDialog(this);
+        if (result == JFileChooser.APPROVE_OPTION) {
+            File target = chooser.getSelectedFile();
+            String path = target.getAbsolutePath();
+            if (!path.toLowerCase().endsWith(".png")) {
+                target = new File(path + ".png");
+            }
+            try {
+                Files.copy(imagePath, target.toPath(), StandardCopyOption.REPLACE_EXISTING);
+                JOptionPane.showMessageDialog(this, "Certificate saved successfully.", "Success",
+                        JOptionPane.INFORMATION_MESSAGE);
+            } catch (Exception ex) {
+                JOptionPane.showMessageDialog(this, "Failed to save certificate: " + ex.getMessage(), "Error",
+                        JOptionPane.ERROR_MESSAGE);
+            }
+        }
+    }
+
     private String valueOrNA(String value) {
         return value == null || value.isBlank() ? "N/A" : value;
     }
@@ -811,6 +1039,32 @@ public class UserDashboard extends JFrame {
             case "ADMIN" -> "Admin";
             default -> role;
         };
+    }
+
+    private void reloadCurrentUserData() {
+        try {
+            User latest = userService.getUserById(currentUser.getId());
+            if (latest == null) {
+                return;
+            }
+            currentUser.setUsername(latest.getUsername());
+            currentUser.setEmail(latest.getEmail());
+            currentUser.setPhone(latest.getPhone());
+            currentUser.setFullName(latest.getFullName());
+            currentUser.setAvatarPath(latest.getAvatarPath());
+            currentUser.setStatus(latest.getStatus());
+            currentUser.setRole(latest.getRole());
+            currentUser.setDateOfBirth(latest.getDateOfBirth());
+            currentUser.setSchool(latest.getSchool());
+            currentUser.setJobTitle(latest.getJobTitle());
+            currentUser.setExperience(latest.getExperience());
+            currentUser.setCreatedAt(latest.getCreatedAt());
+            currentUser.setUpdatedAt(latest.getUpdatedAt());
+            SessionManager.getInstance().login(currentUser);
+        } catch (Exception ex) {
+            JOptionPane.showMessageDialog(this, "Failed to refresh profile: " + ex.getMessage(),
+                    "Error", JOptionPane.ERROR_MESSAGE);
+        }
     }
 
     private void refreshProfilePanel() {

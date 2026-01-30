@@ -447,25 +447,35 @@ public class LessonViewerDialog extends JDialog {
                         .count();
 
                 if (completedCount == lessons.size()) {
-                    JOptionPane.showMessageDialog(this,
-                            "Congratulations!\nYou've completed all lessons in this course!",
+                    showStatusDialog(
                             "Course Completed",
-                            JOptionPane.INFORMATION_MESSAGE);
+                            "Congratulations! You have completed all lessons in this course.",
+                            UITheme.ACCENT,
+                            UITheme.TEXT
+                    );
                 } else {
-                    JOptionPane.showMessageDialog(this,
-                            "Lesson marked as complete!",
+                    showStatusDialog(
                             "Success",
-                            JOptionPane.INFORMATION_MESSAGE);
+                            "Lesson marked as complete!",
+                            UITheme.PRIMARY,
+                            UITheme.TEXT
+                    );
                 }
             } else {
-                JOptionPane.showMessageDialog(this,
+                showStatusDialog(
+                        "Error",
                         "Failed to mark lesson as complete. Please try again.",
-                        "Error", JOptionPane.ERROR_MESSAGE);
+                        UITheme.DANGER,
+                        UITheme.TEXT
+                );
             }
         } catch (Exception e) {
-            JOptionPane.showMessageDialog(this,
+            showStatusDialog(
+                    "Error",
                     "Error: " + e.getMessage(),
-                    "Error", JOptionPane.ERROR_MESSAGE);
+                    UITheme.DANGER,
+                    UITheme.TEXT
+            );
         }
     }
 
@@ -512,6 +522,36 @@ public class LessonViewerDialog extends JDialog {
         disposeResources();
         super.dispose();
         System.out.println("LessonViewerDialog disposed completely");
+    }
+
+    private void showStatusDialog(String title, String message, Color accent, Color textColor) {
+        JPanel panel = new JPanel(new BorderLayout(12, 12));
+        panel.setBackground(UITheme.SURFACE);
+        panel.setBorder(new EmptyBorder(14, 16, 14, 16));
+
+        JPanel header = new JPanel(new BorderLayout(10, 0));
+        header.setOpaque(false);
+
+        JPanel dot = new JPanel();
+        dot.setPreferredSize(new Dimension(14, 14));
+        dot.setBackground(accent);
+        dot.setMaximumSize(new Dimension(14, 14));
+
+        JLabel titleLabel = new JLabel(title);
+        titleLabel.setFont(new Font("Fira Sans", Font.BOLD, 16));
+        titleLabel.setForeground(textColor);
+
+        header.add(dot, BorderLayout.WEST);
+        header.add(titleLabel, BorderLayout.CENTER);
+
+        JLabel body = new JLabel("<html><div style='width:280px;'>" + message + "</div></html>");
+        body.setFont(new Font("Fira Sans", Font.PLAIN, 13));
+        body.setForeground(UITheme.MUTED_TEXT);
+
+        panel.add(header, BorderLayout.NORTH);
+        panel.add(body, BorderLayout.CENTER);
+
+        JOptionPane.showMessageDialog(this, panel, title, JOptionPane.PLAIN_MESSAGE);
     }
 
     /**

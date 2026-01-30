@@ -2,7 +2,14 @@
 *.class
 target/
 out/
-/src/main/resources/config.properties
+
+# Local configuration (sensitive data)
+src/main/resources/config.properties
+local-mariadb/
+certificates/
+dependency-reduced-pom.xml
+design-system/
+AGENTS.md
 
 # Log files
 *.log
@@ -24,7 +31,6 @@ out/
 .project
 .classpath
 .factorypath
-.DS_Store
 
 # Maven
 .mvn/
@@ -33,9 +39,6 @@ mvnw.cmd
 
 # Video files (large files)
 videos/
-
-# Local configuration (sensitive data)
-src/main/resources/config.properties
 
 # OS Files
 .DS_Store
@@ -50,6 +53,7 @@ Thumbs.db
 # Test coverage
 .coverage
 coverage/
-
-# docs files
-**/*.md
+src/main/resources/config.properties
+*.properties
+scripts/db_check.ps1
+scripts/db_seed.ps1

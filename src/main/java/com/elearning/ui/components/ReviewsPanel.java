@@ -115,10 +115,7 @@ public class ReviewsPanel extends JPanel {
             String content = reviewTextArea.getText().trim();
 
             if (content.isEmpty()) {
-                JOptionPane.showMessageDialog(this,
-                    "Please write a review",
-                    "Error",
-                    JOptionPane.ERROR_MESSAGE);
+                showStatusDialog("Error", "Please write a review", UITheme.DANGER);
                 return;
             }
 
@@ -134,21 +131,12 @@ public class ReviewsPanel extends JPanel {
                     reviewTextArea.setText("");
                     ratingCombo.setSelectedItem(5);
                     loadReviews(); // Refresh reviews
-                    JOptionPane.showMessageDialog(this,
-                        "Review submitted successfully!",
-                        "Success",
-                        JOptionPane.INFORMATION_MESSAGE);
+                    showStatusDialog("Success", "Review submitted successfully!", UITheme.ACCENT);
                 } else {
-                    JOptionPane.showMessageDialog(this,
-                        "Failed to submit review",
-                        "Error",
-                        JOptionPane.ERROR_MESSAGE);
+                    showStatusDialog("Error", "Failed to submit review", UITheme.DANGER);
                 }
             } catch (Exception ex) {
-                JOptionPane.showMessageDialog(this,
-                    "Error: " + ex.getMessage(),
-                    "Error",
-                    JOptionPane.ERROR_MESSAGE);
+                showStatusDialog("Error", "Error: " + ex.getMessage(), UITheme.DANGER);
             }
         });
 
@@ -369,7 +357,7 @@ public class ReviewsPanel extends JPanel {
         if (result == JOptionPane.OK_OPTION) {
             String content = replyArea.getText().trim();
             if (content.isEmpty()) {
-                JOptionPane.showMessageDialog(this, "Please enter a reply", "Error", JOptionPane.ERROR_MESSAGE);
+                showStatusDialog("Error", "Please enter a reply", UITheme.DANGER);
                 return;
             }
             try {
@@ -388,12 +376,42 @@ public class ReviewsPanel extends JPanel {
                 if (success) {
                     loadReviews();
                 } else {
-                    JOptionPane.showMessageDialog(this, "Failed to post reply", "Error", JOptionPane.ERROR_MESSAGE);
+                    showStatusDialog("Error", "Failed to post reply", UITheme.DANGER);
                 }
             } catch (Exception ex) {
-                JOptionPane.showMessageDialog(this, "Error: " + ex.getMessage(), "Error", JOptionPane.ERROR_MESSAGE);
+                showStatusDialog("Error", "Error: " + ex.getMessage(), UITheme.DANGER);
             }
         }
+    }
+
+    private void showStatusDialog(String title, String message, Color accent) {
+        JPanel panel = new JPanel(new BorderLayout(12, 12));
+        panel.setBackground(UITheme.SURFACE);
+        panel.setBorder(BorderFactory.createEmptyBorder(14, 16, 14, 16));
+
+        JPanel header = new JPanel(new BorderLayout(10, 0));
+        header.setOpaque(false);
+
+        JPanel dot = new JPanel();
+        dot.setPreferredSize(new Dimension(14, 14));
+        dot.setBackground(accent);
+        dot.setMaximumSize(new Dimension(14, 14));
+
+        JLabel titleLabel = new JLabel(title);
+        titleLabel.setFont(new Font("Fira Sans", Font.BOLD, 16));
+        titleLabel.setForeground(UITheme.TEXT);
+
+        header.add(dot, BorderLayout.WEST);
+        header.add(titleLabel, BorderLayout.CENTER);
+
+        JLabel body = new JLabel("<html><div style='width:280px;'>" + message + "</div></html>");
+        body.setFont(new Font("Fira Sans", Font.PLAIN, 13));
+        body.setForeground(UITheme.MUTED_TEXT);
+
+        panel.add(header, BorderLayout.NORTH);
+        panel.add(body, BorderLayout.CENTER);
+
+        JOptionPane.showMessageDialog(this, panel, title, JOptionPane.PLAIN_MESSAGE);
     }
 
     public void refresh() {

@@ -19,6 +19,7 @@ public class EnrollmentService {
     private final LessonProgressDAO lessonProgressDAO;
     private final CourseDAO courseDAO;
     private final LessonDAO lessonDAO;
+    private final CertificateService certificateService;
 
     // Private constructor to prevent direct instantiation
     private EnrollmentService() {
@@ -26,6 +27,7 @@ public class EnrollmentService {
         this.lessonProgressDAO = new LessonProgressDAO();
         this.courseDAO = new CourseDAO();
         this.lessonDAO = new LessonDAO();
+        this.certificateService = CertificateService.getInstance();
     }
 
     // Static inner holder class - lazily loaded and thread-safe
@@ -190,6 +192,9 @@ public class EnrollmentService {
             // Update enrollment progress
             enrollmentDAO.updateProgress(userId, courseId, progressPercent);
             enrollmentDAO.updateLastAccessed(userId, courseId);
+
+            // Issue certificate when completion reaches 100%
+            certificateService.issueIfEligible(userId, courseId, progressPercent);
         }
 
         return success;

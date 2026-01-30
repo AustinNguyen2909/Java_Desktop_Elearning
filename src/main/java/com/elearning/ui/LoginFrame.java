@@ -287,8 +287,10 @@ public class LoginFrame extends JFrame {
                     User user = get();
                     if (user != null) {
                         SessionManager.getInstance().login(user);
-                        openDashboard(user);
-                        dispose();
+                        boolean opened = openDashboard(user);
+                        if (opened) {
+                            dispose();
+                        }
                     } else {
                         showError("Invalid username or password");
                     }
@@ -303,8 +305,8 @@ public class LoginFrame extends JFrame {
         worker.execute();
     }
 
-    private void openDashboard(User user) {
-        SwingUtilities.invokeLater(() -> {
+    private boolean openDashboard(User user) {
+        try {
             JFrame dashboard;
             switch (user.getRole()) {
                 case "ADMIN":
@@ -318,10 +320,14 @@ public class LoginFrame extends JFrame {
                     break;
                 default:
                     showError("Unknown user role");
-                    return;
+                    return false;
             }
             dashboard.setVisible(true);
-        });
+            return true;
+        } catch (Exception ex) {
+            showLaunchError(ex);
+            return false;
+        }
     }
 
     private void openRegisterDialog() {
@@ -331,6 +337,36 @@ public class LoginFrame extends JFrame {
 
     private void showError(String message) {
         errorLabel.setText(message);
+    }
+
+    private void showLaunchError(Exception ex) {
+        JPanel panel = new JPanel(new BorderLayout(12, 12));
+        panel.setBackground(UITheme.SURFACE);
+        panel.setBorder(new EmptyBorder(12, 12, 12, 12));
+
+        JLabel title = new JLabel("Failed to open dashboard");
+        title.setFont(new Font("Fira Sans", Font.BOLD, 16));
+        title.setForeground(UITheme.TEXT);
+
+        JLabel body = new JLabel("<html><div style='width:280px;'>Login succeeded but the dashboard failed to open. " +
+                "Please check the error details below.</div></html>");
+        body.setFont(new Font("Fira Sans", Font.PLAIN, 13));
+        body.setForeground(UITheme.MUTED_TEXT);
+
+        JTextArea details = new JTextArea(ex.getMessage() != null ? ex.getMessage() : ex.toString());
+        details.setEditable(false);
+        details.setLineWrap(true);
+        details.setWrapStyleWord(true);
+        details.setFont(new Font("Consolas", Font.PLAIN, 11));
+        details.setForeground(UITheme.DANGER);
+        details.setBackground(new Color(254, 242, 242));
+        details.setBorder(BorderFactory.createEmptyBorder(8, 8, 8, 8));
+
+        panel.add(title, BorderLayout.NORTH);
+        panel.add(body, BorderLayout.CENTER);
+        panel.add(details, BorderLayout.SOUTH);
+
+        JOptionPane.showMessageDialog(this, panel, "Launch Error", JOptionPane.ERROR_MESSAGE);
     }
 }
 

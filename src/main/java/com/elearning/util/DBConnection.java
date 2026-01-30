@@ -23,6 +23,10 @@ public class DBConnection {
                 throw new IOException("Unable to find config.properties");
             }
             config.load(input);
+            String rawUrl = config.getProperty("db.url");
+            if (rawUrl != null) {
+                config.setProperty("db.url", normalizeDbUrl(rawUrl));
+            }
             Class.forName(config.getProperty("db.driver"));
         } catch (IOException | ClassNotFoundException e) {
             throw new RuntimeException("Failed to load database configuration", e);
@@ -76,5 +80,41 @@ public class DBConnection {
             e.printStackTrace();
             return false;
         }
+    }
+
+    /**
+     * Test DDL capability by creating and dropping a temp table.
+     * Returns null when successful, otherwise returns error message.
+     */
+    public String testDDL() {
+        try (Connection conn = getConnection();
+             java.sql.Statement stmt = conn.createStatement()) {
+            stmt.execute("CREATE TABLE IF NOT EXISTS _ddl_smoke (id INT)");
+            stmt.execute("DROP TABLE _ddl_smoke");
+            return null;
+        } catch (SQLException e) {
+            return e.getMessage();
+        }
+    }
+
+    private String normalizeDbUrl(String url) {
+        if (!url.startsWith("jdbc:mysql://")) {
+            return url;
+        }
+
+        String prefix = "jdbc:mysql://";
+        String rest = url.substring(prefix.length());
+        int slashIndex = rest.indexOf('/');
+        String hostPort = slashIndex >= 0 ? rest.substring(0, slashIndex) : rest;
+        String path = slashIndex >= 0 ? rest.substring(slashIndex) : "";
+
+        String host;
+        if (hostPort.contains(":")) {
+            host = hostPort.substring(0, hostPort.indexOf(':'));
+        } else {
+            host = hostPort;
+        }
+
+        return prefix + host + ":3306" + path;
     }
 }
