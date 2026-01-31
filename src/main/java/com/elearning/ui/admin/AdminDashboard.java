@@ -459,13 +459,13 @@ public class AdminDashboard extends JFrame {
             courseStatusChart.setPreferredSize(new Dimension(200, 200));
             chartsPanel.add(courseStatusChart);
 
-            // Enrollment status pie chart
-            ChartPanel enrollmentStatusChart = ChartUtil.createEnrollmentStatusPieChart(
-                    stats.getActiveEnrollments(),
-                    stats.getCompletedEnrollments()
-            );
-            enrollmentStatusChart.setPreferredSize(new Dimension(200, 200));
-            chartsPanel.add(enrollmentStatusChart);
+            // // Enrollment status pie chart
+            // ChartPanel enrollmentStatusChart = ChartUtil.createEnrollmentStatusPieChart(
+            //         stats.getActiveEnrollments(),
+            //         stats.getCompletedEnrollments()
+            // );
+            // enrollmentStatusChart.setPreferredSize(new Dimension(200, 200));
+            // chartsPanel.add(enrollmentStatusChart);
 
             mainContent.add(chartsPanel);
             mainContent.add(Box.createRigidArea(new Dimension(0, 15)));
@@ -658,7 +658,7 @@ public class AdminDashboard extends JFrame {
 
         gridPanel.add(createDetailStatItem("Total Courses", String.valueOf(stats.getTotalCourses())));
         gridPanel.add(createDetailStatItem("Pending Courses", String.valueOf(stats.getPendingCourses())));
-        gridPanel.add(createDetailStatItem("Published Courses", String.valueOf(stats.getPublishedCourses())));
+        gridPanel.add(createDetailStatItem("Approved Courses", String.valueOf(stats.getPublishedCourses())));
         gridPanel.add(createDetailStatItem("Active Enrollments", String.valueOf(stats.getActiveEnrollments())));
 
         gridPanel.add(createDetailStatItem("Completed Enrollments", String.valueOf(stats.getCompletedEnrollments())));
