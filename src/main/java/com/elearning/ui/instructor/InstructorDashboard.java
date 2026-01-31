@@ -526,6 +526,14 @@ public class InstructorDashboard extends JFrame {
         viewItem.addActionListener(e -> viewCourse(course.getId()));
         menu.add(viewItem);
 
+        JMenuItem previewItem = new JMenuItem("Preview Lessons");
+        previewItem.addActionListener(e -> {
+            com.elearning.ui.user.LessonViewerDialog dialog =
+                    new com.elearning.ui.user.LessonViewerDialog(InstructorDashboard.this, course);
+            dialog.setVisible(true);
+        });
+        menu.add(previewItem);
+
         JMenuItem lessonsItem = new JMenuItem("Manage Lessons");
         lessonsItem.addActionListener(e -> manageLessons(course.getId()));
         menu.add(lessonsItem);

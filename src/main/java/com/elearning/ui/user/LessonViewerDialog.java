@@ -50,6 +50,7 @@ public class LessonViewerDialog extends JDialog {
     private final CommentService commentService;
     private final String currentUserRole;
     private final boolean allowLessonComments;
+    private final boolean allowLessonCompletion;
 
     public LessonViewerDialog(JFrame parent, Course course) {
         super(parent, course.getTitle() + " - Lessons", true);
@@ -62,6 +63,7 @@ public class LessonViewerDialog extends JDialog {
         this.progressMap = new HashMap<>();
         this.currentUserRole = SessionManager.getInstance().getCurrentUser().getRole();
         this.allowLessonComments = "USER".equals(currentUserRole) || "INSTRUCTOR".equals(currentUserRole);
+        this.allowLessonCompletion = "USER".equals(currentUserRole);
 
         initComponents();
         loadLessons();
@@ -219,6 +221,11 @@ public class LessonViewerDialog extends JDialog {
         markCompleteBtn.setMaximumSize(new Dimension(120, 34));
         markCompleteBtn.setToolTipText("Mark Complete");
         markCompleteBtn.setEnabled(false);
+        if (!allowLessonCompletion) {
+            markCompleteBtn.setEnabled(false);
+            markCompleteBtn.setBackground(new Color(148, 163, 184));
+            markCompleteBtn.setToolTipText("Students only");
+        }
         markCompleteBtn.addActionListener(e -> markLessonComplete());
 
         JPanel descPanel = new JPanel(new BorderLayout(5, 5));
@@ -485,16 +492,23 @@ public class LessonViewerDialog extends JDialog {
 
         // Update mark complete button
         LessonProgress progress = progressMap.get(lesson.getId());
-        if (progress != null && progress.isCompleted()) {
-            markCompleteBtn.setText("Completed");
-            markCompleteBtn.setEnabled(false);
-            markCompleteBtn.setBackground(new Color(148, 163, 184)); // Gray
-            markCompleteBtn.setToolTipText("Completed");
+        if (allowLessonCompletion) {
+            if (progress != null && progress.isCompleted()) {
+                markCompleteBtn.setText("Completed");
+                markCompleteBtn.setEnabled(false);
+                markCompleteBtn.setBackground(new Color(148, 163, 184)); // Gray
+                markCompleteBtn.setToolTipText("Completed");
+            } else {
+                markCompleteBtn.setText("Complete");
+                markCompleteBtn.setEnabled(true);
+                markCompleteBtn.setBackground(UITheme.ACCENT); // Green
+                markCompleteBtn.setToolTipText("Mark Complete");
+            }
         } else {
             markCompleteBtn.setText("Complete");
-            markCompleteBtn.setEnabled(true);
-            markCompleteBtn.setBackground(UITheme.ACCENT); // Green
-            markCompleteBtn.setToolTipText("Mark Complete");
+            markCompleteBtn.setEnabled(false);
+            markCompleteBtn.setBackground(new Color(148, 163, 184));
+            markCompleteBtn.setToolTipText("Students only");
         }
 
         // Mark lesson as opened
@@ -676,6 +690,10 @@ public class LessonViewerDialog extends JDialog {
     }
 
     private void markLessonComplete() {
+        if (!allowLessonCompletion) {
+            return;
+        }
+
         if (currentLesson == null) {
             return;
         }
