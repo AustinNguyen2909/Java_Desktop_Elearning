@@ -2,6 +2,7 @@ package com.elearning.ui.user;
 
 import com.elearning.model.Certificate;
 import com.elearning.model.Course;
+import com.elearning.model.CourseTest;
 import com.elearning.model.Enrollment;
 import com.elearning.model.Lesson;
 import com.elearning.model.User;
@@ -10,9 +11,11 @@ import com.elearning.service.CertificateService;
 import com.elearning.service.CourseService;
 import com.elearning.service.EnrollmentService;
 import com.elearning.service.LoginLogService;
+import com.elearning.service.TestService;
 import com.elearning.service.UserService;
 import com.elearning.ui.components.LoginCalendarPanel;
 import com.elearning.ui.components.StarRatingPanel;
+import com.elearning.ui.components.TestTakingDialog;
 import com.elearning.ui.components.UITheme;
 import com.elearning.util.CourseCardImageUtil;
 import com.elearning.util.SessionManager;
@@ -42,6 +45,7 @@ public class UserDashboard extends JFrame {
     private final UserService userService;
     private final CertificateService certificateService;
     private final LoginLogService loginLogService;
+    private final TestService testService;
 
     private JPanel contentPanel;
     private JPanel availableCoursesGrid;
@@ -61,6 +65,7 @@ public class UserDashboard extends JFrame {
         this.certificateService = CertificateService.getInstance();
         this.loginLogService = LoginLogService.getInstance();
         this.calendarMonth = YearMonth.now();
+        this.testService = TestService.getInstance();
 
         initComponents();
         loadAvailableCourses();
@@ -597,6 +602,14 @@ public class UserDashboard extends JFrame {
                 }
 
                 String progressText = String.format("Progress: %.1f%%", enrollment.getProgressPercent());
+                
+                // Add test indicator if course has a test and student completed course
+                if (enrollment.getProgressPercent() >= 100.0) {
+                    CourseTest test = testService.getTestByCourseId(enrollment.getCourseId());
+                    if (test != null && test.getIsPublished()) {
+                        progressText += " • Test Available";
+                    }
+                }
 
                 JPanel card = createCourseCard(
                         title,
@@ -746,6 +759,14 @@ public class UserDashboard extends JFrame {
         continueItem.addActionListener(e -> continueCourse(courseId));
         menu.add(continueItem);
 
+        // Check if student can take test
+        Enrollment enrollment = enrollmentService.getEnrollment(currentUser.getId(), courseId);
+        if (enrollment != null && enrollment.getProgressPercent() >= 100.0) {
+            JMenuItem testItem = new JMenuItem("Take Test");
+            testItem.addActionListener(e -> takeTest(courseId));
+            menu.add(testItem);
+        }
+
         JMenuItem detailsItem = new JMenuItem("View Details");
         detailsItem.addActionListener(e -> viewCourseDetails(courseId));
         menu.add(detailsItem);
@@ -820,6 +841,76 @@ public class UserDashboard extends JFrame {
 
         // Refresh course list when dialog closes to show updated progress
         loadMyCourses();
+    }
+
+    private void takeTest(int courseId) {
+        try {
+            // Check if test exists for this course
+            CourseTest test = testService.getTestByCourseId(courseId);
+            if (test == null) {
+                JOptionPane.showMessageDialog(this,
+                    "No test is available for this course yet.",
+                    "No Test Available",
+                    JOptionPane.INFORMATION_MESSAGE);
+                return;
+            }
+
+            // Check if test is published
+            if (!test.getIsPublished()) {
+                JOptionPane.showMessageDialog(this,
+                    "The test for this course is not yet available.",
+                    "Test Not Available",
+                    JOptionPane.INFORMATION_MESSAGE);
+                return;
+            }
+
+            // Verify course completion
+            Enrollment enrollment = enrollmentService.getEnrollment(currentUser.getId(), courseId);
+            if (enrollment == null || enrollment.getProgressPercent() < 100.0) {
+                JOptionPane.showMessageDialog(this,
+                    "You must complete 100% of the course lessons before taking the test.\n" +
+                    "Current progress: " + String.format("%.1f%%", enrollment != null ? enrollment.getProgressPercent() : 0.0),
+                    "Course Not Complete",
+                    JOptionPane.WARNING_MESSAGE);
+                return;
+            }
+
+            // Show test information and confirm
+            String message = String.format(
+                "Test: %s\n\n" +
+                "Questions: %d\n" +
+                "Passing Score: %.0f%%\n" +
+                "Time Limit: %s\n" +
+                "Max Attempts: %s\n\n" +
+                "Are you ready to take the test?",
+                test.getTitle(),
+                testService.getQuestions(test.getId()).size(),
+                test.getPassingScore(),
+                test.getTimeLimitMinutes() != null ? test.getTimeLimitMinutes() + " minutes" : "No limit",
+                test.getMaxAttempts() != null ? String.valueOf(test.getMaxAttempts()) : "Unlimited"
+            );
+
+            int choice = JOptionPane.showConfirmDialog(this,
+                message,
+                "Take Test - " + test.getTitle(),
+                JOptionPane.YES_NO_OPTION,
+                JOptionPane.QUESTION_MESSAGE);
+
+            if (choice == JOptionPane.YES_OPTION) {
+                // Open test taking dialog
+                TestTakingDialog testDialog = new TestTakingDialog(this, test);
+                testDialog.setVisible(true);
+                
+                // Refresh courses after test completion (in case certificate was earned)
+                loadMyCourses();
+            }
+
+        } catch (Exception e) {
+            JOptionPane.showMessageDialog(this,
+                "Error loading test: " + e.getMessage(),
+                "Error",
+                JOptionPane.ERROR_MESSAGE);
+        }
     }
     // Custom cell renderer for lesson list
     class LessonListCellRenderer extends DefaultListCellRenderer {

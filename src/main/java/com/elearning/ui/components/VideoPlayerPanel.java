@@ -1,12 +1,15 @@
 package com.elearning.ui.components;
 
 import javafx.application.Platform;
-import javafx.beans.value.ChangeListener;
 import javafx.embed.swing.JFXPanel;
 import javafx.scene.Scene;
 import javafx.scene.control.Button;
 import javafx.scene.control.Label;
 import javafx.scene.control.Slider;
+import javafx.scene.control.Tooltip;
+import javafx.scene.input.KeyCode;
+import javafx.scene.input.KeyEvent;
+import javafx.scene.input.MouseEvent;
 import javafx.scene.layout.BorderPane;
 import javafx.scene.layout.HBox;
 import javafx.scene.layout.Priority;
@@ -14,7 +17,12 @@ import javafx.scene.layout.Region;
 import javafx.scene.media.Media;
 import javafx.scene.media.MediaPlayer;
 import javafx.scene.media.MediaView;
+import javafx.stage.Stage;
+import javafx.stage.StageStyle;
 import javafx.util.Duration;
+import javafx.animation.FadeTransition;
+import javafx.animation.Timeline;
+import javafx.animation.KeyFrame;
 
 import javax.swing.*;
 import java.awt.*;
@@ -33,6 +41,11 @@ public class VideoPlayerPanel extends JPanel {
     private String videoPath;
     private boolean isInitialized = false;
     private volatile boolean disposed = false;
+    private Stage fullscreenStage = null;
+    private BorderPane originalParent = null;
+    private boolean isFullscreen = false;
+    private HBox fullscreenControlsRef = null;
+    private Timeline controlsHideTimer = null;
 
     // Static initializer to configure JavaFX Platform
     static {
@@ -286,6 +299,12 @@ public class VideoPlayerPanel extends JPanel {
 
         mediaPlayer.volumeProperty().bind(volumeSlider.valueProperty().divide(100));
 
+        // Fullscreen button
+        Button fullscreenBtn = new Button("\u26F6");
+        fullscreenBtn.setStyle("-fx-font-size: 16px; -fx-background-color: #9b59b6; -fx-text-fill: white;");
+        fullscreenBtn.setTooltip(new Tooltip("Fullscreen (F11 or Esc to exit)"));
+        fullscreenBtn.setOnAction(e -> toggleFullscreen());
+
         // Spacer
         Region spacer = new Region();
         HBox.setHgrow(spacer, Priority.ALWAYS);
@@ -297,7 +316,104 @@ public class VideoPlayerPanel extends JPanel {
                 progressSlider,
                 spacer,
                 volumeLabel,
-                volumeSlider
+                volumeSlider,
+                fullscreenBtn
+        );
+
+        return controls;
+    }
+
+    /**
+     * Create fullscreen controls (similar to regular controls but with exit fullscreen button)
+     */
+    private HBox createFullscreenControls() {
+        HBox controls = new HBox(10);
+        controls.setStyle("-fx-background-color: rgba(44, 62, 80, 0.8); -fx-padding: 15;");
+
+        // Play/Pause button
+        Button playPauseBtn = new Button("\u25B6");
+        playPauseBtn.setStyle("-fx-font-size: 18px; -fx-background-color: #3498db; -fx-text-fill: white; -fx-pref-width: 50; -fx-pref-height: 40;");
+        playPauseBtn.setOnAction(e -> {
+            if (mediaPlayer != null && mediaPlayer.getStatus() == MediaPlayer.Status.PLAYING) {
+                mediaPlayer.pause();
+                playPauseBtn.setText("\u25B6");
+            } else if (mediaPlayer != null) {
+                mediaPlayer.play();
+                playPauseBtn.setText("\u23F8");
+            }
+        });
+
+        // Stop button
+        Button stopBtn = new Button("\u23F9");
+        stopBtn.setStyle("-fx-font-size: 18px; -fx-background-color: #e74c3c; -fx-text-fill: white; -fx-pref-width: 50; -fx-pref-height: 40;");
+        stopBtn.setOnAction(e -> {
+            if (mediaPlayer != null) {
+                mediaPlayer.stop();
+                playPauseBtn.setText("\u25B6");
+            }
+        });
+
+        // Time label
+        Label timeLabel = new Label("00:00 / 00:00");
+        timeLabel.setStyle("-fx-text-fill: white; -fx-font-size: 14px;");
+
+        // Progress slider
+        Slider progressSlider = new Slider();
+        progressSlider.setMin(0);
+        progressSlider.setMax(100);
+        progressSlider.setValue(0);
+        progressSlider.setPrefWidth(300);
+        progressSlider.setStyle("-fx-background-color: transparent;");
+
+        // Update progress slider and time label
+        mediaPlayer.currentTimeProperty().addListener((obs, oldTime, newTime) -> {
+            if (!progressSlider.isValueChanging() && mediaPlayer != null) {
+                Duration total = mediaPlayer.getTotalDuration();
+                if (total != null && total.toMillis() > 0) {
+                    progressSlider.setValue(newTime.toMillis() / total.toMillis() * 100);
+                    timeLabel.setText(formatTime(newTime) + " / " + formatTime(total));
+                }
+            }
+        });
+
+        // Seek when slider is moved
+        progressSlider.valueProperty().addListener((obs, oldVal, newVal) -> {
+            if (progressSlider.isValueChanging() && mediaPlayer != null) {
+                Duration total = mediaPlayer.getTotalDuration();
+                if (total != null) {
+                    mediaPlayer.seek(total.multiply(newVal.doubleValue() / 100));
+                }
+            }
+        });
+
+        // Volume slider
+        Slider volumeSlider = new Slider(0, 100, 50);
+        volumeSlider.setPrefWidth(120);
+        volumeSlider.setStyle("-fx-background-color: transparent;");
+        Label volumeLabel = new Label("\uD83D\uDD0A");
+        volumeLabel.setStyle("-fx-text-fill: white; -fx-font-size: 16px;");
+
+        mediaPlayer.volumeProperty().bind(volumeSlider.valueProperty().divide(100));
+
+        // Exit fullscreen button
+        Button exitFullscreenBtn = new Button("\u26F6");
+        exitFullscreenBtn.setStyle("-fx-font-size: 18px; -fx-background-color: #e67e22; -fx-text-fill: white; -fx-pref-width: 50; -fx-pref-height: 40;");
+        exitFullscreenBtn.setTooltip(new Tooltip("Exit Fullscreen (ESC)"));
+        exitFullscreenBtn.setOnAction(e -> exitFullscreen());
+
+        // Spacer
+        Region spacer = new Region();
+        HBox.setHgrow(spacer, Priority.ALWAYS);
+
+        controls.getChildren().addAll(
+                playPauseBtn,
+                stopBtn,
+                timeLabel,
+                progressSlider,
+                spacer,
+                volumeLabel,
+                volumeSlider,
+                exitFullscreenBtn
         );
 
         return controls;
@@ -451,11 +567,236 @@ public class VideoPlayerPanel extends JPanel {
     }
 
     /**
+     * Toggle fullscreen mode
+     */
+    private void toggleFullscreen() {
+        if (mediaView == null || mediaPlayer == null) {
+            return;
+        }
+
+        if (isFullscreen) {
+            exitFullscreen();
+        } else {
+            enterFullscreen();
+        }
+    }
+
+    /**
+     * Enter fullscreen mode
+     */
+    private void enterFullscreen() {
+        if (isFullscreen || mediaView == null) {
+            return;
+        }
+
+        Platform.runLater(() -> {
+            try {
+                // Store reference to original parent
+                originalParent = (BorderPane) mediaView.getParent();
+                
+                // Remove media view from current parent
+                if (originalParent != null) {
+                    originalParent.setCenter(null);
+                }
+
+                // Create fullscreen stage
+                fullscreenStage = new Stage();
+                fullscreenStage.initStyle(StageStyle.UNDECORATED);
+                fullscreenStage.setFullScreen(true);
+                fullscreenStage.setTitle("Video Player - Fullscreen");
+
+                // Create fullscreen layout
+                BorderPane fullscreenRoot = new BorderPane();
+                fullscreenRoot.setStyle("-fx-background-color: black;");
+                
+                // Create media container for fullscreen
+                BorderPane mediaContainer = new BorderPane();
+                mediaContainer.setStyle("-fx-background-color: black;");
+                mediaContainer.setCenter(mediaView);
+                
+                // Add media container to fullscreen layout
+                fullscreenRoot.setCenter(mediaContainer);
+                
+                // Create fullscreen controls
+                HBox fullscreenControls = createFullscreenControls();
+                fullscreenControlsRef = fullscreenControls;
+                fullscreenRoot.setBottom(fullscreenControls);
+                
+                // Bind media view size to media container
+                mediaView.fitWidthProperty().bind(mediaContainer.widthProperty());
+                mediaView.fitHeightProperty().bind(mediaContainer.heightProperty());
+
+                // Create fullscreen scene
+                Scene fullscreenScene = new Scene(fullscreenRoot);
+                fullscreenStage.setScene(fullscreenScene);
+
+                // Add key handlers for fullscreen exit
+                fullscreenScene.setOnKeyPressed(this::handleFullscreenKeyPress);
+                
+                // Add mouse movement handler for auto-hide controls
+                fullscreenScene.setOnMouseMoved(this::handleMouseMovement);
+                fullscreenScene.setOnMouseClicked(this::handleMouseClick);
+                
+                // Start auto-hide timer
+                startControlsHideTimer();
+
+                // Handle stage close
+                fullscreenStage.setOnCloseRequest(e -> exitFullscreen());
+
+                // Show fullscreen stage
+                fullscreenStage.show();
+                isFullscreen = true;
+
+                System.out.println("Entered fullscreen mode");
+
+            } catch (Exception e) {
+                System.err.println("Error entering fullscreen: " + e.getMessage());
+                e.printStackTrace();
+            }
+        });
+    }
+
+    /**
+     * Exit fullscreen mode
+     */
+    private void exitFullscreen() {
+        if (!isFullscreen || fullscreenStage == null) {
+            return;
+        }
+
+        Platform.runLater(() -> {
+            try {
+                // Stop controls hide timer
+                if (controlsHideTimer != null) {
+                    controlsHideTimer.stop();
+                    controlsHideTimer = null;
+                }
+                
+                // Remove media view from fullscreen stage
+                BorderPane fullscreenRoot = (BorderPane) fullscreenStage.getScene().getRoot();
+                fullscreenRoot.setCenter(null);
+
+                // Close fullscreen stage
+                fullscreenStage.close();
+                fullscreenStage = null;
+                fullscreenControlsRef = null;
+
+                // Restore media view to original parent
+                if (originalParent != null && mediaView != null) {
+                    originalParent.setCenter(mediaView);
+                    
+                    // Restore original bindings
+                    mediaView.fitWidthProperty().bind(originalParent.widthProperty());
+                    mediaView.fitHeightProperty().bind(originalParent.heightProperty());
+                }
+
+                isFullscreen = false;
+                System.out.println("Exited fullscreen mode");
+
+            } catch (Exception e) {
+                System.err.println("Error exiting fullscreen: " + e.getMessage());
+                e.printStackTrace();
+            }
+        });
+    }
+
+    /**
+     * Handle key presses in fullscreen mode
+     */
+    private void handleFullscreenKeyPress(KeyEvent event) {
+        if (event.getCode() == KeyCode.ESCAPE || event.getCode() == KeyCode.F11) {
+            exitFullscreen();
+        } else if (event.getCode() == KeyCode.SPACE) {
+            // Toggle play/pause with spacebar
+            if (mediaPlayer != null) {
+                if (mediaPlayer.getStatus() == MediaPlayer.Status.PLAYING) {
+                    mediaPlayer.pause();
+                } else {
+                    mediaPlayer.play();
+                }
+            }
+        }
+        
+        // Show controls on any key press
+        showControls();
+    }
+
+    /**
+     * Handle mouse movement in fullscreen mode
+     */
+    private void handleMouseMovement(MouseEvent event) {
+        showControls();
+    }
+
+    /**
+     * Handle mouse clicks in fullscreen mode
+     */
+    private void handleMouseClick(MouseEvent event) {
+        showControls();
+    }
+
+    /**
+     * Show fullscreen controls and restart hide timer
+     */
+    private void showControls() {
+        if (fullscreenControlsRef != null && isFullscreen) {
+            // Stop any existing hide timer
+            if (controlsHideTimer != null) {
+                controlsHideTimer.stop();
+            }
+            
+            // Show controls
+            fullscreenControlsRef.setVisible(true);
+            fullscreenControlsRef.setOpacity(1.0);
+            
+            // Start new hide timer
+            startControlsHideTimer();
+        }
+    }
+
+    /**
+     * Start timer to auto-hide controls after 3 seconds of inactivity
+     */
+    private void startControlsHideTimer() {
+        if (controlsHideTimer != null) {
+            controlsHideTimer.stop();
+        }
+        
+        controlsHideTimer = new Timeline(new KeyFrame(Duration.seconds(3), e -> hideControls()));
+        controlsHideTimer.play();
+    }
+
+    /**
+     * Hide fullscreen controls with fade animation
+     */
+    private void hideControls() {
+        if (fullscreenControlsRef != null && isFullscreen) {
+            FadeTransition fadeOut = new FadeTransition(Duration.millis(500), fullscreenControlsRef);
+            fadeOut.setFromValue(1.0);
+            fadeOut.setToValue(0.0);
+            fadeOut.setOnFinished(e -> fullscreenControlsRef.setVisible(false));
+            fadeOut.play();
+        }
+    }
+
+    /**
+     * Check if currently in fullscreen mode
+     */
+    public boolean isFullscreen() {
+        return isFullscreen;
+    }
+
+    /**
      * Release resources
      * IMPORTANT: Call this when disposing the panel
      */
     public void dispose() {
         System.out.println("VideoPlayerPanel.dispose() called for: " + videoPath);
+
+        // Exit fullscreen if currently in fullscreen mode
+        if (isFullscreen) {
+            exitFullscreen();
+        }
 
         // Mark as disposed to prevent any pending initFX from running
         disposed = true;

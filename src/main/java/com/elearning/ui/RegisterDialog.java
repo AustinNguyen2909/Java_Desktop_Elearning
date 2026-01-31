@@ -245,8 +245,10 @@ public class RegisterDialog extends JDialog {
                 try {
                     Boolean success = get();
                     if (success) {
+                        JLabel messageLabel = new JLabel("Account created successfully!\nYou can now login.");
+                        messageLabel.setForeground(Color.WHITE);
                         JOptionPane.showMessageDialog(RegisterDialog.this,
-                                "Account created successfully!\nYou can now login.",
+                                messageLabel,
                                 "Success",
                                 JOptionPane.INFORMATION_MESSAGE);
                         dispose();
