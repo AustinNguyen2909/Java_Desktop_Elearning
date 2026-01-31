@@ -1,15 +1,16 @@
 package com.elearning.ui.components;
 
 import com.elearning.model.Course;
+import com.elearning.model.CourseTest;
 import com.elearning.model.Enrollment;
 import com.elearning.model.Lesson;
 import com.elearning.model.User;
 import com.elearning.service.CourseService;
 import com.elearning.service.EnrollmentService;
 import com.elearning.service.LessonService;
+import com.elearning.service.TestService;
 import com.elearning.util.FileUtil;
 import com.elearning.util.SessionManager;
-import com.elearning.util.VideoUtil;
 
 import javax.swing.*;
 import javax.swing.table.DefaultTableModel;
@@ -28,10 +29,12 @@ public class CourseDetailsDialog extends JDialog {
     private final CourseService courseService;
     private final LessonService lessonService;
     private final EnrollmentService enrollmentService;
+    private final TestService testService;
 
     private JTabbedPane tabbedPane;
     private JPanel detailsPanel;
     private JPanel lessonsPanel;
+    private JPanel testPanel;
     private JPanel studentsPanel;
     private JPanel reviewsPanel;
 
@@ -59,6 +62,7 @@ public class CourseDetailsDialog extends JDialog {
         this.courseService = CourseService.getInstance();
         this.lessonService = LessonService.getInstance();
         this.enrollmentService = EnrollmentService.getInstance();
+        this.testService = TestService.getInstance();
 
         loadCourseData();
         initComponents();
@@ -84,6 +88,13 @@ public class CourseDetailsDialog extends JDialog {
 
         createDetailsTab();
         createLessonsTab();
+
+        // Test tab - only for instructors
+        if (currentUser.getRole().equals("INSTRUCTOR") &&
+            course.getInstructorId().equals(currentUser.getId())) {
+            createTestTab();
+        }
+
         if (!currentUser.getRole().equals("USER")) {
             createStudentsTab();
         }
@@ -91,6 +102,13 @@ public class CourseDetailsDialog extends JDialog {
 
         tabbedPane.addTab("Details", detailsPanel);
         tabbedPane.addTab("Lessons", lessonsPanel);
+
+        // Add test tab only for course instructor
+        if (currentUser.getRole().equals("INSTRUCTOR") &&
+            course.getInstructorId().equals(currentUser.getId())) {
+            tabbedPane.addTab("Test & Certificate", testPanel);
+        }
+
         if (!currentUser.getRole().equals("USER")) {
             tabbedPane.addTab("Enrolled Students", studentsPanel);
         }
@@ -245,7 +263,7 @@ public class CourseDetailsDialog extends JDialog {
 
         if (canEdit) {
             JButton addLessonBtn = new JButton("Add New Lesson");
-            addLessonBtn.setBackground(UITheme.ACCENT);
+            addLessonBtn.setBackground(UITheme.PRIMARY);
             addLessonBtn.setForeground(Color.WHITE);
             addLessonBtn.addActionListener(e -> showCreateLessonDialog());
             JPanel topPanel = new JPanel(new FlowLayout(FlowLayout.RIGHT));
@@ -326,6 +344,313 @@ public class CourseDetailsDialog extends JDialog {
             }
         } catch (Exception e) {
             e.printStackTrace();
+        }
+    }
+
+    private void createTestTab() {
+        testPanel = new JPanel(new BorderLayout(15, 15));
+        testPanel.setBackground(Color.WHITE);
+        testPanel.setBorder(BorderFactory.createEmptyBorder(20, 20, 20, 20));
+
+        // Main content panel
+        JPanel contentPanel = new JPanel();
+        contentPanel.setLayout(new BoxLayout(contentPanel, BoxLayout.Y_AXIS));
+        contentPanel.setBackground(Color.WHITE);
+
+        // Header section
+        JLabel titleLabel = new JLabel("Course Test & Certificate");
+        titleLabel.setFont(new Font("Segoe UI", Font.BOLD, 20));
+        titleLabel.setForeground(UITheme.TEXT);
+        titleLabel.setAlignmentX(Component.LEFT_ALIGNMENT);
+
+        JLabel subtitleLabel = new JLabel("Create and manage a final test for students to earn a certificate");
+        subtitleLabel.setFont(new Font("Segoe UI", Font.PLAIN, 13));
+        subtitleLabel.setForeground(UITheme.MUTED_TEXT);
+        subtitleLabel.setAlignmentX(Component.LEFT_ALIGNMENT);
+
+        contentPanel.add(titleLabel);
+        contentPanel.add(Box.createRigidArea(new Dimension(0, 5)));
+        contentPanel.add(subtitleLabel);
+        contentPanel.add(Box.createRigidArea(new Dimension(0, 30)));
+
+        // Info card
+        JPanel infoCard = new JPanel();
+        infoCard.setLayout(new BoxLayout(infoCard, BoxLayout.Y_AXIS));
+        infoCard.setBackground(new Color(240, 249, 255));
+        infoCard.setBorder(BorderFactory.createCompoundBorder(
+            BorderFactory.createLineBorder(new Color(191, 219, 254), 1),
+            BorderFactory.createEmptyBorder(20, 20, 20, 20)
+        ));
+        infoCard.setAlignmentX(Component.LEFT_ALIGNMENT);
+        infoCard.setMaximumSize(new Dimension(Integer.MAX_VALUE, 200));
+
+        JLabel infoIcon = new JLabel("\u2139");  // Info icon
+        infoIcon.setFont(new Font("Segoe UI", Font.BOLD, 24));
+        infoIcon.setForeground(new Color(37, 99, 235));
+        infoIcon.setAlignmentX(Component.LEFT_ALIGNMENT);
+
+        JLabel infoTitle = new JLabel("About Course Tests");
+        infoTitle.setFont(new Font("Segoe UI", Font.BOLD, 15));
+        infoTitle.setForeground(UITheme.TEXT);
+        infoTitle.setAlignmentX(Component.LEFT_ALIGNMENT);
+
+        JLabel infoText1 = new JLabel("<html>• Students can take the test after completing 100% of the course lessons<br/>" +
+                                       "• Tests consist of multiple-choice questions (4 options, 1 correct answer)<br/>" +
+                                       "• Students need 80% or higher to pass and earn a certificate<br/>" +
+                                       "• Certificates are automatically generated upon passing</html>");
+        infoText1.setFont(new Font("Segoe UI", Font.PLAIN, 13));
+        infoText1.setForeground(UITheme.MUTED_TEXT);
+        infoText1.setAlignmentX(Component.LEFT_ALIGNMENT);
+
+        infoCard.add(infoIcon);
+        infoCard.add(Box.createRigidArea(new Dimension(0, 10)));
+        infoCard.add(infoTitle);
+        infoCard.add(Box.createRigidArea(new Dimension(0, 10)));
+        infoCard.add(infoText1);
+
+        contentPanel.add(infoCard);
+        contentPanel.add(Box.createRigidArea(new Dimension(0, 30)));
+
+        // Check if test exists for this course
+        CourseTest existingTest = testService.getTestByCourseId(courseId);
+        boolean testExists = existingTest != null;
+
+        // Status section
+        JPanel statusCard = new JPanel(new BorderLayout(15, 15));
+        statusCard.setBackground(Color.WHITE);
+        statusCard.setBorder(BorderFactory.createCompoundBorder(
+            BorderFactory.createLineBorder(UITheme.BORDER, 1),
+            BorderFactory.createEmptyBorder(20, 20, 20, 20)
+        ));
+        statusCard.setAlignmentX(Component.LEFT_ALIGNMENT);
+        statusCard.setMaximumSize(new Dimension(Integer.MAX_VALUE, 150));
+
+        JLabel statusLabel = new JLabel("Test Status:");
+        statusLabel.setFont(new Font("Segoe UI", Font.BOLD, 14));
+        statusLabel.setForeground(UITheme.TEXT);
+
+        JPanel statusLeftPanel = new JPanel();
+        statusLeftPanel.setLayout(new BoxLayout(statusLeftPanel, BoxLayout.Y_AXIS));
+        statusLeftPanel.setOpaque(false);
+        statusLeftPanel.add(statusLabel);
+        statusLeftPanel.add(Box.createRigidArea(new Dimension(0, 5)));
+
+        if (testExists) {
+            // Show test details
+            JLabel testTitleLabel = new JLabel(existingTest.getTitle());
+            testTitleLabel.setFont(new Font("Segoe UI", Font.BOLD, 16));
+            testTitleLabel.setForeground(UITheme.TEXT);
+            statusLeftPanel.add(testTitleLabel);
+            statusLeftPanel.add(Box.createRigidArea(new Dimension(0, 5)));
+
+            int questionCount = testService.getQuestions(existingTest.getId()).size();
+            String publishStatus = existingTest.getIsPublished() ? "Published" : "Draft";
+            Color statusColor = existingTest.getIsPublished() ? new Color(34, 197, 94) : new Color(251, 146, 60);
+
+            JLabel detailsLabel = new JLabel(String.format("%d questions • Passing: %.0f%% • %s",
+                    questionCount, existingTest.getPassingScore(), publishStatus));
+            detailsLabel.setFont(new Font("Segoe UI", Font.PLAIN, 13));
+            detailsLabel.setForeground(UITheme.MUTED_TEXT);
+            statusLeftPanel.add(detailsLabel);
+
+            JLabel statusBadge = new JLabel(publishStatus);
+            statusBadge.setFont(new Font("Segoe UI", Font.BOLD, 12));
+            statusBadge.setForeground(statusColor);
+            statusBadge.setBorder(BorderFactory.createCompoundBorder(
+                BorderFactory.createLineBorder(statusColor, 1),
+                BorderFactory.createEmptyBorder(3, 8, 3, 8)
+            ));
+            statusBadge.setOpaque(true);
+            statusBadge.setBackground(new Color(statusColor.getRed(), statusColor.getGreen(), statusColor.getBlue(), 20));
+
+            JPanel badgePanel = new JPanel(new FlowLayout(FlowLayout.RIGHT));
+            badgePanel.setOpaque(false);
+            badgePanel.add(statusBadge);
+
+            statusCard.add(badgePanel, BorderLayout.EAST);
+        } else {
+            JLabel noTestLabel = new JLabel("No test created yet");
+            noTestLabel.setFont(new Font("Segoe UI", Font.PLAIN, 14));
+            noTestLabel.setForeground(UITheme.MUTED_TEXT);
+            statusLeftPanel.add(noTestLabel);
+        }
+
+        statusCard.add(statusLeftPanel, BorderLayout.WEST);
+
+        contentPanel.add(statusCard);
+        contentPanel.add(Box.createRigidArea(new Dimension(0, 20)));
+
+        // Action buttons
+        JPanel buttonPanel = new JPanel(new FlowLayout(FlowLayout.LEFT, 10, 0));
+        buttonPanel.setBackground(Color.WHITE);
+        buttonPanel.setAlignmentX(Component.LEFT_ALIGNMENT);
+
+        if (testExists) {
+            JButton editTestButton = new JButton("Edit Test");
+            editTestButton.setBackground(UITheme.PRIMARY);
+            editTestButton.setForeground(Color.WHITE);
+            editTestButton.setFocusPainted(false);
+            editTestButton.setBorderPainted(false);
+            editTestButton.setFont(new Font("Segoe UI", Font.BOLD, 14));
+            editTestButton.setPreferredSize(new Dimension(150, 40));
+            editTestButton.addActionListener(e -> showEditTestDialog(existingTest));
+
+            JButton viewResultsButton = new JButton("View Test Results");
+            viewResultsButton.setBackground(new Color(148, 163, 184));
+            viewResultsButton.setForeground(Color.WHITE);
+            viewResultsButton.setFocusPainted(false);
+            viewResultsButton.setBorderPainted(false);
+            viewResultsButton.setFont(new Font("Segoe UI", Font.PLAIN, 14));
+            viewResultsButton.setPreferredSize(new Dimension(150, 40));
+            viewResultsButton.addActionListener(e -> showTestResults());
+
+            JButton deleteTestButton = new JButton("Delete Test");
+            deleteTestButton.setBackground(new Color(239, 68, 68));
+            deleteTestButton.setForeground(Color.WHITE);
+            deleteTestButton.setFocusPainted(false);
+            deleteTestButton.setBorderPainted(false);
+            deleteTestButton.setFont(new Font("Segoe UI", Font.PLAIN, 14));
+            deleteTestButton.setPreferredSize(new Dimension(130, 40));
+            deleteTestButton.addActionListener(e -> deleteTest(existingTest.getId()));
+
+            buttonPanel.add(editTestButton);
+            buttonPanel.add(viewResultsButton);
+            buttonPanel.add(deleteTestButton);
+        } else {
+            JButton createTestButton = new JButton("Create Test");
+            createTestButton.setBackground(UITheme.PRIMARY);
+            createTestButton.setForeground(Color.WHITE);
+            createTestButton.setFocusPainted(false);
+            createTestButton.setBorderPainted(false);
+            createTestButton.setFont(new Font("Segoe UI", Font.BOLD, 14));
+            createTestButton.setPreferredSize(new Dimension(150, 40));
+            createTestButton.addActionListener(e -> showCreateTestDialog());
+
+            buttonPanel.add(createTestButton);
+        }
+
+        contentPanel.add(buttonPanel);
+        contentPanel.add(Box.createVerticalGlue());
+
+        // Add to scroll pane
+        JScrollPane scrollPane = new JScrollPane(contentPanel);
+        scrollPane.setBackground(Color.WHITE);
+        scrollPane.getViewport().setBackground(Color.WHITE);
+        scrollPane.setBorder(null);
+        scrollPane.getVerticalScrollBar().setUnitIncrement(16);
+
+        testPanel.add(scrollPane, BorderLayout.CENTER);
+    }
+
+    private void showCreateTestDialog() {
+        TestCreationDialog dialog = new TestCreationDialog(this, courseId, null);
+        dialog.setVisible(true);
+        if (dialog.isSuccess()) {
+            // Refresh the test tab
+            refreshTestTab();
+        }
+    }
+
+    private void showEditTestDialog(CourseTest test) {
+        // Show test editing options
+        JLabel messageLabel = new JLabel("What would you like to do with this test?");
+        messageLabel.setForeground(Color.WHITE);
+        String[] options = {"Edit Test Settings", "Manage Questions", "Cancel"};
+        int choice = JOptionPane.showOptionDialog(this,
+            messageLabel,
+            "Edit Test - " + test.getTitle(),
+            JOptionPane.YES_NO_CANCEL_OPTION,
+            JOptionPane.QUESTION_MESSAGE,
+            null,
+            options,
+            options[1]); // Default to "Manage Questions"
+
+        switch (choice) {
+            case 0: // Edit Test Settings
+                TestCreationDialog settingsDialog = new TestCreationDialog(this, courseId, test);
+                settingsDialog.setVisible(true);
+                if (settingsDialog.isSuccess()) {
+                    refreshTestTab();
+                }
+                break;
+            case 1: // Manage Questions
+                QuestionManagementDialog questionsDialog = new QuestionManagementDialog(this, test);
+                questionsDialog.setVisible(true);
+                refreshTestTab();
+                break;
+            case 2: // Cancel
+            default:
+                // Do nothing
+                break;
+        }
+    }
+
+    private void showTestResults() {
+        CourseTest existingTest = testService.getTestByCourseId(courseId);
+        if (existingTest != null) {
+            TestResultsDialog dialog = new TestResultsDialog(this, existingTest);
+            dialog.setVisible(true);
+        } else {
+            JOptionPane.showMessageDialog(this,
+                "No test found for this course.",
+                "Error",
+                JOptionPane.ERROR_MESSAGE);
+        }
+    }
+
+    private void deleteTest(int testId) {
+        int confirm = JOptionPane.showConfirmDialog(this,
+            "Are you sure you want to delete this test?\n\n" +
+            "This will permanently delete:\n" +
+            "• All questions and answer options\n" +
+            "• All student attempts and results\n" +
+            "• All certificates earned\n\n" +
+            "This action cannot be undone!",
+            "Confirm Delete Test",
+            JOptionPane.YES_NO_OPTION,
+            JOptionPane.WARNING_MESSAGE);
+
+        if (confirm == JOptionPane.YES_OPTION) {
+            try {
+                boolean deleted = testService.deleteTest(testId, currentUser.getId());
+                if (deleted) {
+                    JOptionPane.showMessageDialog(this,
+                        "Test deleted successfully!",
+                        "Success",
+                        JOptionPane.INFORMATION_MESSAGE);
+
+                    // Refresh the test tab
+                    refreshTestTab();
+                } else {
+                    JOptionPane.showMessageDialog(this,
+                        "Failed to delete test. Please try again.",
+                        "Error",
+                        JOptionPane.ERROR_MESSAGE);
+                }
+            } catch (Exception ex) {
+                JOptionPane.showMessageDialog(this,
+                    "Error deleting test: " + ex.getMessage(),
+                    "Error",
+                    JOptionPane.ERROR_MESSAGE);
+            }
+        }
+    }
+
+    private void refreshTestTab() {
+        // Remove and recreate the test tab
+        int testTabIndex = -1;
+        for (int i = 0; i < tabbedPane.getTabCount(); i++) {
+            if ("Test & Certificate".equals(tabbedPane.getTitleAt(i))) {
+                testTabIndex = i;
+                break;
+            }
+        }
+        
+        if (testTabIndex != -1) {
+            tabbedPane.removeTabAt(testTabIndex);
+            createTestTab();
+            tabbedPane.insertTab("Test & Certificate", null, testPanel, null, testTabIndex);
+            tabbedPane.setSelectedIndex(testTabIndex);
         }
     }
 

@@ -143,7 +143,7 @@ public class AdminDashboard extends JFrame {
         sidebar.add(createMenuItem("All Courses", "All Courses"));
         sidebar.add(createMenuItem("User Management", "User Management"));
         sidebar.add(createMenuItem("Statistics", "Statistics"));
-        sidebar.add(createMenuItem("My Calendar", "My Calendar"));
+        // sidebar.add(createMenuItem("My Calendar", "My Calendar"));
 
         // Push logout button to bottom
         sidebar.add(Box.createVerticalGlue());
