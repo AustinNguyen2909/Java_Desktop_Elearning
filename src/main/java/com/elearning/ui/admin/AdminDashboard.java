@@ -14,13 +14,16 @@ import com.elearning.ui.components.UITheme;
 import com.elearning.util.CourseCardImageUtil;
 import com.elearning.util.ChartUtil;
 import com.elearning.util.SessionManager;
-import com.elearning.util.ValidationUtil;
-import com.mysql.cj.log.Log;
 import org.jfree.chart.ChartPanel;
 
 import javax.swing.*;
 import javax.swing.table.DefaultTableModel;
 import java.awt.*;
+import java.time.LocalDate;
+import java.time.ZoneId;
+import java.time.temporal.ChronoUnit;
+import java.util.Calendar;
+import java.util.Date;
 import java.util.List;
 import java.util.Map;
 
@@ -42,11 +45,21 @@ public class AdminDashboard extends JFrame {
     private JTextField userSearchField;
     private JComboBox<String> roleFilterComboBox;
 
+    // Date filter components
+    private JSpinner fromDateSpinner;
+    private JSpinner toDateSpinner;
+    private LocalDate filterFromDate;
+    private LocalDate filterToDate;
+
     public AdminDashboard() {
         this.currentUser = SessionManager.getInstance().getCurrentUser();
         this.courseService = CourseService.getInstance();
         this.userService = UserService.getInstance();
         this.analyticsService = AnalyticsService.getInstance();
+
+        // Initialize default date range (last 12 months)
+        this.filterToDate = LocalDate.now();
+        this.filterFromDate = filterToDate.minusMonths(12);
 
         initComponents();
         loadPendingCourses();
@@ -367,7 +380,9 @@ public class AdminDashboard extends JFrame {
         mainContent.setBackground(Color.WHITE);
 
         try {
-            AnalyticsService.PlatformStatistics stats = analyticsService.getPlatformStatistics(currentUser.getRole());
+            // Use date-filtered statistics
+            AnalyticsService.PlatformStatistics stats = analyticsService.getPlatformStatisticsWithDateFilter(
+                    currentUser.getRole(), filterFromDate, filterToDate);
 
             // Top 4 key metrics in a single line (smaller)
             JPanel keyMetricsPanel = new JPanel(new GridLayout(1, 4, 8, 0));
@@ -382,6 +397,22 @@ public class AdminDashboard extends JFrame {
             keyMetricsPanel.add(createCompactStatCard("Total Reviews", String.valueOf(stats.getTotalReviews()), new Color(241, 196, 15)));
 
             mainContent.add(keyMetricsPanel);
+
+            // Date filter section
+            JPanel dateFilterPanel = createDateFilterPanel();
+            dateFilterPanel.setMaximumSize(new Dimension(Integer.MAX_VALUE, 60));
+            mainContent.add(dateFilterPanel);
+            mainContent.add(Box.createRigidArea(new Dimension(0, 5)));
+
+            // Date range info
+            JLabel dateRangeInfo = new JLabel("Showing data from " + filterFromDate + " to " + filterToDate);
+            dateRangeInfo.setFont(new Font("Segoe UI", Font.ITALIC, 11));
+            dateRangeInfo.setForeground(UITheme.MUTED_TEXT);
+            dateRangeInfo.setBorder(BorderFactory.createEmptyBorder(0, 0, 5, 0));
+            dateRangeInfo.setAlignmentX(Component.LEFT_ALIGNMENT);
+            mainContent.add(dateRangeInfo);
+
+            mainContent.add(Box.createRigidArea(new Dimension(0, 5)));
 
             // Charts section title
             JLabel chartsTitle = new JLabel("Visual Analytics");
@@ -438,13 +469,13 @@ public class AdminDashboard extends JFrame {
             trendChartsPanel.setBackground(Color.WHITE);
             trendChartsPanel.setMaximumSize(new Dimension(Integer.MAX_VALUE, 240));
 
-            // Top 5 Courses chart (left)
-            List<Course> topCourses = analyticsService.getTopCoursesByEnrollment(5);
+            // Top 5 Courses chart (left) - filtered by date range
+            List<Course> topCourses = analyticsService.getTopCoursesByEnrollmentWithDateFilter(5, filterFromDate, filterToDate);
             if (!topCourses.isEmpty()) {
                 JPanel topCoursesPanel = new JPanel(new BorderLayout());
                 topCoursesPanel.setBackground(Color.WHITE);
 
-                JLabel topCoursesTitle = new JLabel("Top 5 Courses");
+                JLabel topCoursesTitle = new JLabel("Top 5 Courses (Enrollments in Range)");
                 topCoursesTitle.setFont(new Font("Segoe UI", Font.BOLD, 12));
                 topCoursesTitle.setForeground(UITheme.TEXT);
                 topCoursesTitle.setBorder(BorderFactory.createEmptyBorder(0, 0, 5, 0));
@@ -465,19 +496,26 @@ public class AdminDashboard extends JFrame {
             }
 
             // User Registration Trends chart (right)
+            long daysBetween = ChronoUnit.DAYS.between(filterFromDate, filterToDate);
             Map<String, AnalyticsService.UserRegistrationData> registrationData =
-                    analyticsService.getUserRegistrationTrends(365);
+                    analyticsService.getUserRegistrationTrends((int) daysBetween);
 
             JPanel registrationPanel = new JPanel(new BorderLayout());
             registrationPanel.setBackground(Color.WHITE);
 
-            JLabel registrationTitle = new JLabel("New Registrations");
+            String granularity = getChartGranularity();
+            String chartTitle = "New Registrations (" +
+                    (granularity.equals("daily") ? "Daily" :
+                            granularity.equals("weekly") ? "Weekly" : "Monthly") + ")";
+
+            JLabel registrationTitle = new JLabel(chartTitle);
             registrationTitle.setFont(new Font("Segoe UI", Font.BOLD, 12));
             registrationTitle.setForeground(UITheme.TEXT);
             registrationTitle.setBorder(BorderFactory.createEmptyBorder(0, 0, 5, 0));
             registrationPanel.add(registrationTitle, BorderLayout.NORTH);
 
-            ChartPanel registrationChart = ChartUtil.createUserRegistrationTrendsChart(registrationData);
+            ChartPanel registrationChart = ChartUtil.createUserRegistrationTrendsChartWithGranularity(
+                    registrationData, granularity, filterFromDate, filterToDate);
             registrationChart.setPreferredSize(new Dimension(300, 220));
             registrationPanel.add(registrationChart, BorderLayout.CENTER);
 
@@ -490,7 +528,7 @@ public class AdminDashboard extends JFrame {
             JPanel detailsCardWrapper = new JPanel(new BorderLayout());
             detailsCardWrapper.setBackground(Color.WHITE);
             detailsCardWrapper.setMaximumSize(new Dimension(Integer.MAX_VALUE, 150));
-            detailsCardWrapper.setAlignmentX(Component.LEFT_ALIGNMENT);
+            detailsCardWrapper.setAlignmentX(Component.CENTER_ALIGNMENT);
 
             JPanel detailsCard = createDetailedStatsCard(stats);
             detailsCardWrapper.add(detailsCard, BorderLayout.WEST);
@@ -570,7 +608,7 @@ public class AdminDashboard extends JFrame {
                 BorderFactory.createEmptyBorder(12, 15, 12, 15)
         ));
 
-        JLabel detailsTitle = new JLabel("Detailed Statistics");
+        JLabel detailsTitle = new JLabel("Detailed Statistics (Filtered by Date Range)");
         detailsTitle.setFont(new Font("Segoe UI", Font.BOLD, 14));
         detailsTitle.setForeground(UITheme.TEXT);
         detailsTitle.setBorder(BorderFactory.createEmptyBorder(0, 0, 10, 0));
@@ -620,6 +658,138 @@ public class AdminDashboard extends JFrame {
         item.add(valueComp);
 
         return item;
+    }
+
+    private JPanel createDateFilterPanel() {
+        JPanel filterPanel = new JPanel(new FlowLayout(FlowLayout.LEFT, 15, 10));
+        filterPanel.setBackground(Color.WHITE);
+        filterPanel.setBorder(BorderFactory.createCompoundBorder(
+                BorderFactory.createLineBorder(new Color(226, 232, 240), 1),
+                BorderFactory.createEmptyBorder(5, 10, 5, 10)
+        ));
+
+        JLabel filterLabel = new JLabel("Date Range Filter:");
+        filterLabel.setFont(new Font("Segoe UI", Font.BOLD, 13));
+        filterLabel.setForeground(UITheme.TEXT);
+        filterPanel.add(filterLabel);
+
+        // From date
+        JLabel fromLabel = new JLabel("From:");
+        fromLabel.setFont(new Font("Segoe UI", Font.PLAIN, 12));
+        fromLabel.setForeground(UITheme.TEXT);
+        filterPanel.add(fromLabel);
+
+        Date fromDate = Date.from(filterFromDate.atStartOfDay(ZoneId.systemDefault()).toInstant());
+        SpinnerDateModel fromModel = new SpinnerDateModel(fromDate, null, new Date(), Calendar.DAY_OF_MONTH);
+        fromDateSpinner = new JSpinner(fromModel);
+        JSpinner.DateEditor fromEditor = new JSpinner.DateEditor(fromDateSpinner, "yyyy-MM-dd");
+        fromDateSpinner.setEditor(fromEditor);
+        fromDateSpinner.setPreferredSize(new Dimension(120, 30));
+        fromDateSpinner.setBackground(Color.WHITE);
+        filterPanel.add(fromDateSpinner);
+
+        // To date
+        JLabel toLabel = new JLabel("To:");
+        toLabel.setFont(new Font("Segoe UI", Font.PLAIN, 12));
+        toLabel.setForeground(UITheme.TEXT);
+        filterPanel.add(toLabel);
+
+        Date toDate = Date.from(filterToDate.atStartOfDay(ZoneId.systemDefault()).toInstant());
+        SpinnerDateModel toModel = new SpinnerDateModel(toDate, null, new Date(), Calendar.DAY_OF_MONTH);
+        toDateSpinner = new JSpinner(toModel);
+        JSpinner.DateEditor toEditor = new JSpinner.DateEditor(toDateSpinner, "yyyy-MM-dd");
+        toDateSpinner.setEditor(toEditor);
+        toDateSpinner.setPreferredSize(new Dimension(120, 30));
+        toDateSpinner.setBackground(Color.WHITE);
+        filterPanel.add(toDateSpinner);
+
+        // Update button
+        JButton updateButton = new JButton("Update Charts");
+        updateButton.setBackground(UITheme.PRIMARY);
+        updateButton.setForeground(Color.WHITE);
+        updateButton.setFocusPainted(false);
+        updateButton.setBorderPainted(false);
+        updateButton.setFont(new Font("Segoe UI", Font.BOLD, 12));
+        updateButton.setPreferredSize(new Dimension(120, 30));
+        updateButton.addActionListener(e -> applyDateFilter());
+        filterPanel.add(updateButton);
+
+        // Quick filter buttons
+        JButton last3MonthsBtn = new JButton("Last 3 Months");
+        last3MonthsBtn.setBackground(new Color(148, 163, 184));
+        last3MonthsBtn.setForeground(Color.WHITE);
+        last3MonthsBtn.setFocusPainted(false);
+        last3MonthsBtn.setBorderPainted(false);
+        last3MonthsBtn.setFont(new Font("Segoe UI", Font.PLAIN, 11));
+        last3MonthsBtn.setPreferredSize(new Dimension(110, 28));
+        last3MonthsBtn.addActionListener(e -> setQuickFilter(90));
+        filterPanel.add(last3MonthsBtn);
+
+        JButton last12MonthsBtn = new JButton("Last 12 Months");
+        last12MonthsBtn.setBackground(new Color(148, 163, 184));
+        last12MonthsBtn.setForeground(Color.WHITE);
+        last12MonthsBtn.setFocusPainted(false);
+        last12MonthsBtn.setBorderPainted(false);
+        last12MonthsBtn.setFont(new Font("Segoe UI", Font.PLAIN, 11));
+        last12MonthsBtn.setPreferredSize(new Dimension(115, 28));
+        last12MonthsBtn.addActionListener(e -> setQuickFilter(365));
+        filterPanel.add(last12MonthsBtn);
+
+        return filterPanel;
+    }
+
+    private void setQuickFilter(int days) {
+        filterToDate = LocalDate.now();
+        filterFromDate = filterToDate.minusDays(days);
+
+        Date fromDate = Date.from(filterFromDate.atStartOfDay(ZoneId.systemDefault()).toInstant());
+        Date toDate = Date.from(filterToDate.atStartOfDay(ZoneId.systemDefault()).toInstant());
+
+        fromDateSpinner.setValue(fromDate);
+        toDateSpinner.setValue(toDate);
+
+        applyDateFilter();
+    }
+
+    private void applyDateFilter() {
+        try {
+            // Get dates from spinners
+            Date fromDate = (Date) fromDateSpinner.getValue();
+            Date toDate = (Date) toDateSpinner.getValue();
+
+            // Convert to LocalDate
+            filterFromDate = fromDate.toInstant().atZone(ZoneId.systemDefault()).toLocalDate();
+            filterToDate = toDate.toInstant().atZone(ZoneId.systemDefault()).toLocalDate();
+
+            // Validate date range
+            if (filterFromDate.isAfter(filterToDate)) {
+                JOptionPane.showMessageDialog(this,
+                        "From date must be before To date",
+                        "Invalid Date Range",
+                        JOptionPane.WARNING_MESSAGE);
+                return;
+            }
+
+            // Refresh statistics with new date range
+            refreshStatistics();
+        } catch (Exception e) {
+            JOptionPane.showMessageDialog(this,
+                    "Error applying date filter: " + e.getMessage(),
+                    "Error",
+                    JOptionPane.ERROR_MESSAGE);
+        }
+    }
+
+    private String getChartGranularity() {
+        long daysBetween = ChronoUnit.DAYS.between(filterFromDate, filterToDate);
+
+        if (daysBetween <= 14) {
+            return "daily";
+        } else if (daysBetween <= 60) {
+            return "weekly";
+        } else {
+            return "monthly";
+        }
     }
 
     private void refreshStatistics() {

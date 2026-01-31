@@ -419,6 +419,27 @@ public class EnrollmentDAO {
     }
 
     /**
+     * Find all enrollments (for analytics and filtering)
+     */
+    public List<Enrollment> findAll() {
+        List<Enrollment> enrollments = new ArrayList<>();
+        String sql = "SELECT * FROM enrollments ORDER BY enrolled_at DESC";
+
+        try (Connection conn = DBConnection.getInstance().getConnection();
+             PreparedStatement stmt = conn.prepareStatement(sql)) {
+
+            ResultSet rs = stmt.executeQuery();
+
+            while (rs.next()) {
+                enrollments.add(mapResultSetToEnrollment(rs));
+            }
+        } catch (SQLException e) {
+            e.printStackTrace();
+        }
+        return enrollments;
+    }
+
+    /**
      * Map ResultSet to Enrollment object
      */
     private Enrollment mapResultSetToEnrollment(ResultSet rs) throws SQLException {

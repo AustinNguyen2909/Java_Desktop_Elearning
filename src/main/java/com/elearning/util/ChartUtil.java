@@ -10,14 +10,14 @@ import org.jfree.chart.plot.CategoryPlot;
 import org.jfree.chart.plot.PiePlot;
 import org.jfree.chart.plot.PlotOrientation;
 import org.jfree.chart.renderer.category.LineAndShapeRenderer;
-import org.jfree.data.category.CategoryDataset;
 import org.jfree.data.category.DefaultCategoryDataset;
 import org.jfree.data.general.DefaultPieDataset;
-import org.jfree.data.general.PieDataset;
 
 import javax.swing.*;
 import java.awt.*;
-import java.util.Map;
+import java.time.LocalDate;
+import java.time.format.DateTimeFormatter;
+import java.util.*;
 
 /**
  * Utility class for creating charts and visualizations using JFreeChart
@@ -271,5 +271,133 @@ public class ChartUtil {
         ChartPanel chartPanel = new ChartPanel(chart);
         chartPanel.setPreferredSize(new Dimension(850, 300));
         return chartPanel;
+    }
+
+    /**
+     * Create a line chart for user registration trends with granularity support
+     * @param data Raw registration data by date
+     * @param granularity "daily", "weekly", or "monthly"
+     * @param fromDate Start date for filtering
+     * @param toDate End date for filtering
+     */
+    public static ChartPanel createUserRegistrationTrendsChartWithGranularity(
+            Map<String, AnalyticsService.UserRegistrationData> data,
+            String granularity,
+            LocalDate fromDate,
+            LocalDate toDate) {
+
+        DefaultCategoryDataset dataset = new DefaultCategoryDataset();
+        Map<String, RegistrationAggregated> aggregatedData = new LinkedHashMap<>();
+
+        // Filter and aggregate data based on granularity
+        DateTimeFormatter inputFormatter = DateTimeFormatter.ofPattern("yyyy-MM-dd");
+
+        for (Map.Entry<String, AnalyticsService.UserRegistrationData> entry : data.entrySet()) {
+            try {
+                LocalDate date = LocalDate.parse(entry.getKey(), inputFormatter);
+
+                // Filter by date range
+                if (date.isBefore(fromDate) || date.isAfter(toDate)) {
+                    continue;
+                }
+
+                String key;
+                switch (granularity.toLowerCase()) {
+                    case "daily":
+                        key = date.format(DateTimeFormatter.ofPattern("MM-dd"));
+                        break;
+                    case "weekly":
+                        // Get the Monday of the week as the key
+                        LocalDate monday = date.minusDays(date.getDayOfWeek().getValue() - 1);
+                        key = monday.format(DateTimeFormatter.ofPattern("MM-dd")) + " (Week)";
+                        break;
+                    case "monthly":
+                        key = date.format(DateTimeFormatter.ofPattern("yyyy-MM"));
+                        break;
+                    default:
+                        key = entry.getKey();
+                }
+
+                // Aggregate data
+                RegistrationAggregated agg = aggregatedData.getOrDefault(key, new RegistrationAggregated());
+                agg.students += entry.getValue().getStudents();
+                agg.instructors += entry.getValue().getInstructors();
+                aggregatedData.put(key, agg);
+
+            } catch (Exception e) {
+                // Skip invalid dates
+                continue;
+            }
+        }
+
+        // Add aggregated data to dataset in order
+        for (Map.Entry<String, RegistrationAggregated> entry : aggregatedData.entrySet()) {
+            String label = entry.getKey();
+            RegistrationAggregated regData = entry.getValue();
+
+            dataset.addValue(regData.students, "Students", label);
+            dataset.addValue(regData.instructors, "Instructors", label);
+        }
+
+        String chartTitle = "New User Registrations";
+        String xAxisLabel;
+        switch (granularity.toLowerCase()) {
+            case "daily":
+                xAxisLabel = "Date";
+                break;
+            case "weekly":
+                xAxisLabel = "Week Starting";
+                break;
+            case "monthly":
+                xAxisLabel = "Month";
+                break;
+            default:
+                xAxisLabel = "Period";
+        }
+
+        JFreeChart chart = ChartFactory.createLineChart(
+                chartTitle,
+                xAxisLabel,
+                "Number of Users",
+                dataset,
+                PlotOrientation.VERTICAL,
+                true,
+                true,
+                false
+        );
+
+        // Customize chart appearance
+        CategoryPlot plot = chart.getCategoryPlot();
+        plot.setBackgroundPaint(Color.WHITE);
+        plot.setRangeGridlinePaint(new Color(230, 230, 230));
+        chart.setBackgroundPaint(Color.WHITE);
+
+        // Customize line renderer
+        LineAndShapeRenderer renderer = new LineAndShapeRenderer();
+        renderer.setSeriesPaint(0, new Color(47, 111, 235)); // Students - Blue
+        renderer.setSeriesPaint(1, new Color(155, 89, 182)); // Instructors - Purple
+        renderer.setSeriesStroke(0, new BasicStroke(2.5f));
+        renderer.setSeriesStroke(1, new BasicStroke(2.5f));
+        renderer.setSeriesShapesVisible(0, true);
+        renderer.setSeriesShapesVisible(1, true);
+        plot.setRenderer(renderer);
+
+        // Rotate category labels if there are many data points
+        if (aggregatedData.size() > 10) {
+            CategoryAxis domainAxis = plot.getDomainAxis();
+            domainAxis.setCategoryLabelPositions(CategoryLabelPositions.UP_45);
+        }
+
+        ChartPanel chartPanel = new ChartPanel(chart);
+        chartPanel.setPreferredSize(new Dimension(850, 300));
+        return chartPanel;
+    }
+
+    /**
+     * Helper class to aggregate registration data
+     */
+    private static class RegistrationAggregated {
+        int students = 0;
+        int instructors = 0;
     }
 }

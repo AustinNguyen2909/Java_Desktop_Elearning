@@ -115,12 +115,20 @@ public class LoginFrame extends JFrame {
         JPanel panel = new JPanel();
         panel.setOpaque(false);
         panel.setLayout(new BoxLayout(panel, BoxLayout.Y_AXIS));
-        
+
         // App Icon/Logo
-        JLabel iconLabel = new JLabel("EL");
-        iconLabel.setFont(new Font("Fira Sans", Font.BOLD, 72));
+        JLabel iconLabel = new JLabel();
+        try {
+            ImageIcon originalIcon = new ImageIcon(getClass().getResource("/assets/logo.png"));
+            Image scaledImage = originalIcon.getImage().getScaledInstance(300, 120, Image.SCALE_SMOOTH);
+            iconLabel.setIcon(new ImageIcon(scaledImage));
+        } catch (Exception e) {
+            // Fallback to text if image not found
+            iconLabel.setText("EL");
+            iconLabel.setFont(new Font("Fira Sans", Font.BOLD, 72));
+            iconLabel.setForeground(UITheme.PRIMARY);
+        }
         iconLabel.setAlignmentX(Component.CENTER_ALIGNMENT);
-        iconLabel.setForeground(UITheme.PRIMARY);
 
         // App Title
         JLabel titleLabel = new JLabel("E-Learning Platform");

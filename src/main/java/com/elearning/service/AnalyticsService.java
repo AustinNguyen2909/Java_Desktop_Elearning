@@ -3,11 +3,13 @@ package com.elearning.service;
 import com.elearning.dao.*;
 import com.elearning.model.Course;
 import com.elearning.model.Enrollment;
+import com.elearning.model.User;
 
-import java.util.HashMap;
+import java.time.LocalDate;
 import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.stream.Collectors;
 
 /**
  * Service for analytics and statistics generation
@@ -71,6 +73,83 @@ public class AnalyticsService {
         double averageProgress = 0.0;
         if (totalEnrollments > 0) {
             averageProgress = enrollmentDAO.getGlobalAverageProgress();
+        }
+
+        double averageEnrollmentsPerCourse = 0.0;
+        if (totalCourses > 0) {
+            averageEnrollmentsPerCourse = (double) totalEnrollments / totalCourses;
+        }
+
+        return new PlatformStatistics(totalUsers, totalInstructors, totalAdmins, activeUsers,
+                totalCourses, approvedCourses, pendingCourses, publishedCourses,
+                totalEnrollments, activeEnrollments, completedEnrollments,
+                totalReviews, averageProgress, averageEnrollmentsPerCourse);
+    }
+
+    /**
+     * Get platform-wide statistics filtered by date range (Admin)
+     */
+    public PlatformStatistics getPlatformStatisticsWithDateFilter(String adminRole, LocalDate fromDate, LocalDate toDate) {
+        if (!"ADMIN".equals(adminRole)) {
+            throw new SecurityException("Only admins can view platform statistics");
+        }
+
+        // User counts - filter by created_at
+        List<User> allUsersInRange = userDAO.findAll().stream()
+                .filter(u -> {
+                    if (u.getCreatedAt() == null) return false;
+                    LocalDate createdDate = u.getCreatedAt().toLocalDate();
+                    return !createdDate.isBefore(fromDate) && !createdDate.isAfter(toDate);
+                })
+                .collect(Collectors.toList());
+
+        int totalUsers = (int) allUsersInRange.stream().filter(u -> "USER".equals(u.getRole())).count();
+        int totalInstructors = (int) allUsersInRange.stream().filter(u -> "INSTRUCTOR".equals(u.getRole())).count();
+        int totalAdmins = (int) allUsersInRange.stream().filter(u -> "ADMIN".equals(u.getRole())).count();
+        int activeUsers = (int) allUsersInRange.stream().filter(u -> "ACTIVE".equals(u.getStatus())).count();
+
+        // Course counts - filter by created_at
+        List<Course> allCoursesInRange = courseDAO.findAll().stream()
+                .filter(c -> {
+                    if (c.getCreatedAt() == null) return false;
+                    LocalDate createdDate = c.getCreatedAt().toLocalDate();
+                    return !createdDate.isBefore(fromDate) && !createdDate.isAfter(toDate);
+                })
+                .collect(Collectors.toList());
+
+        int totalCourses = allCoursesInRange.size();
+        int approvedCourses = (int) allCoursesInRange.stream().filter(c -> "APPROVED".equals(c.getStatus())).count();
+        int pendingCourses = (int) allCoursesInRange.stream().filter(c -> "PENDING".equals(c.getStatus())).count();
+        int publishedCourses = (int) allCoursesInRange.stream().filter(Course::isPublished).count();
+
+        // Enrollment stats - filter by enrolled_at
+        List<Enrollment> allEnrollmentsInRange = enrollmentDAO.findAll().stream()
+                .filter(e -> {
+                    if (e.getEnrolledAt() == null) return false;
+                    LocalDate enrolledDate = e.getEnrolledAt().toLocalDate();
+                    return !enrolledDate.isBefore(fromDate) && !enrolledDate.isAfter(toDate);
+                })
+                .collect(Collectors.toList());
+
+        int totalEnrollments = allEnrollmentsInRange.size();
+        int completedEnrollments = (int) allEnrollmentsInRange.stream()
+                .filter(e -> e.getCompletedAt() != null)
+                .count();
+        int activeEnrollments = totalEnrollments - completedEnrollments;
+
+        // Review stats - count reviews for courses in range
+        int totalReviews = 0;
+        for (Course course : allCoursesInRange) {
+            totalReviews += reviewDAO.countByCourseId(course.getId());
+        }
+
+        // Calculate averages
+        double averageProgress = 0.0;
+        if (totalEnrollments > 0) {
+            double totalProgress = allEnrollmentsInRange.stream()
+                    .mapToDouble(Enrollment::getProgressPercent)
+                    .sum();
+            averageProgress = totalProgress / totalEnrollments;
         }
 
         double averageEnrollmentsPerCourse = 0.0;
@@ -187,6 +266,38 @@ public class AnalyticsService {
      */
     public List<Course> getTopCoursesByEnrollment(int limit) {
         return courseDAO.findTopCoursesByEnrollment(limit);
+    }
+
+    /**
+     * Get top courses by enrollment within a date range
+     */
+    public List<Course> getTopCoursesByEnrollmentWithDateFilter(int limit, LocalDate fromDate, LocalDate toDate) {
+        // Get all enrollments within date range
+        List<Enrollment> enrollmentsInRange = enrollmentDAO.findAll().stream()
+                .filter(e -> {
+                    if (e.getEnrolledAt() == null) return false;
+                    LocalDate enrolledDate = e.getEnrolledAt().toLocalDate();
+                    return !enrolledDate.isBefore(fromDate) && !enrolledDate.isAfter(toDate);
+                })
+                .collect(Collectors.toList());
+
+        // Count enrollments per course
+        Map<Integer, Long> enrollmentCounts = enrollmentsInRange.stream()
+                .collect(Collectors.groupingBy(Enrollment::getCourseId, Collectors.counting()));
+
+        // Get courses and set their enrollment counts
+        return enrollmentCounts.entrySet().stream()
+                .sorted((e1, e2) -> Long.compare(e2.getValue(), e1.getValue()))
+                .limit(limit)
+                .map(entry -> {
+                    Course course = courseDAO.findById(entry.getKey());
+                    if (course != null) {
+                        course.setEnrollmentCount(entry.getValue().intValue());
+                    }
+                    return course;
+                })
+                .filter(course -> course != null)
+                .collect(Collectors.toList());
     }
 
     /**
