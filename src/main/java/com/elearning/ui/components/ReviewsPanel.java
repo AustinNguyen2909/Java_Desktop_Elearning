@@ -160,6 +160,7 @@ public class ReviewsPanel extends JPanel {
 
         JScrollPane reviewsScrollPane = new JScrollPane(reviewsListPanel);
         reviewsScrollPane.setBorder(null);
+        reviewsScrollPane.setVerticalScrollBarPolicy(ScrollPaneConstants.VERTICAL_SCROLLBAR_ALWAYS);
         reviewsScrollPane.getVerticalScrollBar().setUnitIncrement(16);
 
         // Assemble
@@ -213,6 +214,8 @@ public class ReviewsPanel extends JPanel {
             BorderFactory.createLineBorder(new Color(226, 232, 240), 1),
             BorderFactory.createEmptyBorder(10, 10, 10, 10)
         ));
+        card.setPreferredSize(new Dimension(1000, 160));
+        card.setMaximumSize(new Dimension(Integer.MAX_VALUE, 160));
 
         // Header with user and rating
         JPanel headerPanel = new JPanel(new BorderLayout());
@@ -266,11 +269,17 @@ public class ReviewsPanel extends JPanel {
             bodyPanel.add(Box.createRigidArea(new Dimension(0, 6)));
             bodyPanel.add(commentsPanel);
         }
-        bodyPanel.add(Box.createRigidArea(new Dimension(0, 6)));
-        bodyPanel.add(footerPanel);
+
+        JScrollPane bodyScrollPane = new JScrollPane(bodyPanel);
+        bodyScrollPane.setBorder(null);
+        bodyScrollPane.setHorizontalScrollBarPolicy(ScrollPaneConstants.HORIZONTAL_SCROLLBAR_NEVER);
+        bodyScrollPane.setVerticalScrollBarPolicy(ScrollPaneConstants.VERTICAL_SCROLLBAR_AS_NEEDED);
+        bodyScrollPane.getVerticalScrollBar().setUnitIncrement(14);
+        bodyScrollPane.getViewport().setBackground(UITheme.BACKGROUND);
 
         card.add(headerPanel, BorderLayout.NORTH);
-        card.add(bodyPanel, BorderLayout.CENTER);
+        card.add(bodyScrollPane, BorderLayout.CENTER);
+        card.add(footerPanel, BorderLayout.SOUTH);
 
         return card;
     }

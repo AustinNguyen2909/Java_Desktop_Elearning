@@ -12,6 +12,7 @@ SET FOREIGN_KEY_CHECKS = 0;
 
 -- Activity and analytics tables
 TRUNCATE TABLE user_activity;
+TRUNCATE TABLE user_login_logs;
 
 -- Certificate tables
 TRUNCATE TABLE certificates;
@@ -56,6 +57,7 @@ ALTER TABLE course_review_comments AUTO_INCREMENT = 1;
 ALTER TABLE course_review_likes AUTO_INCREMENT = 1;
 ALTER TABLE certificates AUTO_INCREMENT = 1;
 ALTER TABLE user_activity AUTO_INCREMENT = 1;
+ALTER TABLE user_login_logs AUTO_INCREMENT = 1;
 
 COMMIT;
 
@@ -73,6 +75,7 @@ UNION ALL SELECT 'course_reviews', COUNT(*) FROM course_reviews
 UNION ALL SELECT 'course_review_comments', COUNT(*) FROM course_review_comments
 UNION ALL SELECT 'course_review_likes', COUNT(*) FROM course_review_likes
 UNION ALL SELECT 'certificates', COUNT(*) FROM certificates
-UNION ALL SELECT 'user_activity', COUNT(*) FROM user_activity;
+UNION ALL SELECT 'user_activity', COUNT(*) FROM user_activity
+UNION ALL SELECT 'user_login_logs', COUNT(*) FROM user_login_logs;
 
 -- Expected output: All tables should have 0 rows

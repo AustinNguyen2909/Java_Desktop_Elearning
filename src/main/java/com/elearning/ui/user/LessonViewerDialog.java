@@ -1,9 +1,11 @@
 package com.elearning.ui.user;
 
 import com.elearning.dao.LessonProgressDAO;
+import com.elearning.model.Comment;
 import com.elearning.model.Course;
 import com.elearning.model.Lesson;
 import com.elearning.model.LessonProgress;
+import com.elearning.service.CommentService;
 import com.elearning.service.EnrollmentService;
 import com.elearning.service.LessonService;
 import com.elearning.ui.components.VideoPlayerPanel;
@@ -32,6 +34,11 @@ public class LessonViewerDialog extends JDialog {
     private DefaultListModel<Lesson> lessonListModel;
     private JLabel lessonTitleLabel;
     private JTextArea lessonDescriptionArea;
+    private JPanel commentsListPanel;
+    private JTextArea commentInputArea;
+    private JButton postCommentButton;
+    private JScrollPane commentsScrollPane;
+    private JLabel commentsTitleLabel;
     private VideoPlayerPanel videoPlayer;
     private JButton markCompleteBtn;
     private JLabel progressLabel;
@@ -40,6 +47,9 @@ public class LessonViewerDialog extends JDialog {
     private final LessonService lessonService;
     private final EnrollmentService enrollmentService;
     private final LessonProgressDAO progressDAO;
+    private final CommentService commentService;
+    private final String currentUserRole;
+    private final boolean allowLessonComments;
 
     public LessonViewerDialog(JFrame parent, Course course) {
         super(parent, course.getTitle() + " - Lessons", true);
@@ -48,7 +58,10 @@ public class LessonViewerDialog extends JDialog {
         this.lessonService = LessonService.getInstance();
         this.enrollmentService = EnrollmentService.getInstance();
         this.progressDAO = new LessonProgressDAO();
+        this.commentService = CommentService.getInstance();
         this.progressMap = new HashMap<>();
+        this.currentUserRole = SessionManager.getInstance().getCurrentUser().getRole();
+        this.allowLessonComments = "USER".equals(currentUserRole) || "INSTRUCTOR".equals(currentUserRole);
 
         initComponents();
         loadLessons();
@@ -164,7 +177,7 @@ public class LessonViewerDialog extends JDialog {
 
         // Center: Video player placeholder
         JPanel videoPanel = new JPanel(new BorderLayout());
-        videoPanel.setPreferredSize(new Dimension(800, 450));
+        videoPanel.setPreferredSize(new Dimension(980, 580));
         videoPanel.setBackground(Color.BLACK);
         JLabel placeholderLabel = new JLabel("Select a lesson to watch", SwingConstants.CENTER);
         placeholderLabel.setForeground(Color.WHITE);
@@ -172,17 +185,17 @@ public class LessonViewerDialog extends JDialog {
         videoPanel.add(placeholderLabel, BorderLayout.CENTER);
         panel.add(videoPanel, BorderLayout.CENTER);
 
-        // Bottom: Description and mark complete button
-        JPanel bottomPanel = new JPanel(new BorderLayout(10, 10));
+        // Bottom: Description, comments, and mark complete button
+        JPanel bottomPanel = new JPanel(new BorderLayout(10, 8));
         bottomPanel.setBackground(Color.WHITE);
-        bottomPanel.setBorder(new EmptyBorder(10, 0, 0, 0));
+        bottomPanel.setBorder(new EmptyBorder(8, 0, 0, 0));
 
         // Description
         JLabel descLabel = new JLabel("Description:");
         descLabel.setFont(new Font("Segoe UI", Font.BOLD, 14));
         descLabel.setForeground(UITheme.TEXT);
 
-        lessonDescriptionArea = new JTextArea(4, 40);
+        lessonDescriptionArea = new JTextArea(3, 40);
         lessonDescriptionArea.setEditable(false);
         lessonDescriptionArea.setLineWrap(true);
         lessonDescriptionArea.setWrapStyleWord(true);
@@ -193,16 +206,18 @@ public class LessonViewerDialog extends JDialog {
         lessonDescriptionArea.setText("Select a lesson to view description");
 
         JScrollPane descScrollPane = new JScrollPane(lessonDescriptionArea);
-        descScrollPane.setPreferredSize(new Dimension(800, 100));
+        descScrollPane.setPreferredSize(new Dimension(800, 80));
 
         // Mark complete button
-        markCompleteBtn = new JButton("Mark as Complete");
-        markCompleteBtn.setFont(new Font("Segoe UI", Font.BOLD, 14));
+        markCompleteBtn = new JButton("Complete");
+        markCompleteBtn.setFont(new Font("Segoe UI", Font.BOLD, 11));
         markCompleteBtn.setBackground(UITheme.ACCENT); // Green
         markCompleteBtn.setForeground(Color.WHITE);
         markCompleteBtn.setFocusPainted(false);
         markCompleteBtn.setBorderPainted(false);
-        markCompleteBtn.setPreferredSize(new Dimension(180, 40));
+        markCompleteBtn.setPreferredSize(new Dimension(120, 34));
+        markCompleteBtn.setMaximumSize(new Dimension(120, 34));
+        markCompleteBtn.setToolTipText("Mark Complete");
         markCompleteBtn.setEnabled(false);
         markCompleteBtn.addActionListener(e -> markLessonComplete());
 
@@ -211,10 +226,87 @@ public class LessonViewerDialog extends JDialog {
         descPanel.add(descLabel, BorderLayout.NORTH);
         descPanel.add(descScrollPane, BorderLayout.CENTER);
 
-        bottomPanel.add(descPanel, BorderLayout.CENTER);
-        bottomPanel.add(markCompleteBtn, BorderLayout.EAST);
+        JPanel centerStack = new JPanel();
+        centerStack.setLayout(new BoxLayout(centerStack, BoxLayout.Y_AXIS));
+        centerStack.setBackground(Color.WHITE);
+        centerStack.add(descPanel);
+        centerStack.add(Box.createRigidArea(new Dimension(0, 10)));
+        centerStack.add(createCommentsSection());
+
+        bottomPanel.add(centerStack, BorderLayout.CENTER);
 
         panel.add(bottomPanel, BorderLayout.SOUTH);
+
+        return panel;
+    }
+
+    private JPanel createCommentsSection() {
+        JPanel panel = new JPanel(new BorderLayout(8, 8));
+        panel.setBackground(Color.WHITE);
+        panel.setBorder(BorderFactory.createCompoundBorder(
+                BorderFactory.createLineBorder(new Color(226, 232, 240), 1),
+                BorderFactory.createEmptyBorder(10, 10, 10, 10)
+        ));
+
+        commentsTitleLabel = new JLabel("Lesson Comments");
+        commentsTitleLabel.setFont(new Font("Segoe UI", Font.BOLD, 13));
+        commentsTitleLabel.setForeground(UITheme.TEXT);
+
+        commentsListPanel = new JPanel();
+        commentsListPanel.setLayout(new BoxLayout(commentsListPanel, BoxLayout.Y_AXIS));
+        commentsListPanel.setBackground(Color.WHITE);
+        commentsListPanel.add(new JLabel("Select a lesson to view comments."));
+
+        commentsScrollPane = new JScrollPane(commentsListPanel);
+        commentsScrollPane.setBorder(null);
+        commentsScrollPane.setPreferredSize(new Dimension(800, 110));
+        commentsScrollPane.getVerticalScrollBar().setUnitIncrement(14);
+
+        JPanel inputPanel = new JPanel(new BorderLayout(6, 6));
+        inputPanel.setBackground(Color.WHITE);
+
+        commentInputArea = new JTextArea(2, 40);
+        commentInputArea.setLineWrap(true);
+        commentInputArea.setWrapStyleWord(true);
+        commentInputArea.setFont(new Font("Segoe UI", Font.PLAIN, 12));
+        commentInputArea.setBorder(BorderFactory.createCompoundBorder(
+                BorderFactory.createLineBorder(UITheme.BORDER, 1),
+                BorderFactory.createEmptyBorder(6, 6, 6, 6)
+        ));
+
+        JScrollPane inputScroll = new JScrollPane(commentInputArea);
+        inputScroll.setBorder(null);
+
+        postCommentButton = new JButton("Post Comment");
+        postCommentButton.setBackground(UITheme.PRIMARY);
+        postCommentButton.setForeground(Color.WHITE);
+        postCommentButton.setFont(new Font("Segoe UI", Font.BOLD, 11));
+        postCommentButton.setFocusPainted(false);
+        postCommentButton.setBorderPainted(false);
+        postCommentButton.setPreferredSize(new Dimension(120, 34));
+        postCommentButton.addActionListener(e -> postLessonComment(null));
+
+        if (!allowLessonComments) {
+            JLabel info = new JLabel("Comments are available for students and instructors only.");
+            info.setFont(new Font("Segoe UI", Font.PLAIN, 11));
+            info.setForeground(UITheme.MUTED_TEXT);
+            inputPanel.add(info, BorderLayout.CENTER);
+        } else {
+            commentInputArea.setEnabled(false);
+            postCommentButton.setEnabled(false);
+            inputPanel.add(inputScroll, BorderLayout.CENTER);
+
+            JPanel actions = new JPanel(new FlowLayout(FlowLayout.RIGHT, 8, 0));
+            actions.setBackground(Color.WHITE);
+            actions.add(postCommentButton);
+            actions.add(markCompleteBtn);
+
+            inputPanel.add(actions, BorderLayout.EAST);
+        }
+
+        panel.add(commentsTitleLabel, BorderLayout.NORTH);
+        panel.add(commentsScrollPane, BorderLayout.CENTER);
+        panel.add(inputPanel, BorderLayout.SOUTH);
 
         return panel;
     }
@@ -394,13 +486,15 @@ public class LessonViewerDialog extends JDialog {
         // Update mark complete button
         LessonProgress progress = progressMap.get(lesson.getId());
         if (progress != null && progress.isCompleted()) {
-            markCompleteBtn.setText("\u2713 Completed");
+            markCompleteBtn.setText("Completed");
             markCompleteBtn.setEnabled(false);
             markCompleteBtn.setBackground(new Color(148, 163, 184)); // Gray
+            markCompleteBtn.setToolTipText("Completed");
         } else {
-            markCompleteBtn.setText("Mark as Complete");
+            markCompleteBtn.setText("Complete");
             markCompleteBtn.setEnabled(true);
             markCompleteBtn.setBackground(UITheme.ACCENT); // Green
+            markCompleteBtn.setToolTipText("Mark Complete");
         }
 
         // Mark lesson as opened
@@ -408,6 +502,176 @@ public class LessonViewerDialog extends JDialog {
             enrollmentService.openLesson(userId, lesson.getId());
         } catch (Exception e) {
             // Ignore errors for opening lesson
+        }
+
+        if (allowLessonComments) {
+            commentInputArea.setEnabled(true);
+            postCommentButton.setEnabled(true);
+        }
+
+        loadLessonComments();
+    }
+
+    private void loadLessonComments() {
+        commentsListPanel.removeAll();
+        if (currentLesson == null) {
+            commentsListPanel.add(new JLabel("Select a lesson to view comments."));
+            commentsListPanel.revalidate();
+            commentsListPanel.repaint();
+            return;
+        }
+
+        try {
+            List<Comment> comments = commentService.getTopLevelComments(currentLesson.getId());
+            int totalCount = commentService.getCommentCount(currentLesson.getId());
+            commentsTitleLabel.setText("Lesson Comments (" + totalCount + ")");
+
+            if (comments.isEmpty()) {
+                JLabel emptyLabel = new JLabel("No comments yet. Start the discussion.");
+                emptyLabel.setFont(new Font("Segoe UI", Font.PLAIN, 11));
+                emptyLabel.setForeground(UITheme.MUTED_TEXT);
+                commentsListPanel.add(emptyLabel);
+            } else {
+                for (Comment comment : comments) {
+                    commentsListPanel.add(createCommentCard(comment, 0));
+                    List<Comment> replies = commentService.getReplies(comment.getId());
+                    for (Comment reply : replies) {
+                        commentsListPanel.add(createCommentCard(reply, 18));
+                    }
+                    commentsListPanel.add(Box.createRigidArea(new Dimension(0, 8)));
+                }
+            }
+        } catch (Exception e) {
+            JLabel errorLabel = new JLabel("Error loading comments: " + e.getMessage());
+            errorLabel.setForeground(UITheme.DANGER);
+            commentsListPanel.add(errorLabel);
+        }
+
+        commentsListPanel.revalidate();
+        commentsListPanel.repaint();
+    }
+
+    private JPanel createCommentCard(Comment comment, int indent) {
+        JPanel card = new JPanel(new BorderLayout(4, 4));
+        card.setBackground(new Color(236, 254, 255));
+        card.setBorder(BorderFactory.createCompoundBorder(
+                BorderFactory.createEmptyBorder(0, indent, 6, 0),
+                BorderFactory.createLineBorder(new Color(226, 232, 240), 1)
+        ));
+
+        String userName = comment.getUserName() != null ? comment.getUserName() : "Anonymous";
+        JLabel userLabel = new JLabel(userName);
+        userLabel.setFont(new Font("Segoe UI", Font.BOLD, 11));
+        userLabel.setForeground(new Color(22, 78, 99));
+
+        String timeText = comment.getCreatedAt() != null ? comment.getCreatedAt().toString() : "";
+        JLabel timeLabel = new JLabel(timeText);
+        timeLabel.setFont(new Font("Segoe UI", Font.PLAIN, 10));
+        timeLabel.setForeground(new Color(154, 164, 178));
+
+        JPanel header = new JPanel(new BorderLayout());
+        header.setBackground(new Color(236, 254, 255));
+        header.add(userLabel, BorderLayout.WEST);
+        header.add(timeLabel, BorderLayout.EAST);
+
+        JTextArea content = new JTextArea(comment.getContent());
+        content.setEditable(false);
+        content.setLineWrap(true);
+        content.setWrapStyleWord(true);
+        content.setBackground(new Color(236, 254, 255));
+        content.setFont(new Font("Segoe UI", Font.PLAIN, 11));
+
+        JPanel actionRow = new JPanel(new FlowLayout(FlowLayout.LEFT, 0, 0));
+        actionRow.setBackground(new Color(236, 254, 255));
+        if (allowLessonComments) {
+            JButton replyBtn = new JButton("Reply");
+            replyBtn.setBackground(new Color(8, 145, 178));
+            replyBtn.setForeground(Color.WHITE);
+            replyBtn.setFont(new Font("Segoe UI", Font.BOLD, 10));
+            replyBtn.setFocusPainted(false);
+            replyBtn.setBorderPainted(false);
+            replyBtn.addActionListener(e -> showLessonReplyDialog(comment));
+            actionRow.add(replyBtn);
+        }
+
+        card.add(header, BorderLayout.NORTH);
+        card.add(content, BorderLayout.CENTER);
+        card.add(actionRow, BorderLayout.SOUTH);
+
+        return card;
+    }
+
+    private void postLessonComment(Comment parent) {
+        if (!allowLessonComments || currentLesson == null) {
+            return;
+        }
+
+        String content = commentInputArea.getText().trim();
+        if (content.isEmpty()) {
+            showStatusDialog("Error", "Please enter a comment.", UITheme.DANGER, UITheme.TEXT);
+            return;
+        }
+
+        try {
+            Comment comment = new Comment();
+            comment.setUserId(userId);
+            comment.setLessonId(currentLesson.getId());
+            comment.setContent(content);
+            if (parent != null) {
+                comment.setParentId(parent.getId());
+            }
+
+            boolean success = commentService.postComment(comment, userId, currentUserRole);
+            if (success) {
+                commentInputArea.setText("");
+                loadLessonComments();
+            } else {
+                showStatusDialog("Error", "Failed to post comment.", UITheme.DANGER, UITheme.TEXT);
+            }
+        } catch (Exception ex) {
+            showStatusDialog("Error", "Error: " + ex.getMessage(), UITheme.DANGER, UITheme.TEXT);
+        }
+    }
+
+    private void showLessonReplyDialog(Comment parentComment) {
+        if (parentComment == null) {
+            return;
+        }
+
+        JTextArea replyArea = new JTextArea(4, 30);
+        replyArea.setLineWrap(true);
+        replyArea.setWrapStyleWord(true);
+        JScrollPane scrollPane = new JScrollPane(replyArea);
+
+        int result = JOptionPane.showConfirmDialog(
+                this,
+                scrollPane,
+                "Reply",
+                JOptionPane.OK_CANCEL_OPTION,
+                JOptionPane.PLAIN_MESSAGE
+        );
+
+        if (result == JOptionPane.OK_OPTION) {
+            String content = replyArea.getText().trim();
+            if (content.isEmpty()) {
+                showStatusDialog("Error", "Please enter a reply.", UITheme.DANGER, UITheme.TEXT);
+                return;
+            }
+            try {
+                Comment comment = new Comment();
+                comment.setUserId(userId);
+                comment.setLessonId(currentLesson.getId());
+                comment.setParentId(parentComment.getId());
+                comment.setContent(content);
+                boolean success = commentService.postComment(comment, userId, currentUserRole);
+                if (success) {
+                    loadLessonComments();
+                } else {
+                    showStatusDialog("Error", "Failed to post reply.", UITheme.DANGER, UITheme.TEXT);
+                }
+            } catch (Exception ex) {
+                showStatusDialog("Error", "Error: " + ex.getMessage(), UITheme.DANGER, UITheme.TEXT);
+            }
         }
     }
 
@@ -431,9 +695,10 @@ public class LessonViewerDialog extends JDialog {
                 progress.setCompleted(true);
 
                 // Update UI
-                markCompleteBtn.setText("\u2713 Completed");
+                markCompleteBtn.setText("Completed");
                 markCompleteBtn.setEnabled(false);
                 markCompleteBtn.setBackground(new Color(148, 163, 184)); // Gray
+                markCompleteBtn.setToolTipText("Completed");
 
                 // Repaint lesson list to show checkmark
                 lessonList.repaint();

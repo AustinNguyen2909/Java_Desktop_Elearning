@@ -2,6 +2,7 @@ package com.elearning.ui;
 
 import com.elearning.model.User;
 import com.elearning.service.AuthService;
+import com.elearning.service.LoginLogService;
 import com.elearning.ui.admin.AdminDashboard;
 import com.elearning.ui.components.CardPanel;
 import com.elearning.ui.components.ModernButton;
@@ -295,6 +296,11 @@ public class LoginFrame extends JFrame {
                     User user = get();
                     if (user != null) {
                         SessionManager.getInstance().login(user);
+                        try {
+                            LoginLogService.getInstance().recordLogin(user.getId());
+                        } catch (Exception ex) {
+                            ex.printStackTrace();
+                        }
                         boolean opened = openDashboard(user);
                         if (opened) {
                             dispose();

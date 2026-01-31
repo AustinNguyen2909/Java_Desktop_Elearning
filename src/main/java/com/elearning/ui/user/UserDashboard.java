@@ -9,7 +9,9 @@ import com.elearning.service.AuthService;
 import com.elearning.service.CertificateService;
 import com.elearning.service.CourseService;
 import com.elearning.service.EnrollmentService;
+import com.elearning.service.LoginLogService;
 import com.elearning.service.UserService;
+import com.elearning.ui.components.LoginCalendarPanel;
 import com.elearning.ui.components.StarRatingPanel;
 import com.elearning.ui.components.UITheme;
 import com.elearning.util.CourseCardImageUtil;
@@ -25,7 +27,9 @@ import java.nio.file.Path;
 import java.nio.file.Paths;
 import java.nio.file.StandardCopyOption;
 import java.time.LocalDate;
+import java.time.YearMonth;
 import java.time.format.DateTimeFormatter;
+import java.util.Set;
 import java.util.List;
 
 /**
@@ -37,12 +41,17 @@ public class UserDashboard extends JFrame {
     private final EnrollmentService enrollmentService;
     private final UserService userService;
     private final CertificateService certificateService;
+    private final LoginLogService loginLogService;
 
     private JPanel contentPanel;
     private JPanel availableCoursesGrid;
     private JPanel myCoursesGrid;
     private JPanel profilePanel;
     private JTextField searchField;
+    private YearMonth calendarMonth;
+    private LoginCalendarPanel loginCalendarPanel;
+    private JLabel calendarMonthLabel;
+    private JLabel calendarSummaryLabel;
 
     public UserDashboard() {
         this.currentUser = SessionManager.getInstance().getCurrentUser();
@@ -50,6 +59,8 @@ public class UserDashboard extends JFrame {
         this.enrollmentService = EnrollmentService.getInstance();
         this.userService = UserService.getInstance();
         this.certificateService = CertificateService.getInstance();
+        this.loginLogService = LoginLogService.getInstance();
+        this.calendarMonth = YearMonth.now();
 
         initComponents();
         loadAvailableCourses();
@@ -82,6 +93,7 @@ public class UserDashboard extends JFrame {
         contentPanel.add(createMyCoursesPanel(), "My Courses");
         profilePanel = createProfilePanel();
         contentPanel.add(profilePanel, "My Profile");
+        contentPanel.add(createCalendarPanel(), "My Calendar");
 
         contentArea.add(sidebar, BorderLayout.WEST);
         contentArea.add(contentPanel, BorderLayout.CENTER);
@@ -118,6 +130,7 @@ public class UserDashboard extends JFrame {
         sidebar.add(createMenuItem("Browse Courses", "Browse Courses"));
         sidebar.add(createMenuItem("My Courses", "My Courses"));
         sidebar.add(createMenuItem("My Profile", "My Profile"));
+        sidebar.add(createMenuItem("My Calendar", "My Calendar"));
 
         // Push logout button to bottom
         sidebar.add(Box.createVerticalGlue());
@@ -411,6 +424,101 @@ public class UserDashboard extends JFrame {
         panel.add(content, BorderLayout.CENTER);
 
         return panel;
+    }
+
+    private JPanel createCalendarPanel() {
+        JPanel panel = new JPanel(new BorderLayout(12, 12));
+        panel.setBackground(UITheme.BACKGROUND);
+        panel.setBorder(BorderFactory.createEmptyBorder(16, 16, 16, 16));
+
+        JPanel header = new JPanel(new BorderLayout());
+        header.setOpaque(false);
+
+        JLabel titleLabel = new JLabel("My Calendar");
+        titleLabel.setFont(new Font("Fira Sans", Font.BOLD, 18));
+        titleLabel.setForeground(UITheme.TEXT);
+
+        calendarMonthLabel = new JLabel();
+        calendarMonthLabel.setFont(new Font("Fira Sans", Font.BOLD, 16));
+        calendarMonthLabel.setForeground(UITheme.TEXT);
+        calendarMonthLabel.setHorizontalAlignment(SwingConstants.CENTER);
+
+        JPanel navPanel = new JPanel(new FlowLayout(FlowLayout.RIGHT, 8, 0));
+        navPanel.setOpaque(false);
+        JButton prevBtn = createCalendarNavButton("<");
+        JButton nextBtn = createCalendarNavButton(">");
+        JButton refreshBtn = new JButton("Refresh");
+        refreshBtn.setBackground(UITheme.PRIMARY);
+        refreshBtn.setForeground(Color.WHITE);
+        refreshBtn.setFocusPainted(false);
+        refreshBtn.setBorderPainted(false);
+        refreshBtn.setFont(new Font("Fira Sans", Font.BOLD, 12));
+        refreshBtn.addActionListener(e -> refreshCalendarData());
+
+        prevBtn.addActionListener(e -> {
+            calendarMonth = calendarMonth.minusMonths(1);
+            refreshCalendarData();
+        });
+        nextBtn.addActionListener(e -> {
+            calendarMonth = calendarMonth.plusMonths(1);
+            refreshCalendarData();
+        });
+
+        navPanel.add(prevBtn);
+        navPanel.add(nextBtn);
+        navPanel.add(refreshBtn);
+
+        header.add(titleLabel, BorderLayout.WEST);
+        header.add(calendarMonthLabel, BorderLayout.CENTER);
+        header.add(navPanel, BorderLayout.EAST);
+
+        loginCalendarPanel = new LoginCalendarPanel();
+
+        calendarSummaryLabel = new JLabel(" ");
+        calendarSummaryLabel.setFont(new Font("Fira Sans", Font.PLAIN, 12));
+        calendarSummaryLabel.setForeground(UITheme.MUTED_TEXT);
+
+        panel.add(header, BorderLayout.NORTH);
+        panel.add(loginCalendarPanel, BorderLayout.CENTER);
+        panel.add(calendarSummaryLabel, BorderLayout.SOUTH);
+
+        refreshCalendarData();
+
+        return panel;
+    }
+
+    private JButton createCalendarNavButton(String text) {
+        JButton button = new JButton(text);
+        button.setBackground(UITheme.SURFACE);
+        button.setForeground(UITheme.TEXT);
+        button.setFocusPainted(false);
+        button.setBorder(BorderFactory.createLineBorder(UITheme.BORDER));
+        button.setFont(new Font("Fira Sans", Font.BOLD, 12));
+        button.setPreferredSize(new Dimension(36, 30));
+        return button;
+    }
+
+    private void refreshCalendarData() {
+        try {
+            Set<LocalDate> loginDates = loginLogService.getLoginDatesForMonth(currentUser.getId(), calendarMonth);
+            loginCalendarPanel.setMonth(calendarMonth);
+            loginCalendarPanel.setLoginDates(loginDates);
+            calendarMonthLabel.setText(calendarMonth.format(DateTimeFormatter.ofPattern("MMMM yyyy")));
+            if (loginDates.isEmpty()) {
+                calendarSummaryLabel.setText("No logins this month yet.");
+            } else {
+                LocalDate lastLogin = loginDates.stream().max(LocalDate::compareTo).orElse(null);
+                String lastLoginText = lastLogin != null
+                        ? lastLogin.format(DateTimeFormatter.ofPattern("MMM dd, yyyy"))
+                        : "N/A";
+                calendarSummaryLabel.setText("Logged in on " + loginDates.size() + " day(s). Last: " + lastLoginText);
+            }
+        } catch (Exception e) {
+            JOptionPane.showMessageDialog(this,
+                    "Failed to load calendar: " + e.getMessage(),
+                    "Error",
+                    JOptionPane.ERROR_MESSAGE);
+        }
     }
 
     private void loadAvailableCourses() {

@@ -23,6 +23,7 @@ DROP TABLE IF EXISTS review_likes;
 DROP TABLE IF EXISTS review_comments;
 DROP TABLE IF EXISTS reviews;
 DROP TABLE IF EXISTS comments;
+DROP TABLE IF EXISTS user_login_logs;
 DROP TABLE IF EXISTS user_activity;
 DROP TABLE IF EXISTS certificates;
 DROP TABLE IF EXISTS course_review_likes;
@@ -298,4 +299,16 @@ CREATE TABLE user_activity (
     FOREIGN KEY (user_id) REFERENCES users(id) ON DELETE CASCADE,
     FOREIGN KEY (course_id) REFERENCES courses(id) ON DELETE SET NULL,
     FOREIGN KEY (lesson_id) REFERENCES lessons(id) ON DELETE SET NULL
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4;
+
+-- User login logs (for calendar check-ins)
+CREATE TABLE user_login_logs (
+    id BIGINT PRIMARY KEY AUTO_INCREMENT,
+    user_id INT NOT NULL,
+    login_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+
+    INDEX idx_login_user (user_id),
+    INDEX idx_login_at (login_at),
+
+    FOREIGN KEY (user_id) REFERENCES users(id) ON DELETE CASCADE
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4;

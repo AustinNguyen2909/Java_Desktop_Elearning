@@ -371,6 +371,21 @@ INSERT INTO user_activity (user_id, course_id, lesson_id, action_type, metadata,
 ((SELECT id FROM users WHERE username = 'student1'), (SELECT id FROM courses WHERE title = 'Java Foundations'),
  NULL, 'CERT_ISSUED', JSON_OBJECT('code','CERT-JAVA-FOUND-0001'), NOW());
 
+-- User login logs (sample check-in dates)
+INSERT INTO user_login_logs (user_id, login_at) VALUES
+((SELECT id FROM users WHERE username = 'admin'), DATE_SUB(NOW(), INTERVAL 7 DAY)),
+((SELECT id FROM users WHERE username = 'admin'), DATE_SUB(NOW(), INTERVAL 3 DAY)),
+((SELECT id FROM users WHERE username = 'admin'), NOW()),
+((SELECT id FROM users WHERE username = 'instructor1'), DATE_SUB(NOW(), INTERVAL 10 DAY)),
+((SELECT id FROM users WHERE username = 'instructor1'), DATE_SUB(NOW(), INTERVAL 6 DAY)),
+((SELECT id FROM users WHERE username = 'instructor1'), DATE_SUB(NOW(), INTERVAL 2 DAY)),
+((SELECT id FROM users WHERE username = 'student1'), DATE_SUB(NOW(), INTERVAL 9 DAY)),
+((SELECT id FROM users WHERE username = 'student1'), DATE_SUB(NOW(), INTERVAL 5 DAY)),
+((SELECT id FROM users WHERE username = 'student1'), DATE_SUB(NOW(), INTERVAL 1 DAY)),
+((SELECT id FROM users WHERE username = 'student2'), DATE_SUB(NOW(), INTERVAL 8 DAY)),
+((SELECT id FROM users WHERE username = 'student2'), DATE_SUB(NOW(), INTERVAL 4 DAY)),
+((SELECT id FROM users WHERE username = 'student2'), NOW());
+
 -- Update cached counters for lessons
 UPDATE lessons l
 SET like_count = (SELECT COUNT(*) FROM lesson_likes ll WHERE ll.lesson_id = l.id),
