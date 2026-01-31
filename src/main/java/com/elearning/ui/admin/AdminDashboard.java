@@ -401,7 +401,7 @@ public class AdminDashboard extends JFrame {
             // Top 4 key metrics in a single line (smaller)
             JPanel keyMetricsPanel = new JPanel(new GridLayout(1, 4, 8, 0));
             keyMetricsPanel.setBackground(Color.WHITE);
-            keyMetricsPanel.setMaximumSize(new Dimension(Integer.MAX_VALUE, 65));
+            keyMetricsPanel.setMaximumSize(new Dimension(Integer.MAX_VALUE, 100));
             keyMetricsPanel.setBorder(BorderFactory.createEmptyBorder(10, 0, 15, 0));
 
             int totalUsers = stats.getTotalUsers() + stats.getTotalInstructors() + stats.getTotalAdmins();
@@ -419,7 +419,7 @@ public class AdminDashboard extends JFrame {
             mainContent.add(Box.createRigidArea(new Dimension(0, 5)));
 
             // Date range info
-            JLabel dateRangeInfo = new JLabel("Showing data from " + filterFromDate + " to " + filterToDate);
+            JLabel dateRangeInfo = new JLabel("Filtering user registrations from " + filterFromDate + " to " + filterToDate);
             dateRangeInfo.setFont(new Font("Segoe UI", Font.ITALIC, 11));
             dateRangeInfo.setForeground(UITheme.MUTED_TEXT);
             dateRangeInfo.setBorder(BorderFactory.createEmptyBorder(0, 0, 5, 0));
@@ -483,18 +483,18 @@ public class AdminDashboard extends JFrame {
             trendChartsPanel.setBackground(Color.WHITE);
             trendChartsPanel.setMaximumSize(new Dimension(Integer.MAX_VALUE, 240));
 
-            // Top 5 Courses chart (left) - filtered by date range
-            List<Course> topCourses = analyticsService.getTopCoursesByEnrollmentWithDateFilter(5, filterFromDate, filterToDate);
+            // Top 5 Courses chart (left) - ALL-time top courses
+            List<Course> topCourses = analyticsService.getTopCoursesByEnrollment(5);
+            JPanel topCoursesPanel = new JPanel(new BorderLayout());
+            topCoursesPanel.setBackground(Color.WHITE);
+
+            JLabel topCoursesTitle = new JLabel("Top 5 Courses (All-Time)");
+            topCoursesTitle.setFont(new Font("Segoe UI", Font.BOLD, 12));
+            topCoursesTitle.setForeground(UITheme.TEXT);
+            topCoursesTitle.setBorder(BorderFactory.createEmptyBorder(0, 0, 5, 0));
+            topCoursesPanel.add(topCoursesTitle, BorderLayout.NORTH);
+
             if (!topCourses.isEmpty()) {
-                JPanel topCoursesPanel = new JPanel(new BorderLayout());
-                topCoursesPanel.setBackground(Color.WHITE);
-
-                JLabel topCoursesTitle = new JLabel("Top 5 Courses (Enrollments in Range)");
-                topCoursesTitle.setFont(new Font("Segoe UI", Font.BOLD, 12));
-                topCoursesTitle.setForeground(UITheme.TEXT);
-                topCoursesTitle.setBorder(BorderFactory.createEmptyBorder(0, 0, 5, 0));
-                topCoursesPanel.add(topCoursesTitle, BorderLayout.NORTH);
-
                 java.util.List<String> courseTitles = new java.util.ArrayList<>();
                 java.util.List<Integer> enrollmentCounts = new java.util.ArrayList<>();
                 for (Course course : topCourses) {
@@ -505,9 +505,15 @@ public class AdminDashboard extends JFrame {
                 ChartPanel topCoursesChart = ChartUtil.createTopCoursesChart(courseTitles, enrollmentCounts, 5);
                 topCoursesChart.setPreferredSize(new Dimension(300, 220));
                 topCoursesPanel.add(topCoursesChart, BorderLayout.CENTER);
-
-                trendChartsPanel.add(topCoursesPanel);
+            } else {
+                JLabel noDataLabel = new JLabel("No courses available");
+                noDataLabel.setFont(new Font("Segoe UI", Font.PLAIN, 14));
+                noDataLabel.setForeground(UITheme.MUTED_TEXT);
+                noDataLabel.setHorizontalAlignment(SwingConstants.CENTER);
+                topCoursesPanel.add(noDataLabel, BorderLayout.CENTER);
             }
+
+            trendChartsPanel.add(topCoursesPanel);
 
             // User Registration Trends chart (right)
             long daysBetween = ChronoUnit.DAYS.between(filterFromDate, filterToDate);
@@ -541,7 +547,7 @@ public class AdminDashboard extends JFrame {
             // Detailed statistics card at the bottom
             JPanel detailsCardWrapper = new JPanel(new BorderLayout());
             detailsCardWrapper.setBackground(Color.WHITE);
-            detailsCardWrapper.setMaximumSize(new Dimension(Integer.MAX_VALUE, 150));
+            detailsCardWrapper.setMaximumSize(new Dimension(Integer.MAX_VALUE, 220));
             detailsCardWrapper.setAlignmentX(Component.CENTER_ALIGNMENT);
 
             JPanel detailsCard = createDetailedStatsCard(stats);
@@ -597,15 +603,15 @@ public class AdminDashboard extends JFrame {
         card.setBackground(Color.WHITE);
         card.setBorder(BorderFactory.createCompoundBorder(
                 BorderFactory.createLineBorder(new Color(226, 232, 240), 1),
-                BorderFactory.createEmptyBorder(6, 8, 6, 8)
+                BorderFactory.createEmptyBorder(12, 12, 12, 12)
         ));
 
         JLabel titleLabel = new JLabel(title);
-        titleLabel.setFont(new Font("Segoe UI", Font.PLAIN, 10));
+        titleLabel.setFont(new Font("Segoe UI", Font.PLAIN, 13));
         titleLabel.setForeground(UITheme.MUTED_TEXT);
 
         JLabel valueLabel = new JLabel(value);
-        valueLabel.setFont(new Font("Segoe UI", Font.BOLD, 20));
+        valueLabel.setFont(new Font("Segoe UI", Font.BOLD, 28));
         valueLabel.setForeground(color);
 
         card.add(titleLabel, BorderLayout.NORTH);
@@ -622,11 +628,23 @@ public class AdminDashboard extends JFrame {
                 BorderFactory.createEmptyBorder(12, 15, 12, 15)
         ));
 
-        JLabel detailsTitle = new JLabel("Detailed Statistics (Filtered by Date Range)");
+        JLabel detailsTitle = new JLabel("Detailed Statistics");
         detailsTitle.setFont(new Font("Segoe UI", Font.BOLD, 14));
         detailsTitle.setForeground(UITheme.TEXT);
-        detailsTitle.setBorder(BorderFactory.createEmptyBorder(0, 0, 10, 0));
-        card.add(detailsTitle, BorderLayout.NORTH);
+        detailsTitle.setBorder(BorderFactory.createEmptyBorder(0, 0, 5, 0));
+
+        JLabel detailsSubtitle = new JLabel("<html>Users created: Filtered by date range • Courses & Enrollments: All-time totals</html>");
+        detailsSubtitle.setFont(new Font("Segoe UI", Font.PLAIN, 11));
+        detailsSubtitle.setForeground(UITheme.MUTED_TEXT);
+        detailsSubtitle.setBorder(BorderFactory.createEmptyBorder(0, 0, 10, 0));
+
+        JPanel titlePanel = new JPanel();
+        titlePanel.setLayout(new BoxLayout(titlePanel, BoxLayout.Y_AXIS));
+        titlePanel.setBackground(Color.WHITE);
+        titlePanel.add(detailsTitle);
+        titlePanel.add(detailsSubtitle);
+
+        card.add(titlePanel, BorderLayout.NORTH);
 
         // Create a grid for label-value pairs
         JPanel gridPanel = new JPanel(new GridLayout(3, 4, 15, 8));
@@ -659,12 +677,13 @@ public class AdminDashboard extends JFrame {
         item.setBackground(Color.WHITE);
 
         JLabel labelComp = new JLabel(label);
-        labelComp.setFont(new Font("Segoe UI", Font.PLAIN, 10));
+        labelComp.setFont(new Font("Segoe UI", Font.PLAIN, 12));
         labelComp.setForeground(UITheme.MUTED_TEXT);
         labelComp.setAlignmentX(Component.LEFT_ALIGNMENT);
+        labelComp.setBorder(BorderFactory.createEmptyBorder(0, 0, 4, 0));
 
         JLabel valueComp = new JLabel(value);
-        valueComp.setFont(new Font("Segoe UI", Font.BOLD, 13));
+        valueComp.setFont(new Font("Segoe UI", Font.BOLD, 20));
         valueComp.setForeground(UITheme.TEXT);
         valueComp.setAlignmentX(Component.LEFT_ALIGNMENT);
 

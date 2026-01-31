@@ -108,48 +108,27 @@ public class AnalyticsService {
         int totalAdmins = (int) allUsersInRange.stream().filter(u -> "ADMIN".equals(u.getRole())).count();
         int activeUsers = (int) allUsersInRange.stream().filter(u -> "ACTIVE".equals(u.getStatus())).count();
 
-        // Course counts - filter by created_at
-        List<Course> allCoursesInRange = courseDAO.findAll().stream()
-                .filter(c -> {
-                    if (c.getCreatedAt() == null) return false;
-                    LocalDate createdDate = c.getCreatedAt().toLocalDate();
-                    return !createdDate.isBefore(fromDate) && !createdDate.isAfter(toDate);
-                })
-                .collect(Collectors.toList());
+        // Course counts - show ALL courses (current platform state, not filtered by date)
+        // Courses represent inventory/state, not time-series activity
+        int totalCourses = courseDAO.findAll().size();
+        int approvedCourses = courseDAO.findApprovedCourses().size();
+        int pendingCourses = courseDAO.findPendingCourses().size();
+        int publishedCourses = courseDAO.findPublishedCourses().size();
 
-        int totalCourses = allCoursesInRange.size();
-        int approvedCourses = (int) allCoursesInRange.stream().filter(c -> "APPROVED".equals(c.getStatus())).count();
-        int pendingCourses = (int) allCoursesInRange.stream().filter(c -> "PENDING".equals(c.getStatus())).count();
-        int publishedCourses = (int) allCoursesInRange.stream().filter(Course::isPublished).count();
+        // Enrollment stats - show ALL enrollments (current platform state, not filtered by date)
+        // Enrollments represent current student engagement state
+        int totalEnrollments = enrollmentDAO.getTotalEnrollmentCount();
+        int activeEnrollments = enrollmentDAO.getInProgressCount();
+        int completedEnrollments = enrollmentDAO.getCompletedCount();
 
-        // Enrollment stats - filter by enrolled_at
-        List<Enrollment> allEnrollmentsInRange = enrollmentDAO.findAll().stream()
-                .filter(e -> {
-                    if (e.getEnrolledAt() == null) return false;
-                    LocalDate enrolledDate = e.getEnrolledAt().toLocalDate();
-                    return !enrolledDate.isBefore(fromDate) && !enrolledDate.isAfter(toDate);
-                })
-                .collect(Collectors.toList());
-
-        int totalEnrollments = allEnrollmentsInRange.size();
-        int completedEnrollments = (int) allEnrollmentsInRange.stream()
-                .filter(e -> e.getCompletedAt() != null)
-                .count();
-        int activeEnrollments = totalEnrollments - completedEnrollments;
-
-        // Review stats - count reviews for courses in range
-        int totalReviews = 0;
-        for (Course course : allCoursesInRange) {
-            totalReviews += reviewDAO.countByCourseId(course.getId());
-        }
+        // Review stats - count ALL reviews across ALL courses (not filtered by date)
+        // Reviews are tied to courses, so we show total platform reviews
+        int totalReviews = countAllReviews();
 
         // Calculate averages
         double averageProgress = 0.0;
         if (totalEnrollments > 0) {
-            double totalProgress = allEnrollmentsInRange.stream()
-                    .mapToDouble(Enrollment::getProgressPercent)
-                    .sum();
-            averageProgress = totalProgress / totalEnrollments;
+            averageProgress = enrollmentDAO.getGlobalAverageProgress();
         }
 
         double averageEnrollmentsPerCourse = 0.0;
