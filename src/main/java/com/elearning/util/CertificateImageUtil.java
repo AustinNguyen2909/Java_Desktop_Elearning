@@ -79,12 +79,11 @@ public class CertificateImageUtil {
         g2.setColor(Color.WHITE);
         drawCenteredString(g2, "EXCELLENCE", new Rectangle(sealX - 90, sealY + sealSize + 8, sealSize + 180, 28), g2.getFont());
 
-        // Left header
-        g2.setColor(Color.WHITE);
-        g2.setFont(new Font("Serif", Font.BOLD, 40));
-        g2.drawString("E-Learning", 90, 105);
-        g2.setFont(new Font("Serif", Font.PLAIN, 18));
-        g2.drawString("Course Certificate", 92, 128);
+        // Logo (centered in header band)
+        BufferedImage logo = LogoUtil.renderLogo(360, 120);
+        int logoX = (width - logo.getWidth()) / 2;
+        int logoY = 40;
+        g2.drawImage(logo, logoX, logoY, null);
 
         // Certificate title (centered)
         g2.setColor(new Color(22, 78, 99));

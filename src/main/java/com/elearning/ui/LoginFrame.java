@@ -11,6 +11,7 @@ import com.elearning.ui.components.ModernTextField;
 import com.elearning.ui.components.UITheme;
 import com.elearning.ui.instructor.InstructorDashboard;
 import com.elearning.ui.user.UserDashboard;
+import com.elearning.util.LogoUtil;
 import com.elearning.util.SessionManager;
 
 import javax.swing.*;
@@ -120,13 +121,12 @@ public class LoginFrame extends JFrame {
         // App Icon/Logo
         JLabel iconLabel = new JLabel();
         try {
-            ImageIcon originalIcon = new ImageIcon(getClass().getResource("/assets/logo.png"));
-            Image scaledImage = originalIcon.getImage().getScaledInstance(300, 120, Image.SCALE_SMOOTH);
-            iconLabel.setIcon(new ImageIcon(scaledImage));
+            Image logo = LogoUtil.renderLogo(360, 140);
+            iconLabel.setIcon(new ImageIcon(logo));
         } catch (Exception e) {
-            // Fallback to text if image not found
-            iconLabel.setText("EL");
-            iconLabel.setFont(new Font("Fira Sans", Font.BOLD, 72));
+            // Fallback to text if rendering fails
+            iconLabel.setText("HPSL");
+            iconLabel.setFont(new Font("Fira Sans", Font.BOLD, 48));
             iconLabel.setForeground(UITheme.PRIMARY);
         }
         iconLabel.setAlignmentX(Component.CENTER_ALIGNMENT);
